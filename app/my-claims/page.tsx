@@ -1,0 +1,81 @@
+"use client"
+
+import { Navbar } from "@/components/navbar"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/components/status-badge"
+import Image from "next/image"
+import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
+import { mockClaims } from "@/lib/mock-data"
+
+export default function MyClaimsPage() {
+  const { user } = useAuth()
+
+  const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar role={user?.role || "user"} />
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="mb-2 text-3xl font-bold text-foreground">My Claims</h1>
+          <p className="text-muted-foreground">Track the status of your submitted claims</p>
+        </div>
+
+        <div className="space-y-4">
+          {userClaims.map((claim) => (
+            <Card key={claim.id} className="p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-4">
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-border">
+                    <Image
+                      src={claim.itemImage || "/placeholder.svg"}
+                      alt={claim.itemName}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-card-foreground">{claim.itemName}</h3>
+                      <StatusBadge status={claim.status} />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Claimed on {new Date(claim.claimedAt).toLocaleDateString()}
+                    </p>
+                    {claim.releasedAt && (
+                      <p className="text-sm text-muted-foreground">
+                        Released on {new Date(claim.releasedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                    {claim.releaseNotes && (
+                      <p className="mt-1 text-sm text-muted-foreground">Notes: {claim.releaseNotes}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2 sm:flex-col">
+                  <Link href={`/items/${claim.itemId}`}>
+                    <Button variant="outline" size="sm" className="w-full bg-transparent">
+                      View Item
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Card>
+          ))}
+
+          {userClaims.length === 0 && (
+            <Card className="p-12 text-center">
+              <p className="mb-4 text-muted-foreground">You haven't submitted any claims yet</p>
+              <Link href="/browse">
+                <Button>Browse Items</Button>
+              </Link>
+            </Card>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
