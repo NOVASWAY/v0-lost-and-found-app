@@ -58,6 +58,13 @@ export interface Playbook {
   updatedAt: string
 }
 
+export interface Location {
+  id: string
+  name: string
+  description?: string
+  createdAt: string
+}
+
 export interface ServiceRecord {
   id: string
   serviceDate: string
@@ -384,5 +391,45 @@ export const mockPlaybooks: Playbook[] = [
     protocol: "Flag for Superuser review. Freeze all active claims for the entity.",
     priority: "critical",
     updatedAt: "2025-01-21T09:30:00",
+  },
+]
+
+// Mock Locations
+export const mockLocations: Location[] = [
+  {
+    id: "loc1",
+    name: "Main Sanctuary - Pew 12",
+    description: "Main worship area",
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    id: "loc2",
+    name: "Fellowship Hall",
+    description: "Community gathering space",
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    id: "loc3",
+    name: "Parking Lot B",
+    description: "Secondary parking area",
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    id: "loc4",
+    name: "Entrance Lobby",
+    description: "Main entrance area",
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    id: "loc5",
+    name: "Children's Ministry Room",
+    description: "Children's activities area",
+    createdAt: "2025-01-01T00:00:00",
+  },
+  {
+    id: "loc6",
+    name: "Youth Room",
+    description: "Youth group meeting space",
+    createdAt: "2025-01-01T00:00:00",
   },
 ]

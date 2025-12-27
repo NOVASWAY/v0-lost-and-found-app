@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter } from "lucide-react"
-import { mockItems } from "@/lib/mock-data"
+import { mockItems, mockLocations } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function BrowsePage() {
@@ -36,7 +36,7 @@ export default function BrowsePage() {
     const matchesCategory = categoryFilter === "all" || item.category.toLowerCase() === categoryFilter
     const matchesColor = colorFilter === "all" || item.color.toLowerCase().includes(colorFilter)
     const matchesLocation =
-      locationFilter === "all" || item.location.toLowerCase().includes(locationFilter.replace("-", " "))
+      locationFilter === "all" || item.location.toLowerCase() === locationFilter.toLowerCase()
 
     return matchesSearch && matchesCategory && matchesColor && matchesLocation
   })
@@ -106,12 +106,11 @@ export default function BrowsePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                <SelectItem value="main-sanctuary">Main Sanctuary</SelectItem>
-                <SelectItem value="fellowship-hall">Fellowship Hall</SelectItem>
-                <SelectItem value="parking-lot">Parking Lot</SelectItem>
-                <SelectItem value="youth-room">Youth Room</SelectItem>
-                <SelectItem value="entrance-lobby">Entrance Lobby</SelectItem>
-                <SelectItem value="children">Children's Ministry</SelectItem>
+                {mockLocations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.name}>
+                    {loc.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

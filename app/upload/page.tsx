@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { mockItems, mockUsers, type Item } from "@/lib/mock-data"
+import { mockItems, mockUsers, mockLocations, type Item } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 
 export default function UploadPage() {
@@ -212,15 +212,11 @@ export default function UploadPage() {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Main Sanctuary - Pew 12">Main Sanctuary</SelectItem>
-                    <SelectItem value="Fellowship Hall">Fellowship Hall</SelectItem>
-                    <SelectItem value="Parking Lot B">Parking Lot</SelectItem>
-                    <SelectItem value="Youth Room">Youth Room</SelectItem>
-                    <SelectItem value="Entrance Lobby">Main Entrance</SelectItem>
-                    <SelectItem value="Children's Ministry Room">Children's Ministry</SelectItem>
-                    <SelectItem value="Church Office">Church Office</SelectItem>
-                    <SelectItem value="Restroom">Restroom</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {mockLocations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.name}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

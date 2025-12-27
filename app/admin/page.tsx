@@ -29,8 +29,9 @@ import {
   Trash2,
   Users,
   Calendar,
+  MapPin,
 } from "lucide-react"
-import { mockUsers, mockPlaybooks, type User, type Order, type Playbook } from "@/lib/mock-data"
+import { mockUsers, mockPlaybooks, mockLocations, type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function AdminDashboardPage() {
@@ -52,6 +53,13 @@ export default function AdminDashboardPage() {
     scenario: "",
     protocol: "",
     priority: "medium",
+  })
+  const [locations, setLocations] = useState<Location[]>(mockLocations)
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null)
+  const [newLocation, setNewLocation] = useState<Partial<Location>>({
+    name: "",
+    description: "",
   })
 
   const filteredUsers = users.filter((u) => {
@@ -520,6 +528,70 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             </Card>
+
+            {/* Location Management Section */}
+            <Card className="bg-card border-border shadow-2xl overflow-hidden">
+              <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                <div>
+                  <h2 className="text-xl font-black tracking-tight uppercase italic flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    Church Locations
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Manage locations where items can be found
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setEditingLocation(null)
+                    setNewLocation({ name: "", description: "" })
+                    setIsLocationDialogOpen(true)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/50 text-primary hover:bg-primary/10 font-bold"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> New Location
+                </Button>
+              </div>
+              <div className="divide-y divide-border">
+                {locations.map((loc) => (
+                  <div key={loc.id} className="p-4 hover:bg-muted/30 transition-colors group">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-bold tracking-tight">{loc.name}</h4>
+                        {loc.description && (
+                          <p className="text-xs text-muted-foreground mt-1">{loc.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => openEditLocation(loc)}
+                        >
+                          <Edit className="w-3 h-3 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteLocation(loc.id)}
+                        >
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {locations.length === 0 && (
+                  <div className="p-8 text-center">
+                    <p className="text-sm text-muted-foreground">No locations configured</p>
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
 
           {/* System Integrity & Logs */}
@@ -784,6 +856,56 @@ export default function AdminDashboardPage() {
                 </Button>
                 <Button onClick={handleMarkAttendance} className="flex-1 bg-primary font-black uppercase italic">
                   Record
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isLocationDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md p-6 border-primary shadow-[0_0_50px_rgba(var(--primary),0.1)]">
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 italic">
+              {editingLocation ? "Update Location" : "New Location"}
+            </h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Location Name</label>
+                <Input
+                  value={newLocation.name}
+                  onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
+                  placeholder="e.g., Main Sanctuary - Pew 12"
+                  className="bg-muted/50"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Description (Optional)
+                </label>
+                <Input
+                  value={newLocation.description}
+                  onChange={(e) => setNewLocation({ ...newLocation, description: e.target.value })}
+                  placeholder="Brief description of the location"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => {
+                    setIsLocationDialogOpen(false)
+                    setEditingLocation(null)
+                    setNewLocation({ name: "", description: "" })
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveLocation} className="flex-1 bg-primary font-black uppercase italic">
+                  {editingLocation ? "Update" : "Create"}
                 </Button>
               </div>
             </div>
