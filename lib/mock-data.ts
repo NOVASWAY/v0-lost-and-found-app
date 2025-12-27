@@ -40,6 +40,24 @@ export interface ReleaseLog {
   notes: string
 }
 
+export interface Order {
+  id: string
+  title: string
+  message: string
+  status: "unread" | "read"
+  priority: "low" | "medium" | "high"
+  createdAt: string
+}
+
+export interface Playbook {
+  id: string
+  title: string
+  scenario: string
+  protocol: string
+  priority: "low" | "medium" | "high" | "critical"
+  updatedAt: string
+}
+
 export interface User {
   id: string
   name: string
@@ -49,6 +67,8 @@ export interface User {
   claimsSubmitted: number
   joinedAt: string
   claimedItems?: { itemId: string; itemName: string; claimStatus: ClaimStatus; claimedAt: string }[]
+  orders?: Order[]
+  playbooksAccess?: string[] // IDs of accessible playbooks
 }
 
 // Mock Items
@@ -184,6 +204,17 @@ export const mockUsers: User[] = [
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "pending", claimedAt: "2025-01-16T10:00:00" },
     ],
+    orders: [
+      {
+        id: "o1",
+        title: "Security Protocol Update",
+        message: "Please ensure all found items are photographed from at least three angles.",
+        status: "unread",
+        priority: "high",
+        createdAt: "2025-01-20T09:00:00",
+      },
+    ],
+    playbooksAccess: ["pb1"],
   },
   {
     id: "u2",
@@ -194,6 +225,8 @@ export const mockUsers: User[] = [
     claimsSubmitted: 0,
     joinedAt: "2024-12-15",
     claimedItems: [],
+    orders: [],
+    playbooksAccess: ["pb1", "pb2"],
   },
   {
     id: "u3",
@@ -204,6 +237,8 @@ export const mockUsers: User[] = [
     claimsSubmitted: 0,
     joinedAt: "2024-11-01",
     claimedItems: [],
+    orders: [],
+    playbooksAccess: ["pb1", "pb2"],
   },
   {
     id: "u4",
@@ -217,6 +252,8 @@ export const mockUsers: User[] = [
       { itemId: "3", itemName: "Silver Wristwatch", claimStatus: "pending", claimedAt: "2025-01-15T14:30:00" },
       { itemId: "4", itemName: "Red Umbrella", claimStatus: "released", claimedAt: "2025-01-14T09:15:00" },
     ],
+    orders: [],
+    playbooksAccess: ["pb1"],
   },
   {
     id: "u5",
@@ -231,6 +268,8 @@ export const mockUsers: User[] = [
       { itemId: "2", itemName: "Blue Water Bottle", claimStatus: "pending", claimedAt: "2025-01-17T10:30:00" },
       { itemId: "5", itemName: "Black Eyeglasses", claimStatus: "released", claimedAt: "2025-01-14T14:20:00" },
     ],
+    orders: [],
+    playbooksAccess: ["pb2"],
   },
   {
     id: "u6",
@@ -241,6 +280,8 @@ export const mockUsers: User[] = [
     claimsSubmitted: 0,
     joinedAt: "2024-11-15",
     claimedItems: [],
+    orders: [],
+    playbooksAccess: ["pb1"],
   },
   {
     id: "u7",
@@ -253,6 +294,8 @@ export const mockUsers: User[] = [
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "rejected", claimedAt: "2025-01-12T16:45:00" },
     ],
+    orders: [],
+    playbooksAccess: ["pb1"],
   },
   {
     id: "u8",
@@ -263,5 +306,27 @@ export const mockUsers: User[] = [
     claimsSubmitted: 0,
     joinedAt: "2024-12-01",
     claimedItems: [],
+    orders: [],
+    playbooksAccess: ["pb2"],
+  },
+]
+
+// Mock Playbooks
+export const mockPlaybooks: Playbook[] = [
+  {
+    id: "pb1",
+    title: "High-Value Asset Discovery",
+    scenario: "Recovery of electronics or jewelry exceeding $500 in value",
+    protocol: "Immediate lockdown in Secure Vault B. Require two-person verification for release.",
+    priority: "high",
+    updatedAt: "2025-01-20T10:00:00",
+  },
+  {
+    id: "pb2",
+    title: "Suspicious Claim Pattern",
+    scenario: "Multiple claims from same entity within 48-hour window",
+    protocol: "Flag for Superuser review. Freeze all active claims for the entity.",
+    priority: "critical",
+    updatedAt: "2025-01-21T09:30:00",
   },
 ]

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
@@ -18,8 +20,11 @@ import {
   Eye,
   Zap,
   ShieldCheck,
+  MessageSquare,
+  BookOpen,
+  Plus,
 } from "lucide-react"
-import { mockUsers, type User } from "@/lib/mock-data"
+import { mockUsers, mockPlaybooks, type User, type Order, type Playbook } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function AdminDashboardPage() {
@@ -30,11 +35,16 @@ export default function AdminDashboardPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [users, setUsers] = useState<User[]>(mockUsers)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
-
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    role: "user" as "user" | "volunteer" | "admin",
+  const [orderMessage, setOrderMessage] = useState("") // State for order message
+  const [orderTitle, setOrderTitle] = useState("")
+  const [orderPriority, setOrderPriority] = useState<"low" | "medium" | "high">("medium")
+  const [playbooks, setPlaybooks] = useState<Playbook[]>(mockPlaybooks)
+  const [isPlaybookDialogOpen, setIsPlaybookDialogOpen] = useState(false)
+  const [newPlaybook, setNewPlaybook] = useState<Partial<Playbook>>({
+    title: "",
+    scenario: "",
+    protocol: "",
+    priority: "medium",
   })
 
   const filteredUsers = users.filter((u) => {
@@ -53,16 +63,18 @@ export default function AdminDashboardPage() {
   const totalUploads = users.reduce((sum, u) => sum + u.itemsUploaded, 0)
   const totalClaims = users.reduce((sum, u) => sum + u.claimsSubmitted, 0)
 
-  const handleCreateUser = () => {
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault()
+    const id = `u${Math.random().toString(36).substr(2, 9)}`
     const user: User = {
-      id: `u${users.length + 1}`,
+      id,
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
       itemsUploaded: 0,
       claimsSubmitted: 0,
       joinedAt: new Date().toISOString().split("T")[0],
-      claimedItems: [],
+      orders: [],
     }
     setUsers([...users, user])
     setNewUser({ name: "", email: "", role: "user" })
@@ -77,6 +89,36 @@ export default function AdminDashboardPage() {
     }
   }
 
+  const handleSendOrder = (userId: string) => {
+    if (!orderTitle || !orderMessage) return
+
+    const newOrder: Order = {
+      id: `o${Math.random().toString(36).substr(2, 9)}`,
+      title: orderTitle,
+      message: orderMessage,
+      status: "unread",
+      priority: orderPriority,
+      createdAt: new Date().toISOString(),
+    }
+
+    setUsers(
+      users.map((u) => {
+        if (u.id === userId) {
+          return {
+            ...u,
+            orders: [...(u.orders || []), newOrder],
+          }
+        }
+        return u
+      }),
+    )
+
+    setOrderTitle("")
+    setOrderMessage("")
+    setOrderPriority("medium")
+    setSelectedUser(null)
+  }
+
   const toggleRowExpansion = (userId: string) => {
     const newExpanded = new Set(expandedRows)
     if (newExpanded.has(userId)) {
@@ -86,6 +128,27 @@ export default function AdminDashboardPage() {
     }
     setExpandedRows(newExpanded)
   }
+
+  const handleCreatePlaybook = () => {
+    if (!newPlaybook.title || !newPlaybook.protocol) return
+    const playbook: Playbook = {
+      id: `pb${Date.now()}`,
+      title: newPlaybook.title,
+      scenario: newPlaybook.scenario || "",
+      protocol: newPlaybook.protocol,
+      priority: newPlaybook.priority as any,
+      updatedAt: new Date().toISOString(),
+    }
+    setPlaybooks([...playbooks, playbook])
+    setIsPlaybookDialogOpen(false)
+    setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
+  }
+
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "user" as "user" | "volunteer" | "admin",
+  })
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -224,22 +287,104 @@ export default function AdminDashboardPage() {
                           </div>
                         </td>
                         <td className="p-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:bg-destructive/10 hover:text-destructive p-2 h-auto"
-                            onClick={() => {
-                              setSelectedUser(u)
-                              setDeactivateDialogOpen(true)
-                            }}
-                          >
-                            <ShieldAlert className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-primary hover:bg-primary/10 p-2 h-auto"
+                              onClick={() => {
+                                setSelectedUser(u)
+                                // Normally we'd open a dialog here
+                                const title = prompt("Enter Order Title:")
+                                const message = prompt("Enter Order Message:")
+                                if (title && message) {
+                                  const newOrder: Order = {
+                                    id: `o${Math.random().toString(36).substr(2, 9)}`,
+                                    title,
+                                    message,
+                                    status: "unread",
+                                    priority: "medium",
+                                    createdAt: new Date().toISOString(),
+                                  }
+                                  setUsers(
+                                    users.map((user) =>
+                                      user.id === u.id ? { ...user, orders: [...(user.orders || []), newOrder] } : user,
+                                    ),
+                                  )
+                                }
+                              }}
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive p-2 h-auto"
+                              onClick={() => {
+                                setSelectedUser(u)
+                                setDeactivateDialogOpen(true)
+                              }}
+                            >
+                              <ShieldAlert className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </Card>
+
+            {/* Situational Playbooks Management Section */}
+            <Card className="bg-card border-border shadow-2xl overflow-hidden">
+              <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                <div>
+                  <h2 className="text-xl font-black tracking-tight uppercase italic flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    Operational Playbooks
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Standard operating procedures for security scenarios
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setIsPlaybookDialogOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/50 text-primary hover:bg-primary/10 font-bold"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> New Protocol
+                </Button>
+              </div>
+              <div className="divide-y divide-border">
+                {playbooks.map((pb) => (
+                  <div key={pb.id} className="p-4 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={`uppercase text-[10px] font-black ${
+                            pb.priority === "critical"
+                              ? "bg-destructive"
+                              : pb.priority === "high"
+                                ? "bg-amber-600"
+                                : "bg-primary"
+                          }`}
+                        >
+                          {pb.priority}
+                        </Badge>
+                        <h4 className="font-bold tracking-tight">{pb.title}</h4>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        REV: {new Date(pb.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-2">Scenario: {pb.scenario}</p>
+                    <div className="bg-background/50 border border-border/50 p-3 rounded text-xs font-mono leading-relaxed">
+                      {pb.protocol}
+                    </div>
+                  </div>
+                ))}
               </div>
             </Card>
           </div>
@@ -298,8 +443,62 @@ export default function AdminDashboardPage() {
         </div>
       </main>
 
-      {/* Existing dialogs updated with security theme */}
-      {/* ... existing dialogs ... */}
+      {createDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md p-6 border-primary shadow-[0_0_50px_rgba(var(--primary),0.1)]">
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 italic">Initialize Node</h2>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Entity Name
+                </label>
+                <Input
+                  required
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  placeholder="Full Name"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Email Address
+                </label>
+                <Input
+                  required
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="entity@vault.church"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Clearance Level
+                </label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                  className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm focus:ring-primary focus:border-primary"
+                >
+                  <option value="user">Standard (User)</option>
+                  <option value="volunteer">Release Agent (Volunteer)</option>
+                  <option value="admin">Superuser (Admin)</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="ghost" className="flex-1" onClick={() => setCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1 bg-primary font-black uppercase italic">
+                  Create User
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
