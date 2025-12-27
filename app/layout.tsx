@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     icon: "/vault-church-logo.jpeg",
     apple: "/vault-church-logo.jpeg",
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 }
 
 export default function RootLayout({

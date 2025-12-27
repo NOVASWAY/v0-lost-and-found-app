@@ -71,7 +71,7 @@ export default function BrowsePage() {
 
           <div className="flex flex-wrap gap-4">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -87,7 +87,7 @@ export default function BrowsePage() {
             </Select>
 
             <Select value={colorFilter} onValueChange={setColorFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Color" />
               </SelectTrigger>
               <SelectContent>
@@ -101,7 +101,7 @@ export default function BrowsePage() {
             </Select>
 
             <Select value={locationFilter} onValueChange={setLocationFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>

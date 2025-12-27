@@ -79,7 +79,7 @@ export default function AuditLogsPage() {
               />
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Event Type" />
               </SelectTrigger>
               <SelectContent>
@@ -101,7 +101,7 @@ export default function AuditLogsPage() {
               </SelectContent>
             </Select>
             <Select value={severityFilter} onValueChange={setSeverityFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Severity" />
               </SelectTrigger>
               <SelectContent>

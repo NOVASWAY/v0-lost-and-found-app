@@ -14,11 +14,11 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="relative h-10 w-10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
               <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
             </div>
-            <span className="text-xl font-semibold text-foreground">Vault Church Security System</span>
+            <span className="text-base sm:text-xl font-semibold text-foreground truncate">Vault Church Security System</span>
           </div>
           <nav className="flex items-center gap-4">
             <ThemeToggle />
