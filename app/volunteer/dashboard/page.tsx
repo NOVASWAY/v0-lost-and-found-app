@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,18 @@ import { mockClaims } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function VolunteerDashboardPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "volunteer") {
+      router.push("/login")
+    }
+  }, [isAuthenticated, user, router])
+
+  if (!isAuthenticated || user?.role !== "volunteer") {
+    return null
+  }
   const [searchQuery, setSearchQuery] = useState("")
 
   const pendingClaims = mockClaims.filter((claim) => claim.status === "pending")

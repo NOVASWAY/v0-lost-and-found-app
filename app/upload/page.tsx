@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -12,10 +13,31 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
+import { useAuth } from "@/lib/auth-context"
+import { mockItems, mockUsers, type Item } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function UploadPage() {
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+  const { toast } = useToast()
   const [itemImage, setItemImage] = useState<string | null>(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [category, setCategory] = useState("")
+  const [color, setColor] = useState("")
+  const [location, setLocation] = useState("")
+  const [dateFound, setDateFound] = useState(new Date().toISOString().split("T")[0])
+  const [description, setDescription] = useState("")
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -30,13 +52,53 @@ export default function UploadPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!itemImage || !category || !location || !dateFound || !user) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Create new item
+    const newItem: Item = {
+      id: `item-${Date.now()}`,
+      imageUrl: itemImage,
+      category: category.charAt(0).toUpperCase() + category.slice(1),
+      color: color || "Unknown",
+      location: location,
+      dateFounded: dateFound,
+      description: description || "",
+      status: "available",
+      uploadedBy: user.name,
+      donationDeadline: new Date(new Date(dateFound).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      uniqueMarkings: description || undefined,
+    }
+
+    // Add to mockItems
+    mockItems.push(newItem)
+
+    // Update user stats
+    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
+    if (userIndex !== -1) {
+      mockUsers[userIndex].itemsUploaded += 1
+      mockUsers[userIndex].vaultPoints += 50 // Award points for uploading
+    }
+
+    toast({
+      title: "Item Uploaded",
+      description: "Your item has been successfully added to the system.",
+    })
+
     setIsSubmitted(true)
   }
 
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar role="user" />
+        <Navbar role={user?.role || "user"} />
         <main className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
           <Card className="max-w-md p-8 text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-accent" />
@@ -60,7 +122,7 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role="user" />
+      <Navbar role={user?.role || "user"} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-2xl">
@@ -108,20 +170,24 @@ export default function UploadPage() {
               {/* Category */}
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select required>
+                <Select value={category} onValueChange={setCategory} required>
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wallet">Wallet</SelectItem>
-                    <SelectItem value="keys">Keys</SelectItem>
-                    <SelectItem value="phone">Phone</SelectItem>
-                    <SelectItem value="clothing">Clothing</SelectItem>
-                    <SelectItem value="jewelry">Jewelry</SelectItem>
-                    <SelectItem value="bag">Bag/Backpack</SelectItem>
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="book">Book</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="Wallet">Wallet</SelectItem>
+                    <SelectItem value="Keys">Keys</SelectItem>
+                    <SelectItem value="Phone">Phone</SelectItem>
+                    <SelectItem value="Clothing">Clothing</SelectItem>
+                    <SelectItem value="Jewelry">Jewelry</SelectItem>
+                    <SelectItem value="Backpack">Bag/Backpack</SelectItem>
+                    <SelectItem value="Water Bottle">Water Bottle</SelectItem>
+                    <SelectItem value="Umbrella">Umbrella</SelectItem>
+                    <SelectItem value="Eyeglasses">Eyeglasses</SelectItem>
+                    <SelectItem value="Watch">Watch</SelectItem>
+                    <SelectItem value="Electronics">Electronics</SelectItem>
+                    <SelectItem value="Book">Book</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -129,25 +195,32 @@ export default function UploadPage() {
               {/* Color */}
               <div className="space-y-2">
                 <Label htmlFor="color">Primary Color</Label>
-                <Input id="color" type="text" placeholder="e.g., Black, Blue, Red" />
+                <Input
+                  id="color"
+                  type="text"
+                  placeholder="e.g., Black, Blue, Red"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                />
               </div>
 
               {/* Location Found */}
               <div className="space-y-2">
                 <Label htmlFor="location">Location Found *</Label>
-                <Select required>
+                <Select value={location} onValueChange={setLocation} required>
                   <SelectTrigger id="location">
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sanctuary">Main Sanctuary</SelectItem>
-                    <SelectItem value="fellowship">Fellowship Hall</SelectItem>
-                    <SelectItem value="parking">Parking Lot</SelectItem>
-                    <SelectItem value="youth">Youth Room</SelectItem>
-                    <SelectItem value="office">Church Office</SelectItem>
-                    <SelectItem value="entrance">Main Entrance</SelectItem>
-                    <SelectItem value="restroom">Restroom</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="Main Sanctuary - Pew 12">Main Sanctuary</SelectItem>
+                    <SelectItem value="Fellowship Hall">Fellowship Hall</SelectItem>
+                    <SelectItem value="Parking Lot B">Parking Lot</SelectItem>
+                    <SelectItem value="Youth Room">Youth Room</SelectItem>
+                    <SelectItem value="Entrance Lobby">Main Entrance</SelectItem>
+                    <SelectItem value="Children's Ministry Room">Children's Ministry</SelectItem>
+                    <SelectItem value="Church Office">Church Office</SelectItem>
+                    <SelectItem value="Restroom">Restroom</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -155,7 +228,13 @@ export default function UploadPage() {
               {/* Date Found */}
               <div className="space-y-2">
                 <Label htmlFor="date">Date Found *</Label>
-                <Input id="date" type="date" required defaultValue={new Date().toISOString().split("T")[0]} />
+                <Input
+                  id="date"
+                  type="date"
+                  required
+                  value={dateFound}
+                  onChange={(e) => setDateFound(e.target.value)}
+                />
               </div>
 
               {/* Description */}
@@ -165,6 +244,8 @@ export default function UploadPage() {
                   id="description"
                   placeholder="Any unique features, brands, or identifying marks..."
                   rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 

@@ -16,6 +16,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
+import { useAuth } from "@/lib/auth-context"
+import { mockClaims, mockItems, mockUsers, type Claim } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 interface ClaimModalProps {
   itemId: string
@@ -23,8 +26,11 @@ interface ClaimModalProps {
 }
 
 export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
+  const { user } = useAuth()
+  const { toast } = useToast()
   const [proofImage, setProofImage] = useState<string | null>(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [notes, setNotes] = useState("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -38,7 +44,75 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
   }
 
   const handleSubmit = () => {
-    // Handle claim submission
+    if (!proofImage || !user) {
+      toast({
+        title: "Missing Information",
+        description: "Please upload a proof photo.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check if item exists and is available
+    const item = mockItems.find((i) => i.id === itemId)
+    if (!item) {
+      toast({
+        title: "Item Not Found",
+        description: "The item you're trying to claim doesn't exist.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (item.status !== "available") {
+      toast({
+        title: "Item Not Available",
+        description: "This item is no longer available for claiming.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Create new claim
+    const newClaim: Claim = {
+      id: `c${Date.now()}`,
+      itemId: itemId,
+      itemName: itemName,
+      itemImage: item.imageUrl,
+      proofImage: proofImage,
+      claimantName: user.name,
+      claimantEmail: user.username + "@vault.church", // Using username as email base
+      status: "pending",
+      claimedAt: new Date().toISOString(),
+    }
+
+    // Add to mockClaims
+    mockClaims.push(newClaim)
+
+    // Update item status
+    item.status = "claimed"
+
+    // Update user stats
+    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
+    if (userIndex !== -1) {
+      mockUsers[userIndex].claimsSubmitted += 1
+      mockUsers[userIndex].vaultPoints += 25 // Award points for claiming
+      if (!mockUsers[userIndex].claimedItems) {
+        mockUsers[userIndex].claimedItems = []
+      }
+      mockUsers[userIndex].claimedItems.push({
+        itemId: itemId,
+        itemName: itemName,
+        claimStatus: "pending",
+        claimedAt: newClaim.claimedAt,
+      })
+    }
+
+    toast({
+      title: "Claim Submitted",
+      description: "Your claim has been submitted and will be reviewed by a volunteer.",
+    })
+
     setIsSubmitted(true)
   }
 
@@ -101,6 +175,8 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
                   id="notes"
                   placeholder="Provide any additional details that help verify ownership..."
                   rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                 />
               </div>
 

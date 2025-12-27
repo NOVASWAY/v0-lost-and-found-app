@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -10,30 +11,88 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
+import { mockClaims, mockItems, mockReleaseLogs, mockUsers, type ReleaseLog } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ReleaseItemPage({ params }: { params: { id: string } }) {
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+  const { toast } = useToast()
   const [notes, setNotes] = useState("")
   const [isReleased, setIsReleased] = useState(false)
 
-  const claim = {
-    id: params.id,
-    itemImage: "/black-leather-wallet.jpg",
-    proofImage: "/wallet-purchase-receipt.jpg",
-    itemName: "Wallet",
-    category: "Wallet",
-    color: "Black Leather",
-    location: "Main Sanctuary",
-    dateFound: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    claimantName: "Sarah Johnson",
-    claimantEmail: "sarah.j@example.com",
-    ticketCode: "CLM-2024-001",
-    claimDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    claimNotes:
-      "This is my wallet. I lost it after Sunday service. The receipt shows I purchased it from a local store.",
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== "volunteer") {
+      router.push("/login")
+    }
+  }, [isAuthenticated, user, router])
+
+  const claim = mockClaims.find((c) => c.id === params.id)
+
+  if (!isAuthenticated || user?.role !== "volunteer") {
+    return null
   }
 
+  if (!claim) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar role="volunteer" />
+        <main className="container mx-auto px-4 py-8">
+          <Card className="p-6 text-center">
+            <p className="text-muted-foreground">Claim not found</p>
+            <Link href="/volunteer/dashboard">
+              <Button className="mt-4">Back to Dashboard</Button>
+            </Link>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
+  const item = mockItems.find((i) => i.id === claim.itemId)
+
   const handleRelease = () => {
-    // Handle release action
+    if (!user || !item) return
+
+    // Update claim status
+    claim.status = "released"
+    claim.releasedBy = `Volunteer: ${user.name}`
+    claim.releasedAt = new Date().toISOString()
+    claim.releaseNotes = notes || undefined
+
+    // Update item status
+    item.status = "released"
+
+    // Create release log
+    const releaseLog: ReleaseLog = {
+      id: `r${Date.now()}`,
+      itemId: claim.itemId,
+      itemName: claim.itemName,
+      claimantName: claim.claimantName,
+      volunteerName: user.name,
+      timestamp: new Date().toISOString(),
+      notes: notes || "Item released to claimant",
+    }
+    mockReleaseLogs.push(releaseLog)
+
+    // Update user stats (claimant)
+    const claimantIndex = mockUsers.findIndex((u) => u.name === claim.claimantName)
+    if (claimantIndex !== -1) {
+      mockUsers[claimantIndex].vaultPoints += 100 // Award points for successful claim
+      if (mockUsers[claimantIndex].claimedItems) {
+        const claimItem = mockUsers[claimantIndex].claimedItems.find((ci) => ci.itemId === claim.itemId)
+        if (claimItem) {
+          claimItem.claimStatus = "released"
+        }
+      }
+    }
+
+    toast({
+      title: "Item Released",
+      description: `The item has been successfully released to ${claim.claimantName}.`,
+    })
+
     setIsReleased(true)
   }
 
@@ -76,7 +135,7 @@ export default function ReleaseItemPage({ params }: { params: { id: string } }) 
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-foreground">Review & Release</h1>
             <Badge variant="outline" className="font-mono">
-              {claim.ticketCode}
+              {claim.id}
             </Badge>
           </div>
           <p className="text-muted-foreground">Verify the claimant's identity and proof before releasing the item</p>
@@ -106,28 +165,32 @@ export default function ReleaseItemPage({ params }: { params: { id: string } }) 
           <Card className="p-6">
             <h2 className="mb-4 text-xl font-semibold text-card-foreground">Item Details</h2>
             <div className="space-y-3">
-              <div>
-                <Label className="text-muted-foreground">Category</Label>
-                <p className="text-card-foreground">{claim.category}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Color/Description</Label>
-                <p className="text-card-foreground">{claim.color}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Location Found</Label>
-                <p className="text-card-foreground">{claim.location}</p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Date Found</Label>
-                <p className="text-card-foreground">
-                  {claim.dateFound.toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
+              {item && (
+                <>
+                  <div>
+                    <Label className="text-muted-foreground">Category</Label>
+                    <p className="text-card-foreground">{item.category}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Color/Description</Label>
+                    <p className="text-card-foreground">{item.color}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Location Found</Label>
+                    <p className="text-card-foreground">{item.location}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Date Found</Label>
+                    <p className="text-card-foreground">
+                      {new Date(item.dateFounded).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </Card>
 
@@ -146,16 +209,12 @@ export default function ReleaseItemPage({ params }: { params: { id: string } }) 
               <div>
                 <Label className="text-muted-foreground">Claim Date</Label>
                 <p className="text-card-foreground">
-                  {claim.claimDate.toLocaleDateString("en-US", {
+                  {new Date(claim.claimedAt).toLocaleDateString("en-US", {
                     month: "long",
                     day: "numeric",
                     year: "numeric",
                   })}
                 </p>
-              </div>
-              <div>
-                <Label className="text-muted-foreground">Claimant's Notes</Label>
-                <p className="text-card-foreground">{claim.claimNotes}</p>
               </div>
             </div>
           </Card>

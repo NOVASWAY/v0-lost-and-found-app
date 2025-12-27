@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +13,18 @@ import { useAuth } from "@/lib/auth-context"
 import { mockItems } from "@/lib/mock-data"
 
 export default function MyUploadsPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
 
