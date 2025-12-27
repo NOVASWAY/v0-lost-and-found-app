@@ -44,7 +44,7 @@ export default function AuditLogsPage() {
   const getTypeLabel = (type: AuditLog["type"]) => {
     return type
       .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ")
   }
 

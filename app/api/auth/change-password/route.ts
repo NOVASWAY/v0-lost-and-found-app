@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { comparePassword, hashPassword } from "@/lib/db"
+import { changePasswordSchema, validateAndSanitize } from "@/lib/validation"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, currentPassword, newPassword } = await request.json()
-
-    if (!userId || !currentPassword || !newPassword) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
+    // Rate limiting - stricter for password changes
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 300000, maxRequests: 5 }) // 5 attempts per 5 minutes
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many password change attempts. Please try again later." }, { status: 429 })
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
+    const body = await request.json()
+    const validation = validateAndSanitize(changePasswordSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
     }
+
+    const { userId, currentPassword, newPassword } = validation.data
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

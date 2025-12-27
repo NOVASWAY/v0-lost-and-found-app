@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 // PATCH update playbook
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { title, scenario, protocol, priority, userId } = await request.json()
 
     const playbook = await prisma.playbook.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!playbook) {
@@ -15,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const updatedPlaybook = await prisma.playbook.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(title && { title }),
         ...(scenario && { scenario }),
@@ -45,13 +46,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE playbook
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get("userId")
 
     const playbook = await prisma.playbook.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!playbook) {
@@ -59,7 +61,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     await prisma.playbook.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     // Add audit log

@@ -1,12 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAdminOrVolunteer } from "@/lib/auth-middleware"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET all claims
 export async function GET(request: NextRequest) {
   try {
+    // Require admin or volunteer for viewing all claims
+    const authResult = await requireAdminOrVolunteer(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
     const claimantId = searchParams.get("claimantId")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100)
+    const skip = (page - 1) * limit
 
     const where: any = {}
 
@@ -18,30 +37,43 @@ export async function GET(request: NextRequest) {
       where.claimantId = claimantId
     }
 
-    const claims = await prisma.claim.findMany({
-      where,
-      include: {
-        item: {
-          select: {
-            id: true,
-            category: true,
-            imageUrl: true,
-            location: true,
-            dateFounded: true,
+    const [claims, total] = await Promise.all([
+      prisma.claim.findMany({
+        where,
+        include: {
+          item: {
+            select: {
+              id: true,
+              category: true,
+              imageUrl: true,
+              location: true,
+              dateFounded: true,
+            },
+          },
+          claimant: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
           },
         },
-        claimant: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          },
-        },
-      },
-      orderBy: { claimedAt: "desc" },
-    })
+        orderBy: { claimedAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.claim.count({ where }),
+    ])
 
-    return NextResponse.json({ claims })
+    return NextResponse.json({
+      claims,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
     console.error("Get claims error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -51,10 +83,25 @@ export async function GET(request: NextRequest) {
 // POST create new claim
 export async function POST(request: NextRequest) {
   try {
-    const { itemId, proofImage, claimantId, notes } = await request.json()
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
 
-    if (!itemId || !proofImage || !claimantId) {
-      return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
+    const body = await request.json()
+    const validation = validateAndSanitize(createClaimSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { itemId, proofImage, claimantId, notes } = validation.data
+
+    // Validate image URL
+    if (proofImage.length > 5000) {
+      return NextResponse.json({ error: "Proof image URL too long" }, { status: 400 })
     }
 
     // Check if item exists and is available

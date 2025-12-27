@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 // GET claim by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const claim = await prisma.claim.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         item: true,
         claimant: {
@@ -31,12 +32,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH update claim (for releasing)
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { status, releaseNotes, releasedBy, volunteerId } = await request.json()
 
     const claim = await prisma.claim.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         item: true,
         claimant: true,
@@ -66,7 +68,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const updatedClaim = await prisma.claim.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         item: true,

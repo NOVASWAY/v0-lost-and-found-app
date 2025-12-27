@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAdmin } from "@/lib/auth-middleware"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { createPlaybookSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET all playbooks
 export async function GET() {
@@ -15,14 +18,30 @@ export async function GET() {
   }
 }
 
-// POST create playbook
+// POST create playbook (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const { title, scenario, protocol, priority, userId } = await request.json()
-
-    if (!title || !scenario || !protocol) {
-      return NextResponse.json({ error: "Title, scenario, and protocol are required" }, { status: 400 })
+    // Require admin authentication
+    const authResult = await requireAdmin(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
     }
+
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
+    const body = await request.json()
+    const validation = validateAndSanitize(createPlaybookSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { title, scenario, protocol, priority, userId } = validation.data
 
     const playbook = await prisma.playbook.create({
       data: {

@@ -62,6 +62,18 @@ The Vault Church Security System is a full-featured platform for managing:
 - Touch-optimized UI
 - Works on all device sizes
 
+### 🔒 Security & Performance
+- **Input Validation**: Zod schema validation on all API endpoints
+- **Rate Limiting**: Protection against brute force and API abuse
+- **Authentication Middleware**: Role-based access control
+- **Password Security**: Bcrypt hashing with strength requirements
+- **Security Headers**: HTTP security headers configured
+- **Database Indexes**: Optimized queries for performance
+- **Pagination**: Efficient data loading with pagination
+- **Audit Logging**: Complete security event tracking
+
+See [SECURITY.md](./SECURITY.md) for detailed security documentation.
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
@@ -72,6 +84,8 @@ The Vault Church Security System is a full-featured platform for managing:
 - **UI Components**: Radix UI
 - **Authentication**: Custom auth context
 - **State Management**: React Hooks
+- **Validation**: Zod
+- **Security**: Rate limiting, input validation, password hashing
 
 ## Getting Started
 

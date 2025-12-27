@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 // PATCH update location
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const { name, description, userId } = await request.json()
 
     const location = await prisma.location.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!location) {
@@ -15,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const updatedLocation = await prisma.location.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description: description || null }),
@@ -46,13 +47,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE location
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get("userId")
 
     const location = await prisma.location.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!location) {
@@ -60,7 +62,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     await prisma.location.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     // Add audit log

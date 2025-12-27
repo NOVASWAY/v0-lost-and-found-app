@@ -466,26 +466,7 @@ export const mockLocations: Location[] = [
   },
 ]
 
-// Audit Log Types
-export type AuditLogType =
-  | "user_created"
-  | "user_deleted"
-  | "user_password_changed"
-  | "item_uploaded"
-  | "item_claimed"
-  | "item_released"
-  | "item_donated"
-  | "attendance_marked"
-  | "service_marked"
-  | "location_created"
-  | "location_updated"
-  | "location_deleted"
-  | "playbook_created"
-  | "playbook_updated"
-  | "playbook_deleted"
-  | "login"
-  | "logout"
-  | "order_sent"
+// Audit Log Types - defined above at line 68
 
 export interface AuditLog {
   id: string

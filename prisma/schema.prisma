@@ -33,6 +33,10 @@ model User {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([username])
+  @@index([role])
+  @@index([vaultPoints])
 }
 
 model Item {
@@ -54,6 +58,12 @@ model Item {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([uploadedById])
+  @@index([dateFounded])
+  @@index([location])
 }
 
 model Claim {
@@ -78,6 +88,11 @@ model Claim {
   claimedAt     DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([itemId])
+  @@index([claimantId])
+  @@index([claimedAt])
 }
 
 model ReleaseLog {
@@ -130,6 +145,9 @@ model ServiceRecord {
   
   recordedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([serviceDate])
 }
 
 model Order {
@@ -159,4 +177,9 @@ model AuditLog {
   
   timestamp DateTime @default(now())
   createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([userId])
+  @@index([timestamp])
 }

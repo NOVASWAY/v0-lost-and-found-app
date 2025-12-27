@@ -40,5 +40,3 @@ export const prisma = new Proxy({} as any, {
   },
 })
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
-

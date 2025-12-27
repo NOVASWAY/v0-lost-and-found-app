@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { createItemSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET all items
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get("search") || ""
     const status = searchParams.get("status")
     const category = searchParams.get("category")
     const location = searchParams.get("location")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100) // Max 100 per page
+    const skip = (page - 1) * limit
 
     const where: any = {}
 
@@ -31,29 +43,43 @@ export async function GET(request: NextRequest) {
       where.location = { contains: location, mode: "insensitive" }
     }
 
-    const items = await prisma.item.findMany({
-      where,
-      include: {
-        uploadedBy: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
+    const [items, total] = await Promise.all([
+      prisma.item.findMany({
+        where,
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
+          },
+          claims: {
+            select: {
+              id: true,
+              status: true,
+              claimantName: true,
+              claimedAt: true,
+            },
+            take: 5, // Limit claims per item
           },
         },
-        claims: {
-          select: {
-            id: true,
-            status: true,
-            claimantName: true,
-            claimedAt: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    })
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.item.count({ where }),
+    ])
 
-    return NextResponse.json({ items })
+    return NextResponse.json({
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    })
   } catch (error) {
     console.error("Get items error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -63,6 +89,20 @@ export async function GET(request: NextRequest) {
 // POST create new item
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+    }
+
+    const body = await request.json()
+    const validation = validateAndSanitize(createItemSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
     const {
       imageUrl,
       category,
@@ -72,10 +112,11 @@ export async function POST(request: NextRequest) {
       description,
       uniqueMarkings,
       uploadedById,
-    } = await request.json()
+    } = validation.data
 
-    if (!imageUrl || !category || !location || !dateFounded || !uploadedById) {
-      return NextResponse.json({ error: "Required fields are missing" }, { status: 400 })
+    // Validate image URL format and size (basic check)
+    if (imageUrl.length > 5000) {
+      return NextResponse.json({ error: "Image URL too long" }, { status: 400 })
     }
 
     // Calculate donation deadline (30 days from found date)

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 // GET user by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -35,10 +36,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE user (admin only)
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!user) {
@@ -57,7 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     })
 
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "User deleted successfully" })
@@ -68,12 +70,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 }
 
 // PATCH update user
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const data = await request.json()
 
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(data.name && { name: data.name }),
         ...(data.role && { role: data.role }),

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
 // GET item by ID
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const item = await prisma.item.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         uploadedBy: {
           select: {
@@ -41,12 +42,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PATCH update item
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const data = await request.json()
 
     const item = await prisma.item.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(data.status && { status: data.status }),
         ...(data.description && { description: data.description }),
@@ -70,10 +72,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE item
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     await prisma.item.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Item deleted successfully" })

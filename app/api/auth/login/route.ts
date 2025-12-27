@@ -2,14 +2,37 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { comparePassword } from "@/lib/db"
 import { addAuditLog } from "@/lib/audit-logger"
+import { loginSchema, validateAndSanitize } from "@/lib/validation"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json()
-
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
+    // Rate limiting - stricter for login
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 5 })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please try again later." },
+        { 
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": "5",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": new Date(rateLimitResult.resetTime).toISOString(),
+          },
+        }
+      )
     }
+
+    const body = await request.json()
+    const validation = validateAndSanitize(loginSchema, body)
+
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { username, password } = validation.data
 
     const user = await prisma.user.findUnique({
       where: { username },
@@ -39,10 +62,19 @@ export async function POST(request: NextRequest) {
     // Return user data (excluding password)
     const { password: _, ...userWithoutPassword } = user
 
-    return NextResponse.json({
-      user: userWithoutPassword,
-      message: "Login successful",
-    })
+    return NextResponse.json(
+      {
+        user: userWithoutPassword,
+        message: "Login successful",
+      },
+      {
+        headers: {
+          "X-RateLimit-Limit": "5",
+          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+          "X-RateLimit-Reset": new Date(rateLimitResult.resetTime).toISOString(),
+        },
+      }
+    )
   } catch (error) {
     console.error("Login error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
