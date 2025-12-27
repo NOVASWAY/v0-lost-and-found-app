@@ -40,4 +40,9 @@ dev.db
 prisma/dev.db
 prisma/dev.db-journal
 
+# Credentials and sensitive files
+CREDENTIALS.md
+*.credentials
+*.secrets
+
 /lib/generated/prisma
