@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
     const searchLower = searchQuery.toLowerCase()
     return (
       u.name.toLowerCase().includes(searchLower) ||
-      u.email.toLowerCase().includes(searchLower) ||
+      u.username.toLowerCase().includes(searchLower) ||
       u.role.toLowerCase().includes(searchLower)
     )
   })
@@ -72,7 +72,8 @@ export default function AdminDashboardPage() {
     const user: User = {
       id,
       name: newUser.name,
-      email: newUser.email,
+      username: newUser.username,
+      password: newUser.password,
       role: newUser.role,
       itemsUploaded: 0,
       claimsSubmitted: 0,
@@ -81,8 +82,9 @@ export default function AdminDashboardPage() {
       rank: users.length + 1,
       orders: [],
     }
+    mockUsers.push(user)
     setUsers([...users, user])
-    setNewUser({ name: "", email: "", role: "user" })
+    setNewUser({ name: "", username: "", password: "", role: "user" })
     setCreateDialogOpen(false)
   }
 
@@ -174,7 +176,8 @@ export default function AdminDashboardPage() {
 
   const [newUser, setNewUser] = useState({
     name: "",
-    email: "",
+    username: "",
+    password: "",
     role: "user" as "user" | "volunteer" | "admin",
   })
 
@@ -284,7 +287,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-sm">{u.name}</p>
-                              <p className="text-xs text-muted-foreground">{u.email}</p>
+                              <p className="text-xs text-muted-foreground">{u.username}</p>
                             </div>
                           </div>
                         </td>
@@ -587,14 +590,27 @@ export default function AdminDashboardPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Email Address
+                  Username
                 </label>
                 <Input
                   required
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  placeholder="entity@vault.church"
+                  type="text"
+                  value={newUser.username}
+                  onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                  placeholder="username"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Password
+                </label>
+                <Input
+                  required
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Enter password"
                   className="bg-muted/50"
                 />
               </div>

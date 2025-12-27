@@ -15,7 +15,6 @@ export default function ProfilePage() {
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(user?.name || "")
-  const [email, setEmail] = useState(user?.email || "")
 
   const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
   const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
@@ -60,14 +59,8 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={!isEditing}
-                />
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" type="text" value={user?.username || ""} disabled />
               </div>
 
               <div className="space-y-2">

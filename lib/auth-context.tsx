@@ -7,8 +7,7 @@ import { mockUsers, type User } from "./mock-data"
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  signup: (name: string, email: string, password: string) => Promise<boolean>
+  login: (username: string, password: string) => Promise<boolean>
   logout: () => void
   isAuthenticated: boolean
 }
@@ -29,9 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     // Mock authentication
-    const foundUser = mockUsers.find((u) => u.email === email)
+    const foundUser = mockUsers.find((u) => u.username === username && u.password === password)
     if (foundUser) {
       setUser(foundUser)
       setIsAuthenticated(true)
@@ -50,25 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false
   }
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    // Mock signup - create new user
-    const newUser: User = {
-      id: `u${mockUsers.length + 1}`,
-      name,
-      email,
-      role: "user",
-      itemsUploaded: 0,
-      claimsSubmitted: 0,
-      joinedAt: new Date().toISOString().split("T")[0],
-    }
-    mockUsers.push(newUser)
-    setUser(newUser)
-    setIsAuthenticated(true)
-    localStorage.setItem("currentUser", JSON.stringify(newUser))
-    router.push("/dashboard")
-    return true
-  }
-
   const logout = () => {
     setUser(null)
     setIsAuthenticated(false)
@@ -77,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>{children}</AuthContext.Provider>
   )
 }
 

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
@@ -24,13 +24,13 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    const success = await login(email, password)
+    const success = await login(username, password)
 
     if (!success) {
       toast({
         title: "Login Failed",
         description:
-          "Invalid email or password. Try user: john@example.com, volunteer: tom@example.com, or admin: admin@example.com",
+          "Invalid username or password. Try user: johndoe, volunteer: tomanderson, or admin: admin",
         variant: "destructive",
       })
     }
@@ -54,13 +54,13 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="username"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
           </div>
@@ -81,10 +81,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-muted-foreground">Don't have an account? </span>
-          <Link href="/signup" className="font-medium text-primary hover:underline">
-            Sign up
-          </Link>
+          <span className="text-muted-foreground">Contact an administrator to create an account</span>
         </div>
 
         <div className="mt-4 text-center">

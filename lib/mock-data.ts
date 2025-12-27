@@ -61,7 +61,8 @@ export interface Playbook {
 export interface User {
   id: string
   name: string
-  email: string
+  username: string
+  password: string
   role: "user" | "volunteer" | "admin"
   itemsUploaded: number
   claimsSubmitted: number
@@ -198,7 +199,8 @@ export const mockUsers: User[] = [
   {
     id: "u1",
     name: "John Doe",
-    email: "john@example.com",
+    username: "johndoe",
+    password: "password123",
     role: "user",
     itemsUploaded: 3,
     claimsSubmitted: 1,
@@ -223,7 +225,8 @@ export const mockUsers: User[] = [
   {
     id: "u2",
     name: "Tom Anderson",
-    email: "tom@example.com",
+    username: "tomanderson",
+    password: "password123",
     role: "volunteer",
     itemsUploaded: 0,
     claimsSubmitted: 0,
@@ -237,7 +240,8 @@ export const mockUsers: User[] = [
   {
     id: "u3",
     name: "Admin User",
-    email: "admin@example.com",
+    username: "admin",
+    password: "admin123",
     role: "admin",
     itemsUploaded: 0,
     claimsSubmitted: 0,
@@ -251,7 +255,8 @@ export const mockUsers: User[] = [
   {
     id: "u4",
     name: "Sarah Johnson",
-    email: "sarah@example.com",
+    username: "sarahjohnson",
+    password: "password123",
     role: "user",
     itemsUploaded: 5,
     claimsSubmitted: 2,
@@ -268,7 +273,8 @@ export const mockUsers: User[] = [
   {
     id: "u5",
     name: "Michael Chen",
-    email: "michael@example.com",
+    username: "michaelchen",
+    password: "password123",
     role: "user",
     itemsUploaded: 2,
     claimsSubmitted: 3,
@@ -286,7 +292,8 @@ export const mockUsers: User[] = [
   {
     id: "u6",
     name: "Emily Rodriguez",
-    email: "emily@example.com",
+    username: "emilyrodriguez",
+    password: "password123",
     role: "volunteer",
     itemsUploaded: 1,
     claimsSubmitted: 0,
@@ -300,7 +307,8 @@ export const mockUsers: User[] = [
   {
     id: "u7",
     name: "David Park",
-    email: "david@example.com",
+    username: "davidpark",
+    password: "password123",
     role: "user",
     itemsUploaded: 1,
     claimsSubmitted: 1,
@@ -316,7 +324,8 @@ export const mockUsers: User[] = [
   {
     id: "u8",
     name: "Jennifer Williams",
-    email: "jennifer@example.com",
+    username: "jenniferwilliams",
+    password: "password123",
     role: "volunteer",
     itemsUploaded: 0,
     claimsSubmitted: 0,

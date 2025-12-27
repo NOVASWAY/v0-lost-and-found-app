@@ -15,7 +15,7 @@ export default function AdminUsersPage() {
 
   const filteredUsers = mockUsers.filter((u) => {
     const searchLower = searchQuery.toLowerCase()
-    return u.name.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower)
+    return u.name.toLowerCase().includes(searchLower) || u.username.toLowerCase().includes(searchLower)
   })
 
   const regularUsers = mockUsers.filter((u) => u.role === "user").length
@@ -37,7 +37,7 @@ export default function AdminUsersPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name or email..."
+              placeholder="Search by name or username..."
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -72,7 +72,7 @@ export default function AdminUsersPage() {
               <thead className="border-b border-border bg-muted/50">
                 <tr>
                   <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Email</th>
+                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Username</th>
                   <th className="p-4 text-left text-sm font-medium text-muted-foreground">Role</th>
                   <th className="p-4 text-left text-sm font-medium text-muted-foreground">Uploads</th>
                   <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claims</th>
@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
                 {filteredUsers.map((u) => (
                   <tr key={u.id} className="border-b border-border last:border-0">
                     <td className="p-4 font-medium text-card-foreground">{u.name}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{u.email}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{u.username}</td>
                     <td className="p-4">
                       <Badge variant={u.role === "volunteer" ? "default" : "outline"} className="capitalize">
                         {u.role}
