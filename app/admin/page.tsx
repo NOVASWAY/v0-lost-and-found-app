@@ -23,6 +23,8 @@ import {
   MessageSquare,
   BookOpen,
   Plus,
+  Edit,
+  Trash2,
 } from "lucide-react"
 import { mockUsers, mockPlaybooks, type User, type Order, type Playbook } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
@@ -40,6 +42,7 @@ export default function AdminDashboardPage() {
   const [orderPriority, setOrderPriority] = useState<"low" | "medium" | "high">("medium")
   const [playbooks, setPlaybooks] = useState<Playbook[]>(mockPlaybooks)
   const [isPlaybookDialogOpen, setIsPlaybookDialogOpen] = useState(false)
+  const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null)
   const [newPlaybook, setNewPlaybook] = useState<Partial<Playbook>>({
     title: "",
     scenario: "",
@@ -131,19 +134,42 @@ export default function AdminDashboardPage() {
     setExpandedRows(newExpanded)
   }
 
-  const handleCreatePlaybook = () => {
+  const handleSavePlaybook = () => {
     if (!newPlaybook.title || !newPlaybook.protocol) return
-    const playbook: Playbook = {
-      id: `pb${Date.now()}`,
-      title: newPlaybook.title,
-      scenario: newPlaybook.scenario || "",
-      protocol: newPlaybook.protocol,
-      priority: newPlaybook.priority as any,
-      updatedAt: new Date().toISOString(),
+
+    if (editingPlaybook) {
+      setPlaybooks(
+        playbooks.map((pb) =>
+          pb.id === editingPlaybook.id
+            ? ({ ...pb, ...newPlaybook, updatedAt: new Date().toISOString() } as Playbook)
+            : pb,
+        ),
+      )
+    } else {
+      const playbook: Playbook = {
+        id: `pb${Date.now()}`,
+        title: newPlaybook.title,
+        scenario: newPlaybook.scenario || "",
+        protocol: newPlaybook.protocol,
+        priority: (newPlaybook.priority as any) || "medium",
+        updatedAt: new Date().toISOString(),
+      }
+      setPlaybooks([...playbooks, playbook])
     }
-    setPlaybooks([...playbooks, playbook])
+
     setIsPlaybookDialogOpen(false)
+    setEditingPlaybook(null)
     setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
+  }
+
+  const handleDeletePlaybook = (id: string) => {
+    setPlaybooks(playbooks.filter((pb) => pb.id !== id))
+  }
+
+  const openEditPlaybook = (pb: Playbook) => {
+    setEditingPlaybook(pb)
+    setNewPlaybook(pb)
+    setIsPlaybookDialogOpen(true)
   }
 
   const [newUser, setNewUser] = useState({
@@ -360,7 +386,11 @@ export default function AdminDashboardPage() {
                   </p>
                 </div>
                 <Button
-                  onClick={() => setIsPlaybookDialogOpen(true)}
+                  onClick={() => {
+                    setEditingPlaybook(null)
+                    setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
+                    setIsPlaybookDialogOpen(true)
+                  }}
                   variant="outline"
                   size="sm"
                   className="border-primary/50 text-primary hover:bg-primary/10 font-bold"
@@ -370,7 +400,7 @@ export default function AdminDashboardPage() {
               </div>
               <div className="divide-y divide-border">
                 {playbooks.map((pb) => (
-                  <div key={pb.id} className="p-4 hover:bg-muted/30 transition-colors">
+                  <div key={pb.id} className="p-4 hover:bg-muted/30 transition-colors group">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Badge
@@ -386,9 +416,27 @@ export default function AdminDashboardPage() {
                         </Badge>
                         <h4 className="font-bold tracking-tight">{pb.title}</h4>
                       </div>
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        REV: {new Date(pb.updatedAt).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-muted-foreground mr-2">
+                          REV: {new Date(pb.updatedAt).toLocaleDateString()}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => openEditPlaybook(pb)}
+                        >
+                          <Edit className="w-3 h-3 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeletePlaybook(pb.id)}
+                        >
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground italic mb-2">Scenario: {pb.scenario}</p>
                     <div className="bg-background/50 border border-border/50 p-3 rounded text-xs font-mono leading-relaxed">
@@ -453,6 +501,72 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </main>
+
+      {isPlaybookDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md p-6 border-primary shadow-[0_0_50px_rgba(var(--primary),0.1)]">
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 italic">
+              {editingPlaybook ? "Update Protocol" : "New Protocol"}
+            </h2>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Title</label>
+                <Input
+                  value={newPlaybook.title}
+                  onChange={(e) => setNewPlaybook({ ...newPlaybook, title: e.target.value })}
+                  placeholder="e.g., High-Value Asset Recovery"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Scenario
+                </label>
+                <Input
+                  value={newPlaybook.scenario}
+                  onChange={(e) => setNewPlaybook({ ...newPlaybook, scenario: e.target.value })}
+                  placeholder="What triggers this playbook?"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Protocol
+                </label>
+                <textarea
+                  value={newPlaybook.protocol}
+                  onChange={(e) => setNewPlaybook({ ...newPlaybook, protocol: e.target.value })}
+                  placeholder="Detailed instructions..."
+                  className="w-full min-h-[100px] bg-muted/50 border border-border rounded-md px-3 py-2 text-xs font-mono focus:ring-primary focus:border-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Priority
+                </label>
+                <select
+                  value={newPlaybook.priority}
+                  onChange={(e) => setNewPlaybook({ ...newPlaybook, priority: e.target.value as any })}
+                  className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-xs focus:ring-primary focus:border-primary"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="ghost" className="flex-1" onClick={() => setIsPlaybookDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSavePlaybook} className="flex-1 bg-primary font-black uppercase italic">
+                  {editingPlaybook ? "Update" : "Deploy"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {createDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
