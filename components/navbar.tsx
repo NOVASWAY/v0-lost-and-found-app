@@ -39,13 +39,16 @@ export function Navbar({ role = "user" }: NavbarProps) {
   if (role === "admin") links = adminLinks
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="relative h-10 w-10">
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-xl">
+      <div className="container mx-auto flex items-center justify-between px-6 py-4">
+        <Link href="/" className="flex items-center gap-4 group">
+          <div className="relative h-12 w-12 grayscale group-hover:grayscale-0 transition-all duration-500 border border-primary/20 rounded-lg p-1 bg-white/5 shadow-[0_0_15px_rgba(180,140,40,0.1)]">
             <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
           </div>
-          <span className="text-xl font-semibold text-card-foreground">Lost & Found</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-black tracking-tighter text-foreground leading-none">THE VAULT</span>
+            <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase">Security Operations</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}

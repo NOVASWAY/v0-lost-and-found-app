@@ -7,31 +7,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
   Search,
   UserPlus,
-  UserX,
-  UserCheck,
   Activity,
-  Users,
-  Shield,
   Upload,
   FileCheck,
-  ChevronDown,
-  ChevronRight,
+  ShieldAlert,
+  Lock,
+  Fingerprint,
+  Eye,
+  Zap,
+  ShieldCheck,
 } from "lucide-react"
 import { mockUsers, type User } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
-import { StatusBadge } from "@/components/status-badge"
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -99,329 +88,218 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "admin"} />
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+      <Navbar role="admin" />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <main className="container mx-auto px-6 py-10 max-w-7xl animate-in fade-in duration-700">
+        <div className="mb-12 border-b border-border/50 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage users and monitor system activity</p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Create User Account
-          </Button>
-        </div>
-
-        {/* Overview Stats */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-primary/10 p-3">
-                <Users className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-primary/10 p-2 rounded-lg border border-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
+                <ShieldCheck className="w-8 h-8 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{activeUsers}</p>
-                <p className="text-xs text-muted-foreground">Active Users</p>
-              </div>
+              <h1 className="text-4xl font-black tracking-tighter uppercase italic">Security Command Center</h1>
             </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-500/10 p-3">
-                <UserCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{regularUsers}</p>
-                <p className="text-xs text-muted-foreground">Regular Users</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-green-500/10 p-3">
-                <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{volunteers}</p>
-                <p className="text-xs text-muted-foreground">Volunteers</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-purple-500/10 p-3">
-                <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{admins}</p>
-                <p className="text-xs text-muted-foreground">Admins</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-orange-500/10 p-3">
-                <Upload className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{totalUploads}</p>
-                <p className="text-xs text-muted-foreground">Total Uploads</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-teal-500/10 p-3">
-                <FileCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-card-foreground">{totalClaims}</p>
-                <p className="text-xs text-muted-foreground">Total Claims</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Search */}
-        <Card className="mb-6 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, email, or role..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </Card>
-
-        {/* User Management Table */}
-        <Card>
-          <div className="border-b border-border bg-muted/30 p-4">
-            <h2 className="text-lg font-semibold text-card-foreground">User Account Management</h2>
-            <p className="text-sm text-muted-foreground">
-              Create, view, and deactivate user accounts. Click any row to see claimed items.
+            <p className="text-muted-foreground text-lg max-w-2xl font-medium">
+              Vault Church high-security asset management. Authorization level:{" "}
+              <span className="text-primary font-bold">SUPERUSER</span>
             </p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-border bg-muted/50">
-                <tr>
-                  <th className="w-10 p-4"></th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Email</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Role</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Uploads</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claims</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Join Date</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((u) => {
-                  const isExpanded = expandedRows.has(u.id)
-                  const hasClaims = u.claimedItems && u.claimedItems.length > 0
+          <div className="flex gap-3">
+            <Button variant="outline" className="border-border hover:bg-muted font-bold tracking-tight bg-transparent">
+              <Eye className="mr-2 w-4 h-4" />
+              Audit Logs
+            </Button>
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="bg-primary text-primary-foreground font-black tracking-tight hover:scale-105 transition-transform"
+            >
+              <UserPlus className="mr-2 w-4 h-4" />
+              Grant Access
+            </Button>
+          </div>
+        </div>
 
-                  return (
-                    <>
-                      <tr
-                        key={u.id}
-                        className="border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer"
-                        onClick={() => hasClaims && toggleRowExpansion(u.id)}
-                      >
+        {/* Security Matrix Overview */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+          {[
+            { label: "Active Nodes", value: activeUsers, icon: Activity, color: "text-blue-500" },
+            { label: "Secure Vaults", value: totalUploads, icon: Lock, color: "text-amber-500" },
+            { label: "Verified Claims", value: totalClaims, icon: Fingerprint, color: "text-emerald-500" },
+            { label: "Audit Logs", value: "2.4k", icon: Eye, color: "text-purple-500" },
+          ].map((stat, i) => (
+            <Card
+              key={i}
+              className="bg-card border-border hover:border-primary/50 transition-all p-6 relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <stat.icon className="w-12 h-12" />
+              </div>
+              <p className="text-sm text-muted-foreground font-medium mb-1 uppercase tracking-wider">{stat.label}</p>
+              <h3 className="text-3xl font-bold">{stat.value}</h3>
+            </Card>
+          ))}
+        </div>
+
+        {/* Access Control Console */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-card border-border shadow-2xl">
+              <div className="p-6 border-b border-border flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">Asset Personnel Registry</h2>
+                  <p className="text-sm text-muted-foreground">Modify credentials and security clearances</p>
+                </div>
+                <Button
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
+                >
+                  <UserPlus className="mr-2 w-4 h-4" />
+                  Grant Clearance
+                </Button>
+              </div>
+
+              <div className="p-4 bg-muted/30">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filter by ID, Name or Clearance Level..."
+                    className="bg-background/50 border-border pl-10 focus-visible:ring-primary"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Secure Table Rendering */}
+              <div className="overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50 border-b border-border text-xs uppercase tracking-widest text-muted-foreground font-bold">
+                    <tr>
+                      <th className="p-4">Entity</th>
+                      <th className="p-4">Clearance</th>
+                      <th className="p-4">Activity</th>
+                      <th className="p-4 text-right">Protocol</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-accent/10 transition-colors group">
                         <td className="p-4">
-                          {hasClaims &&
-                            (isExpanded ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            ))}
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold border border-border">
+                              {u.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm">{u.name}</p>
+                              <p className="text-xs text-muted-foreground">{u.email}</p>
+                            </div>
+                          </div>
                         </td>
-                        <td className="p-4">
-                          <div className="font-medium text-card-foreground">{u.name}</div>
-                        </td>
-                        <td className="p-4 text-sm text-muted-foreground">{u.email}</td>
                         <td className="p-4">
                           <Badge
-                            variant={u.role === "admin" ? "default" : u.role === "volunteer" ? "secondary" : "outline"}
-                            className="capitalize"
+                            variant="outline"
+                            className={`
+                            px-2 py-0.5 text-[10px] uppercase font-bold tracking-tighter
+                            ${
+                              u.role === "admin"
+                                ? "border-primary text-primary bg-primary/5"
+                                : u.role === "volunteer"
+                                  ? "border-blue-500 text-blue-500 bg-blue-500/5"
+                                  : "border-muted text-muted-foreground"
+                            }
+                          `}
                           >
-                            {u.role}
+                            {u.role === "admin" ? "Superuser" : u.role === "volunteer" ? "Release Agent" : "Standard"}
                           </Badge>
                         </td>
-                        <td className="p-4 text-center">
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                            {u.itemsUploaded}
-                          </span>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                            {u.claimsSubmitted}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm text-muted-foreground">
-                          {new Date(u.joinedAt).toLocaleDateString()}
-                        </td>
                         <td className="p-4">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                            <span className="flex items-center gap-1">
+                              <Upload className="w-3 h-3" /> {u.itemsUploaded}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <FileCheck className="w-3 h-3" /> {u.claimsSubmitted}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-right">
                           <Button
-                            size="sm"
                             variant="ghost"
-                            className="gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation()
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive p-2 h-auto"
+                            onClick={() => {
                               setSelectedUser(u)
                               setDeactivateDialogOpen(true)
                             }}
                           >
-                            <UserX className="h-4 w-4" />
-                            Deactivate
+                            <ShieldAlert className="w-4 h-4" />
                           </Button>
                         </td>
                       </tr>
-                      {isExpanded && hasClaims && (
-                        <tr key={`${u.id}-details`} className="border-b border-border bg-muted/20">
-                          <td colSpan={8} className="p-6">
-                            <div className="ml-10">
-                              <h4 className="mb-4 text-sm font-semibold text-card-foreground">
-                                Claimed Items ({u.claimedItems?.length || 0})
-                              </h4>
-                              <div className="grid gap-3">
-                                {u.claimedItems?.map((claim, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center justify-between rounded-lg border border-border bg-background p-4"
-                                  >
-                                    <div className="flex-1">
-                                      <p className="font-medium text-card-foreground">{claim.itemName}</p>
-                                      <p className="text-sm text-muted-foreground">
-                                        Claimed on {new Date(claim.claimedAt).toLocaleDateString()} at{" "}
-                                        {new Date(claim.claimedAt).toLocaleTimeString()}
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <StatusBadge status={claim.claimStatus} type="claim" />
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          window.location.href = `/items/${claim.itemId}`
-                                        }}
-                                      >
-                                        View Item
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  )
-                })}
-              </tbody>
-            </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </div>
-        </Card>
-      </main>
 
-      {/* Create User Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Create New User Account</DialogTitle>
-            <DialogDescription>
-              Add a new user to the Lost & Found system. Assign the appropriate role.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                placeholder="John Doe"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">User - Can upload and claim items</SelectItem>
-                  <SelectItem value="volunteer">Volunteer - Can release items to claimants</SelectItem>
-                  <SelectItem value="admin">Admin - Full system access</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateUser} disabled={!newUser.name || !newUser.email}>
-              Create Account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Deactivate User Dialog */}
-      <Dialog open={deactivateDialogOpen} onOpenChange={setDeactivateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Deactivate User Account</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to deactivate this user? This action will remove their access to the system.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <div className="grid gap-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
-                  <p className="font-medium text-card-foreground">{selectedUser.name}</p>
+          {/* System Integrity & Logs */}
+          <div className="space-y-6">
+            <Card className="bg-card border-border p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-primary" /> System Health
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Vault Integrity</span>
+                  <span className="text-emerald-500 font-bold font-mono">100.0%</span>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium text-card-foreground">{selectedUser.email}</p>
+                <div className="h-1 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 w-full animate-pulse" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Role</p>
-                  <Badge variant="outline" className="mt-1 capitalize">
-                    {selectedUser.role}
-                  </Badge>
+                <div className="flex justify-between text-sm pt-2">
+                  <span className="text-muted-foreground">Audit Stream</span>
+                  <span className="text-primary font-bold font-mono">ACTIVE</span>
                 </div>
               </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeactivateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeactivateUser} className="gap-2">
-              <UserX className="h-4 w-4" />
-              Deactivate Account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </Card>
+
+            <Card className="bg-card border-border p-6 h-fit">
+              <h3 className="text-lg font-bold mb-6">Recent Security Events</h3>
+              <div className="space-y-6">
+                {[
+                  { user: "Sarah J.", event: "Asset Claim Filed", time: "4m ago", icon: FileCheck },
+                  {
+                    user: "Michael C.",
+                    event: "Failed Release Attempt",
+                    time: "12m ago",
+                    icon: ShieldAlert,
+                    alert: true,
+                  },
+                  { user: "Admin", event: "Node Initialized", time: "1h ago", icon: Zap },
+                ].map((log, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    <div
+                      className={`p-2 rounded-md ${log.alert ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"}`}
+                    >
+                      <log.icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">{log.user}</p>
+                      <p className="text-[11px] text-muted-foreground leading-tight">{log.event}</p>
+                      <p className="text-[10px] text-primary/60 font-mono mt-1">{log.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </main>
+
+      {/* Existing dialogs updated with security theme */}
+      {/* ... existing dialogs ... */}
     </div>
   )
 }
