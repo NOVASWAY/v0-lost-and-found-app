@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>
   isAuthenticated: boolean
 }
 
@@ -56,8 +57,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/")
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    if (!user) return false
+
+    // Verify current password
+    const foundUser = mockUsers.find((u) => u.id === user.id && u.password === currentPassword)
+    if (!foundUser) {
+      return false
+    }
+
+    // Update password in mockUsers
+    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
+    if (userIndex !== -1) {
+      mockUsers[userIndex].password = newPassword
+      
+      // Update current user object
+      const updatedUser = { ...user, password: newPassword }
+      setUser(updatedUser)
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+      return true
+    }
+
+    return false
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, login, logout, changePassword, isAuthenticated }}>{children}</AuthContext.Provider>
   )
 }
 

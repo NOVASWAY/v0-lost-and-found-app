@@ -11,10 +11,14 @@ import { useToast } from "@/hooks/use-toast"
 import { mockItems, mockClaims } from "@/lib/mock-data"
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, changePassword } = useAuth()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(user?.name || "")
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
   const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
@@ -26,6 +30,49 @@ export default function ProfilePage() {
       description: "Your profile has been updated successfully.",
     })
     setIsEditing(false)
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "New password and confirm password do not match.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsChangingPassword(true)
+    const success = await changePassword(currentPassword, newPassword)
+
+    if (success) {
+      toast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully.",
+      })
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setIsChangingPassword(false)
+    } else {
+      toast({
+        title: "Password Change Failed",
+        description: "Current password is incorrect.",
+        variant: "destructive",
+      })
+      setIsChangingPassword(false)
+    }
   }
 
   return (
@@ -68,24 +115,6 @@ export default function ProfilePage() {
                 <Input id="role" type="text" value={user?.role || "user"} disabled className="capitalize" />
               </div>
 
-              <div className="border-t border-border pt-6">
-                <h3 className="mb-4 text-lg font-semibold text-card-foreground">Change Password</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" disabled={!isEditing} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" disabled={!isEditing} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input id="confirm-password" type="password" disabled={!isEditing} />
-                  </div>
-                </div>
-              </div>
-
               <div className="flex gap-3">
                 {!isEditing ? (
                   <Button type="button" onClick={() => setIsEditing(true)}>
@@ -100,6 +129,50 @@ export default function ProfilePage() {
                   </>
                 )}
               </div>
+            </form>
+          </Card>
+
+          <Card className="mt-6 p-6">
+            <h3 className="mb-4 text-lg font-semibold text-card-foreground">Change Password</h3>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min. 6 characters)"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  required
+                  minLength={6}
+                />
+              </div>
+              <Button type="submit" disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}>
+                {isChangingPassword ? "Changing Password..." : "Change Password"}
+              </Button>
             </form>
           </Card>
 
