@@ -14,6 +14,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { mockClaims, mockItems, mockReleaseLogs, mockUsers, type ReleaseLog } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import { addAuditLog } from "@/lib/audit-logger"
 
 export default function ReleaseItemPage({ params }: { params: { id: string } }) {
   const { user, isAuthenticated } = useAuth()
@@ -87,6 +88,9 @@ export default function ReleaseItemPage({ params }: { params: { id: string } }) 
         }
       }
     }
+
+    // Add audit log
+    addAuditLog("item_released", "Item released", user.id, user.name, `${claim.itemName} released to ${claim.claimantName}`, "info")
 
     toast({
       title: "Item Released",

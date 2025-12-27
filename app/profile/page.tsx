@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { addAuditLog } from "@/lib/audit-logger"
 import { mockItems, mockClaims } from "@/lib/mock-data"
 
 export default function ProfilePage() {
@@ -57,6 +58,7 @@ export default function ProfilePage() {
     const success = await changePassword(currentPassword, newPassword)
 
     if (success) {
+      addAuditLog("user_password_changed", "Password changed", user?.id, user?.name, "User password updated", "info")
       toast({
         title: "Password Changed",
         description: "Your password has been updated successfully.",

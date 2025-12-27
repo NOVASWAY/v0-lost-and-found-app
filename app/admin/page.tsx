@@ -31,8 +31,9 @@ import {
   Calendar,
   MapPin,
 } from "lucide-react"
-import { mockUsers, mockPlaybooks, mockLocations, type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
+import { mockUsers, mockPlaybooks, mockLocations, mockAuditLogs, type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { addAuditLog } from "@/lib/audit-logger"
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -98,6 +99,7 @@ export default function AdminDashboardPage() {
     }
     mockUsers.push(user)
     setUsers([...users, user])
+    addAuditLog("user_created", "User account created", user.id, user.name, `User '${user.username}' created with role '${user.role}'`, "info")
     setNewUser({ name: "", username: "", password: "", role: "user" })
     setCreateDialogOpen(false)
   }
@@ -131,6 +133,13 @@ export default function AdminDashboardPage() {
       mockUsers[userIndex] = updatedUser
     }
 
+    if (markAttended) {
+      addAuditLog("attendance_marked", "Attendance marked", selectedUser.id, selectedUser.name, `Marked attendance for service on ${serviceDate}`, "info")
+    }
+    if (markServed) {
+      addAuditLog("service_marked", "Service marked", selectedUser.id, selectedUser.name, `Marked service participation for ${serviceDate}`, "info")
+    }
+
     setUsers(users.map((u) => (u.id === selectedUser.id ? updatedUser : u)))
     setAttendanceDialogOpen(false)
     setSelectedUser(null)
@@ -142,6 +151,11 @@ export default function AdminDashboardPage() {
 
   const handleDeactivateUser = () => {
     if (selectedUser) {
+      addAuditLog("user_deleted", "User account deactivated", selectedUser.id, selectedUser.name, `User '${selectedUser.username}' deactivated`, "warning")
+      const index = mockUsers.findIndex((u) => u.id === selectedUser.id)
+      if (index !== -1) {
+        mockUsers.splice(index, 1)
+      }
       setUsers(users.filter((u) => u.id !== selectedUser.id))
       setDeactivateDialogOpen(false)
       setSelectedUser(null)
@@ -199,6 +213,7 @@ export default function AdminDashboardPage() {
             : pb,
         ),
       )
+      addAuditLog("playbook_updated", "Playbook updated", user?.id, user?.name, `Playbook '${editingPlaybook.title}' updated`, "info")
     } else {
       const playbook: Playbook = {
         id: `pb${Date.now()}`,
@@ -209,6 +224,7 @@ export default function AdminDashboardPage() {
         updatedAt: new Date().toISOString(),
       }
       setPlaybooks([...playbooks, playbook])
+      addAuditLog("playbook_created", "Playbook created", user?.id, user?.name, `Playbook '${playbook.title}' created`, "info")
     }
 
     setIsPlaybookDialogOpen(false)
@@ -217,6 +233,10 @@ export default function AdminDashboardPage() {
   }
 
   const handleDeletePlaybook = (id: string) => {
+    const playbook = playbooks.find((pb) => pb.id === id)
+    if (playbook) {
+      addAuditLog("playbook_deleted", "Playbook deleted", user?.id, user?.name, `Playbook '${playbook.title}' deleted`, "warning")
+    }
     setPlaybooks(playbooks.filter((pb) => pb.id !== id))
   }
 
@@ -224,6 +244,57 @@ export default function AdminDashboardPage() {
     setEditingPlaybook(pb)
     setNewPlaybook(pb)
     setIsPlaybookDialogOpen(true)
+  }
+
+  const handleSaveLocation = () => {
+    if (!newLocation.name) return
+
+    if (editingLocation) {
+      setLocations(
+        locations.map((loc) =>
+          loc.id === editingLocation.id
+            ? ({ ...loc, ...newLocation } as Location)
+            : loc,
+        ),
+      )
+      const index = mockLocations.findIndex((loc) => loc.id === editingLocation.id)
+      if (index !== -1) {
+        mockLocations[index] = { ...editingLocation, ...newLocation } as Location
+      }
+      addAuditLog("location_updated", "Location updated", user?.id, user?.name, `Location '${editingLocation.name}' updated`, "info")
+    } else {
+      const location: Location = {
+        id: `loc${Date.now()}`,
+        name: newLocation.name,
+        description: newLocation.description || undefined,
+        createdAt: new Date().toISOString(),
+      }
+      mockLocations.push(location)
+      setLocations([...locations, location])
+      addAuditLog("location_created", "Location created", user?.id, user?.name, `Location '${location.name}' created`, "info")
+    }
+
+    setIsLocationDialogOpen(false)
+    setEditingLocation(null)
+    setNewLocation({ name: "", description: "" })
+  }
+
+  const handleDeleteLocation = (id: string) => {
+    const location = locations.find((loc) => loc.id === id)
+    if (location) {
+      addAuditLog("location_deleted", "Location deleted", user?.id, user?.name, `Location '${location.name}' deleted`, "warning")
+      const index = mockLocations.findIndex((loc) => loc.id === id)
+      if (index !== -1) {
+        mockLocations.splice(index, 1)
+      }
+    }
+    setLocations(locations.filter((loc) => loc.id !== id))
+  }
+
+  const openEditLocation = (loc: Location) => {
+    setEditingLocation(loc)
+    setNewLocation(loc)
+    setIsLocationDialogOpen(true)
   }
 
   const [newUser, setNewUser] = useState({
@@ -257,7 +328,11 @@ export default function AdminDashboardPage() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="border-border hover:bg-muted font-bold tracking-tight bg-transparent">
+            <Button
+              variant="outline"
+              className="border-border hover:bg-muted font-bold tracking-tight bg-transparent"
+              onClick={() => (window.location.href = "/admin/audit-logs")}
+            >
               <Eye className="mr-2 w-4 h-4" />
               Audit Logs
             </Button>
@@ -618,30 +693,46 @@ export default function AdminDashboardPage() {
             <Card className="bg-card border-border p-6 h-fit">
               <h3 className="text-lg font-bold mb-6">Recent Security Events</h3>
               <div className="space-y-6">
-                {[
-                  { user: "Sarah J.", event: "Asset Claim Filed", time: "4m ago", icon: FileCheck },
-                  {
-                    user: "Michael C.",
-                    event: "Failed Release Attempt",
-                    time: "12m ago",
-                    icon: ShieldAlert,
-                    alert: true,
-                  },
-                  { user: "Admin", event: "Node Initialized", time: "1h ago", icon: Zap },
-                ].map((log, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div
-                      className={`p-2 rounded-md ${log.alert ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"}`}
-                    >
-                      <log.icon className="w-4 h-4" />
+                {mockAuditLogs.slice(0, 5).map((log) => {
+                  const getIcon = () => {
+                    if (log.type.includes("claim")) return FileCheck
+                    if (log.severity === "error" || log.severity === "critical") return ShieldAlert
+                    return Zap
+                  }
+                  const getTimeAgo = (timestamp: string) => {
+                    const now = Date.now()
+                    const logTime = new Date(timestamp).getTime()
+                    const diff = now - logTime
+                    const minutes = Math.floor(diff / 60000)
+                    const hours = Math.floor(minutes / 60)
+                    const days = Math.floor(hours / 24)
+                    if (minutes < 1) return "Just now"
+                    if (minutes < 60) return `${minutes}m ago`
+                    if (hours < 24) return `${hours}h ago`
+                    return `${days}d ago`
+                  }
+                  const Icon = getIcon()
+                  const isAlert = log.severity === "error" || log.severity === "critical"
+                  return (
+                    <div key={log.id} className="flex gap-4 items-start">
+                      <div
+                        className={`p-2 rounded-md ${isAlert ? "bg-destructive/20 text-destructive" : "bg-muted text-muted-foreground"}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-foreground">{log.userName || "System"}</p>
+                        <p className="text-[11px] text-muted-foreground leading-tight">{log.action}</p>
+                        <p className="text-[10px] text-primary/60 font-mono mt-1">{getTimeAgo(log.timestamp)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">{log.user}</p>
-                      <p className="text-[11px] text-muted-foreground leading-tight">{log.event}</p>
-                      <p className="text-[10px] text-primary/60 font-mono mt-1">{log.time}</p>
-                    </div>
+                  )
+                })}
+                {mockAuditLogs.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">No recent events</p>
                   </div>
-                ))}
+                )}
               </div>
             </Card>
           </div>

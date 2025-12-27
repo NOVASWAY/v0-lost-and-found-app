@@ -65,6 +65,38 @@ export interface Location {
   createdAt: string
 }
 
+export type AuditLogType =
+  | "user_created"
+  | "user_deleted"
+  | "user_password_changed"
+  | "item_uploaded"
+  | "item_claimed"
+  | "item_released"
+  | "item_donated"
+  | "attendance_marked"
+  | "service_marked"
+  | "location_created"
+  | "location_updated"
+  | "location_deleted"
+  | "playbook_created"
+  | "playbook_updated"
+  | "playbook_deleted"
+  | "login"
+  | "logout"
+  | "order_sent"
+
+export interface AuditLog {
+  id: string
+  type: AuditLogType
+  userId?: string
+  userName?: string
+  action: string
+  details?: string
+  timestamp: string
+  ipAddress?: string
+  severity: "info" | "warning" | "error" | "critical"
+}
+
 export interface ServiceRecord {
   id: string
   serviceDate: string
@@ -431,5 +463,92 @@ export const mockLocations: Location[] = [
     name: "Youth Room",
     description: "Youth group meeting space",
     createdAt: "2025-01-01T00:00:00",
+  },
+]
+
+// Audit Log Types
+export type AuditLogType =
+  | "user_created"
+  | "user_deleted"
+  | "user_password_changed"
+  | "item_uploaded"
+  | "item_claimed"
+  | "item_released"
+  | "item_donated"
+  | "attendance_marked"
+  | "service_marked"
+  | "location_created"
+  | "location_updated"
+  | "location_deleted"
+  | "playbook_created"
+  | "playbook_updated"
+  | "playbook_deleted"
+  | "login"
+  | "logout"
+  | "order_sent"
+
+export interface AuditLog {
+  id: string
+  type: AuditLogType
+  userId?: string
+  userName?: string
+  action: string
+  details?: string
+  timestamp: string
+  ipAddress?: string
+  severity: "info" | "warning" | "error" | "critical"
+}
+
+// Mock Audit Logs
+export const mockAuditLogs: AuditLog[] = [
+  {
+    id: "audit1",
+    type: "user_created",
+    userId: "u1",
+    userName: "John Doe",
+    action: "User account created",
+    details: "User 'johndoe' created with role 'user'",
+    timestamp: "2025-01-01T08:00:00",
+    severity: "info",
+  },
+  {
+    id: "audit2",
+    type: "item_uploaded",
+    userId: "u1",
+    userName: "John Doe",
+    action: "Item uploaded",
+    details: "Black Leather Wallet uploaded",
+    timestamp: "2025-01-15T10:30:00",
+    severity: "info",
+  },
+  {
+    id: "audit3",
+    type: "item_claimed",
+    userId: "u1",
+    userName: "John Doe",
+    action: "Item claimed",
+    details: "Claim submitted for Black Leather Wallet",
+    timestamp: "2025-01-16T10:00:00",
+    severity: "info",
+  },
+  {
+    id: "audit4",
+    type: "item_released",
+    userId: "u2",
+    userName: "Tom Anderson",
+    action: "Item released",
+    details: "Black Eyeglasses released to Robert Chen",
+    timestamp: "2025-01-15T09:00:00",
+    severity: "info",
+  },
+  {
+    id: "audit5",
+    type: "attendance_marked",
+    userId: "u1",
+    userName: "John Doe",
+    action: "Attendance marked",
+    details: "Marked attendance for service on 2025-01-20",
+    timestamp: "2025-01-20T10:00:00",
+    severity: "info",
   },
 ]

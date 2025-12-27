@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { mockUsers, type User } from "./mock-data"
+import { addAuditLog } from "./audit-logger"
 
 interface AuthContextType {
   user: User | null
@@ -37,6 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true)
       localStorage.setItem("currentUser", JSON.stringify(foundUser))
 
+      // Add audit log
+      addAuditLog("login", "User logged in", foundUser.id, foundUser.name, `User '${foundUser.username}' logged in`, "info")
+
       // Route based on role
       if (foundUser.role === "admin") {
         router.push("/admin")
@@ -51,6 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
+    if (user) {
+      addAuditLog("logout", "User logged out", user.id, user.name, `User '${user.username}' logged out`, "info")
+    }
     setUser(null)
     setIsAuthenticated(false)
     localStorage.removeItem("currentUser")

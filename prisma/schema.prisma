@@ -1,0 +1,162 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  username        String   @unique
+  password        String // Hashed password
+  role            String   @default("user") // user, volunteer, admin
+  itemsUploaded   Int      @default(0)
+  claimsSubmitted Int      @default(0)
+  joinedAt        DateTime @default(now())
+  vaultPoints     Int      @default(0)
+  rank            Int      @default(0)
+  attendanceCount Int      @default(0)
+  serviceCount    Int      @default(0)
+  
+  // Relations
+  uploadedItems   Item[]
+  claims          Claim[]
+  serviceRecords  ServiceRecord[]
+  orders          Order[]
+  auditLogs       AuditLog[]
+  releaseLogs     ReleaseLog[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id              String   @id @default(cuid())
+  imageUrl        String
+  category        String
+  color           String
+  location        String
+  dateFounded     DateTime
+  description     String   @default("")
+  status          String   @default("available") // available, claimed, released, donated
+  donationDeadline DateTime?
+  uniqueMarkings  String?
+  
+  // Relations
+  uploadedById    String
+  uploadedBy      User     @relation(fields: [uploadedById], references: [id])
+  claims          Claim[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Claim {
+  id            String   @id @default(cuid())
+  itemId        String
+  item          Item      @relation(fields: [itemId], references: [id])
+  itemName      String
+  itemImage     String
+  proofImage    String
+  claimantName  String
+  claimantEmail String
+  status        String   @default("pending") // pending, released, rejected
+  releaseNotes  String?
+  releasedBy    String?
+  releasedAt    DateTime?
+  
+  // Relations
+  claimantId    String
+  claimant      User     @relation(fields: [claimantId], references: [id])
+  releaseLog    ReleaseLog?
+  
+  claimedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ReleaseLog {
+  id            String   @id @default(cuid())
+  itemId        String
+  itemName      String
+  claimantName  String
+  volunteerName String
+  notes         String   @default("")
+  
+  // Relations
+  claimId       String   @unique
+  claim         Claim    @relation(fields: [claimId], references: [id])
+  volunteerId   String
+  volunteer     User     @relation(fields: [volunteerId], references: [id])
+  
+  timestamp     DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Playbook {
+  id        String   @id @default(cuid())
+  title     String
+  scenario  String
+  protocol  String
+  priority  String   @default("medium") // low, medium, high, critical
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model ServiceRecord {
+  id          String   @id @default(cuid())
+  serviceDate DateTime
+  attended    Boolean  @default(false)
+  served      Boolean  @default(false)
+  notes       String?
+  recordedBy  String
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  status    String   @default("unread") // unread, read
+  priority  String   @default("medium") // low, medium, high
+  createdAt DateTime @default(now())
+  
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  type      String // user_created, item_uploaded, etc.
+  action    String
+  details   String?
+  severity  String   @default("info") // info, warning, error, critical
+  ipAddress String?
+  
+  // Relations
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+}

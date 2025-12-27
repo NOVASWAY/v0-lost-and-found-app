@@ -16,6 +16,7 @@ import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { mockItems, mockUsers, mockLocations, type Item } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import { addAuditLog } from "@/lib/audit-logger"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuth()
@@ -86,6 +87,9 @@ export default function UploadPage() {
       mockUsers[userIndex].itemsUploaded += 1
       mockUsers[userIndex].vaultPoints += 50 // Award points for uploading
     }
+
+    // Add audit log
+    addAuditLog("item_uploaded", "Item uploaded", user.id, user.name, `${newItem.category} uploaded from ${newItem.location}`, "info")
 
     toast({
       title: "Item Uploaded",

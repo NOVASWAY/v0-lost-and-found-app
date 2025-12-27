@@ -19,6 +19,7 @@ import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { mockClaims, mockItems, mockUsers, type Claim } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
+import { addAuditLog } from "@/lib/audit-logger"
 
 interface ClaimModalProps {
   itemId: string
@@ -107,6 +108,9 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
         claimedAt: newClaim.claimedAt,
       })
     }
+
+    // Add audit log
+    addAuditLog("item_claimed", "Item claimed", user.id, user.name, `Claim submitted for ${itemName}`, "info")
 
     toast({
       title: "Claim Submitted",
