@@ -74,6 +74,8 @@ export default function AdminDashboardPage() {
       itemsUploaded: 0,
       claimsSubmitted: 0,
       joinedAt: new Date().toISOString().split("T")[0],
+      vaultPoints: 0,
+      rank: users.length + 1,
       orders: [],
     }
     setUsers([...users, user])
@@ -241,6 +243,7 @@ export default function AdminDashboardPage() {
                     <tr>
                       <th className="p-4">Entity</th>
                       <th className="p-4">Clearance</th>
+                      <th className="p-4">Standing</th>
                       <th className="p-4">Activity</th>
                       <th className="p-4 text-right">Protocol</th>
                     </tr>
@@ -275,6 +278,14 @@ export default function AdminDashboardPage() {
                           >
                             {u.role === "admin" ? "Superuser" : u.role === "volunteer" ? "Release Agent" : "Standard"}
                           </Badge>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black italic text-accent">{u.vaultPoints} VP</span>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+                              Rank #{u.rank}
+                            </span>
+                          </div>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">

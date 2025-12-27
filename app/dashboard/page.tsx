@@ -14,6 +14,9 @@ import {
   BookOpen,
   ChevronRight,
   ShieldAlert,
+  Trophy,
+  Star,
+  TrendingUp,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { mockItems, mockClaims, mockPlaybooks } from "@/lib/mock-data"
@@ -116,6 +119,54 @@ export default function DashboardPage() {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded bg-primary/20">
+                    <Trophy className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 italic">
+                    Global Standing
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-4xl font-black italic tracking-tighter">#{user?.rank || "--"}</h3>
+                  <span className="text-xs font-bold text-muted-foreground uppercase">Vault Rank</span>
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-xs font-medium text-emerald-500">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>Top 12% of community contributors</span>
+                </div>
+              </Card>
+
+              <Card className="p-6 bg-card border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded bg-accent/10">
+                    <Star className="w-5 h-5 text-accent" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                    Contribution Value
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-4xl font-black italic tracking-tighter text-accent">{user?.vaultPoints || 0}</h3>
+                  <span className="text-xs font-bold text-muted-foreground uppercase">Vault Credits</span>
+                </div>
+                <div className="mt-4 space-y-1">
+                  <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                    <span>Next Reward Tier</span>
+                    <span>{1000 - (user?.vaultPoints || 0)} pts to Gold</span>
+                  </div>
+                  <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent transition-all duration-1000"
+                      style={{ width: `${((user?.vaultPoints || 0) / 1000) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
             {/* Security Orders */}
             {/* ... existing orders code ... */}
 

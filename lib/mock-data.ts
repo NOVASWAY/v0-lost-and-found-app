@@ -66,6 +66,8 @@ export interface User {
   itemsUploaded: number
   claimsSubmitted: number
   joinedAt: string
+  vaultPoints: number
+  rank: number
   claimedItems?: { itemId: string; itemName: string; claimStatus: ClaimStatus; claimedAt: string }[]
   orders?: Order[]
   playbooksAccess?: string[] // IDs of accessible playbooks
@@ -201,6 +203,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 3,
     claimsSubmitted: 1,
     joinedAt: "2025-01-01",
+    vaultPoints: 450,
+    rank: 4,
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "pending", claimedAt: "2025-01-16T10:00:00" },
     ],
@@ -224,6 +228,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 0,
     claimsSubmitted: 0,
     joinedAt: "2024-12-15",
+    vaultPoints: 0,
+    rank: 0,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1", "pb2"],
@@ -236,6 +242,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 0,
     claimsSubmitted: 0,
     joinedAt: "2024-11-01",
+    vaultPoints: 0,
+    rank: 0,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1", "pb2"],
@@ -248,6 +256,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 5,
     claimsSubmitted: 2,
     joinedAt: "2024-12-20",
+    vaultPoints: 850,
+    rank: 1,
     claimedItems: [
       { itemId: "3", itemName: "Silver Wristwatch", claimStatus: "pending", claimedAt: "2025-01-15T14:30:00" },
       { itemId: "4", itemName: "Red Umbrella", claimStatus: "released", claimedAt: "2025-01-14T09:15:00" },
@@ -263,6 +273,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 2,
     claimsSubmitted: 3,
     joinedAt: "2025-01-05",
+    vaultPoints: 620,
+    rank: 2,
     claimedItems: [
       { itemId: "6", itemName: "Green Backpack", claimStatus: "pending", claimedAt: "2025-01-18T11:00:00" },
       { itemId: "2", itemName: "Blue Water Bottle", claimStatus: "pending", claimedAt: "2025-01-17T10:30:00" },
@@ -279,6 +291,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 1,
     claimsSubmitted: 0,
     joinedAt: "2024-11-15",
+    vaultPoints: 0,
+    rank: 0,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1"],
@@ -291,6 +305,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 1,
     claimsSubmitted: 1,
     joinedAt: "2025-01-10",
+    vaultPoints: 150,
+    rank: 8,
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "rejected", claimedAt: "2025-01-12T16:45:00" },
     ],
@@ -305,6 +321,8 @@ export const mockUsers: User[] = [
     itemsUploaded: 0,
     claimsSubmitted: 0,
     joinedAt: "2024-12-01",
+    vaultPoints: 0,
+    rank: 0,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb2"],
