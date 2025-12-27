@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { StatusBadge } from "@/components/status-badge"
@@ -11,7 +13,18 @@ import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   const item = mockItems.find((i) => i.id === params.id)
 

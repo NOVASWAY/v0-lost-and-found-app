@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { ItemCard } from "@/components/item-card"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,18 @@ import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function BrowsePage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [colorFilter, setColorFilter] = useState("all")

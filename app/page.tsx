@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Upload, Search, Shield, Clock } from "lucide-react"
+import { Upload, Search, Shield, Lock, Eye, BookOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { mockItems } from "@/lib/mock-data"
 import Image from "next/image"
@@ -18,15 +18,12 @@ export default function HomePage() {
             <div className="relative h-10 w-10">
               <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
             </div>
-            <span className="text-xl font-semibold text-foreground">Vault Church Lost & Found</span>
+            <span className="text-xl font-semibold text-foreground">Vault Church Security System</span>
           </div>
           <nav className="flex items-center gap-4">
             <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button>Sign Up</Button>
             </Link>
           </nav>
         </div>
@@ -41,23 +38,17 @@ export default function HomePage() {
             </div>
           </div>
           <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight text-foreground md:text-6xl">
-            Reuniting You With What Matters
+            Vault Church Security System
           </h1>
           <p className="mb-10 text-pretty text-lg text-muted-foreground md:text-xl">
-            A transparent, photo-based system to help the Vault Church community recover lost items with integrity and
-            trust.
+            A unified security system for asset management, access control, protocol enforcement, and community safety.
+            Shielded in silence. Fortified for eternity.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/upload">
+            <Link href="/login">
               <Button size="lg" className="w-full sm:w-auto">
-                <Upload className="mr-2 h-5 w-5" />
-                Upload Found Item
-              </Button>
-            </Link>
-            <Link href="/browse">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
-                <Search className="mr-2 h-5 w-5" />
-                Browse Items
+                <Shield className="mr-2 h-5 w-5" />
+                Access System
               </Button>
             </Link>
           </div>
@@ -67,45 +58,45 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="border-t border-border bg-muted/30 py-16">
         <div className="container mx-auto px-4">
-          <h2 className="mb-12 text-center text-3xl font-bold text-foreground">How It Works</h2>
+          <h2 className="mb-12 text-center text-3xl font-bold text-foreground">Security System Capabilities</h2>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Upload className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Upload Photos</h3>
-              <p className="text-sm text-muted-foreground">
-                Found something? Take a photo and upload it with details about where and when you found it.
-              </p>
-            </Card>
-
-            <Card className="p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Search className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Search & Claim</h3>
-              <p className="text-sm text-muted-foreground">
-                Lost something? Browse items and submit a claim with proof photos to verify ownership.
-              </p>
-            </Card>
-
             <Card className="p-6">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Verified Release</h3>
+              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Lost & Found Management</h3>
               <p className="text-sm text-muted-foreground">
-                Volunteers verify identity and release items. Every action is logged for transparency.
+                Comprehensive asset tracking with photo verification, claim processing, and secure release protocols.
               </p>
             </Card>
 
             <Card className="p-6">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <Clock className="h-6 w-6 text-primary" />
+                <Lock className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Donation Timer</h3>
+              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Access Control</h3>
               <p className="text-sm text-muted-foreground">
-                Unclaimed items are donated after 30 days, ensuring they benefit those in need.
+                Role-based authentication with admin-controlled user management and security clearance levels.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Security Playbooks</h3>
+              <p className="text-sm text-muted-foreground">
+                Operational protocols for security scenarios with priority-based response procedures.
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <Eye className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-card-foreground">Audit Logging</h3>
+              <p className="text-sm text-muted-foreground">
+                Complete activity tracking with transparent logging of all security events and user actions.
               </p>
             </Card>
           </div>
@@ -115,7 +106,10 @@ export default function HomePage() {
       {/* Recent Items Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Recently Found Items</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Asset Registry</h2>
+            <p className="text-sm text-muted-foreground mt-1">Recently recovered items in the security system</p>
+          </div>
           <Link href="/browse">
             <Button variant="ghost">View All</Button>
           </Link>
@@ -151,7 +145,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border bg-card py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 Vault Church Lost & Found. Shielded in Silence. Fortified for Eternity.</p>
+          <p>&copy; 2025 Vault Church Security System. Shielded in Silence. Fortified for Eternity.</p>
         </div>
       </footer>
     </div>

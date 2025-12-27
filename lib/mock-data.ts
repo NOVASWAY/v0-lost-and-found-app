@@ -58,6 +58,16 @@ export interface Playbook {
   updatedAt: string
 }
 
+export interface ServiceRecord {
+  id: string
+  serviceDate: string
+  attended: boolean
+  served: boolean
+  notes?: string
+  recordedBy: string
+  recordedAt: string
+}
+
 export interface User {
   id: string
   name: string
@@ -69,6 +79,9 @@ export interface User {
   joinedAt: string
   vaultPoints: number
   rank: number
+  attendanceCount: number
+  serviceCount: number
+  serviceRecords?: ServiceRecord[]
   claimedItems?: { itemId: string; itemName: string; claimStatus: ClaimStatus; claimedAt: string }[]
   orders?: Order[]
   playbooksAccess?: string[] // IDs of accessible playbooks
@@ -207,6 +220,8 @@ export const mockUsers: User[] = [
     joinedAt: "2025-01-01",
     vaultPoints: 450,
     rank: 4,
+    attendanceCount: 8,
+    serviceCount: 3,
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "pending", claimedAt: "2025-01-16T10:00:00" },
     ],
@@ -233,6 +248,8 @@ export const mockUsers: User[] = [
     joinedAt: "2024-12-15",
     vaultPoints: 0,
     rank: 0,
+    attendanceCount: 12,
+    serviceCount: 10,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1", "pb2"],
@@ -248,6 +265,8 @@ export const mockUsers: User[] = [
     joinedAt: "2024-11-01",
     vaultPoints: 0,
     rank: 0,
+    attendanceCount: 0,
+    serviceCount: 0,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1", "pb2"],
@@ -263,6 +282,8 @@ export const mockUsers: User[] = [
     joinedAt: "2024-12-20",
     vaultPoints: 850,
     rank: 1,
+    attendanceCount: 15,
+    serviceCount: 8,
     claimedItems: [
       { itemId: "3", itemName: "Silver Wristwatch", claimStatus: "pending", claimedAt: "2025-01-15T14:30:00" },
       { itemId: "4", itemName: "Red Umbrella", claimStatus: "released", claimedAt: "2025-01-14T09:15:00" },
@@ -281,6 +302,8 @@ export const mockUsers: User[] = [
     joinedAt: "2025-01-05",
     vaultPoints: 620,
     rank: 2,
+    attendanceCount: 6,
+    serviceCount: 2,
     claimedItems: [
       { itemId: "6", itemName: "Green Backpack", claimStatus: "pending", claimedAt: "2025-01-18T11:00:00" },
       { itemId: "2", itemName: "Blue Water Bottle", claimStatus: "pending", claimedAt: "2025-01-17T10:30:00" },
@@ -300,6 +323,8 @@ export const mockUsers: User[] = [
     joinedAt: "2024-11-15",
     vaultPoints: 0,
     rank: 0,
+    attendanceCount: 20,
+    serviceCount: 15,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb1"],
@@ -315,6 +340,8 @@ export const mockUsers: User[] = [
     joinedAt: "2025-01-10",
     vaultPoints: 150,
     rank: 8,
+    attendanceCount: 3,
+    serviceCount: 0,
     claimedItems: [
       { itemId: "1", itemName: "Black Leather Wallet", claimStatus: "rejected", claimedAt: "2025-01-12T16:45:00" },
     ],
@@ -332,6 +359,8 @@ export const mockUsers: User[] = [
     joinedAt: "2024-12-01",
     vaultPoints: 0,
     rank: 0,
+    attendanceCount: 18,
+    serviceCount: 12,
     claimedItems: [],
     orders: [],
     playbooksAccess: ["pb2"],

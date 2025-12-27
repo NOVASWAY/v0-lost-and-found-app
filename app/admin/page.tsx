@@ -7,7 +7,9 @@ import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Search,
   UserPlus,
@@ -25,6 +27,8 @@ import {
   Plus,
   Edit,
   Trash2,
+  Users,
+  Calendar,
 } from "lucide-react"
 import { mockUsers, mockPlaybooks, type User, type Order, type Playbook } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
@@ -80,12 +84,52 @@ export default function AdminDashboardPage() {
       joinedAt: new Date().toISOString().split("T")[0],
       vaultPoints: 0,
       rank: users.length + 1,
+      attendanceCount: 0,
+      serviceCount: 0,
       orders: [],
     }
     mockUsers.push(user)
     setUsers([...users, user])
     setNewUser({ name: "", username: "", password: "", role: "user" })
     setCreateDialogOpen(false)
+  }
+
+  const handleMarkAttendance = () => {
+    if (!selectedUser) return
+
+    const pointsToAdd = (markAttended ? 10 : 0) + (markServed ? 25 : 0)
+    const updatedUser: User = {
+      ...selectedUser,
+      attendanceCount: markAttended ? selectedUser.attendanceCount + 1 : selectedUser.attendanceCount,
+      serviceCount: markServed ? selectedUser.serviceCount + 1 : selectedUser.serviceCount,
+      vaultPoints: selectedUser.vaultPoints + pointsToAdd,
+      serviceRecords: [
+        ...(selectedUser.serviceRecords || []),
+        {
+          id: `sr${Date.now()}`,
+          serviceDate,
+          attended: markAttended,
+          served: markServed,
+          notes: serviceNotes || undefined,
+          recordedBy: user?.name || "Admin",
+          recordedAt: new Date().toISOString(),
+        },
+      ],
+    }
+
+    // Update in mockUsers
+    const userIndex = mockUsers.findIndex((u) => u.id === selectedUser.id)
+    if (userIndex !== -1) {
+      mockUsers[userIndex] = updatedUser
+    }
+
+    setUsers(users.map((u) => (u.id === selectedUser.id ? updatedUser : u)))
+    setAttendanceDialogOpen(false)
+    setSelectedUser(null)
+    setServiceDate(new Date().toISOString().split("T")[0])
+    setMarkAttended(true)
+    setMarkServed(false)
+    setServiceNotes("")
   }
 
   const handleDeactivateUser = () => {
@@ -180,6 +224,11 @@ export default function AdminDashboardPage() {
     password: "",
     role: "user" as "user" | "volunteer" | "admin",
   })
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false)
+  const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0])
+  const [markAttended, setMarkAttended] = useState(true)
+  const [markServed, setMarkServed] = useState(false)
+  const [serviceNotes, setServiceNotes] = useState("")
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -317,17 +366,39 @@ export default function AdminDashboardPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
-                            <span className="flex items-center gap-1">
-                              <Upload className="w-3 h-3" /> {u.itemsUploaded}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <FileCheck className="w-3 h-3" /> {u.claimsSubmitted}
-                            </span>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                              <span className="flex items-center gap-1">
+                                <Upload className="w-3 h-3" /> {u.itemsUploaded}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <FileCheck className="w-3 h-3" /> {u.claimsSubmitted}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground font-mono">
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" /> Att: {u.attendanceCount || 0}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" /> Svc: {u.serviceCount || 0}
+                              </span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-500 hover:bg-blue-500/10 p-2 h-auto"
+                              onClick={() => {
+                                setSelectedUser(u)
+                                setAttendanceDialogOpen(true)
+                              }}
+                              title="Mark Attendance/Service"
+                            >
+                              <Calendar className="w-4 h-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -637,6 +708,85 @@ export default function AdminDashboardPage() {
                 </Button>
               </div>
             </form>
+          </Card>
+        </div>
+      )}
+
+      {attendanceDialogOpen && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md p-6 border-primary shadow-[0_0_50px_rgba(var(--primary),0.1)]">
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 italic">Record Service Attendance</h2>
+            <div className="mb-4 p-3 bg-muted/50 rounded-md">
+              <p className="text-sm font-semibold text-card-foreground">{selectedUser.name}</p>
+              <p className="text-xs text-muted-foreground">@{selectedUser.username}</p>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Service Date
+                </Label>
+                <Input
+                  type="date"
+                  value={serviceDate}
+                  onChange={(e) => setServiceDate(e.target.value)}
+                  className="bg-muted/50"
+                  required
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="attended"
+                    checked={markAttended}
+                    onCheckedChange={(checked) => setMarkAttended(checked === true)}
+                  />
+                  <Label htmlFor="attended" className="text-sm font-medium cursor-pointer">
+                    Attended Service (+10 Vault Points)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="served"
+                    checked={markServed}
+                    onCheckedChange={(checked) => setMarkServed(checked === true)}
+                  />
+                  <Label htmlFor="served" className="text-sm font-medium cursor-pointer">
+                    Served at Service (+25 Vault Points)
+                  </Label>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Notes (Optional)
+                </Label>
+                <Input
+                  value={serviceNotes}
+                  onChange={(e) => setServiceNotes(e.target.value)}
+                  placeholder="Service notes..."
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => {
+                    setAttendanceDialogOpen(false)
+                    setSelectedUser(null)
+                    setServiceDate(new Date().toISOString().split("T")[0])
+                    setMarkAttended(true)
+                    setMarkServed(false)
+                    setServiceNotes("")
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleMarkAttendance} className="flex-1 bg-primary font-black uppercase italic">
+                  Record
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
       )}
