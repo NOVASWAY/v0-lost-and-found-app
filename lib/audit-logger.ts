@@ -1,4 +1,3 @@
-import { prisma } from "./db"
 import type { AuditLogType } from "./mock-data"
 
 export async function addAuditLog(
@@ -10,6 +9,16 @@ export async function addAuditLog(
   severity: "info" | "warning" | "error" | "critical" = "info",
 ) {
   try {
+    // Only run on server-side
+    if (typeof window !== "undefined") {
+      // On client-side, we could make an API call instead
+      // For now, just skip logging on client
+      return null
+    }
+
+    // Dynamic import to avoid bundling Prisma in client
+    const { prisma } = await import("./db")
+    
     const log = await prisma.auditLog.create({
       data: {
         type,
