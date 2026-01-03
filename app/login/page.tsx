@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -12,30 +13,51 @@ import { Shield } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { RubiksSafe } from "@/components/rubiks-safe"
+import { mockUsers } from "@/lib/mock-data"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isUnlocking, setIsUnlocking] = useState(false)
   const { login } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    const success = await login(username, password)
-
-    if (!success) {
+    // Check credentials
+    const foundUser = mockUsers.find((u) => u.username === username && u.password === password)
+    
+    if (foundUser) {
+      // Show unlock animation
+      setIsUnlocking(true)
+      
+      // Perform login (sets user state)
+      await login(username, password)
+      
+      // Wait for animation to complete (1.5s) then redirect
+      setTimeout(() => {
+        if (foundUser.role === "admin") {
+          router.push("/admin")
+        } else if (foundUser.role === "volunteer") {
+          router.push("/volunteer/dashboard")
+        } else {
+          router.push("/dashboard")
+        }
+      }, 1500)
+    } else {
       toast({
         title: "Login Failed",
         description:
           "Invalid username or password. Try user: johndoe, volunteer: tomanderson, or admin: admin",
         variant: "destructive",
       })
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (
@@ -45,6 +67,15 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-md p-8">
         <div className="mb-8 text-center">
+          {/* Vault Safe Animation */}
+          <div className="mb-6 flex justify-center">
+            <RubiksSafe 
+              isActive={password.length > 0} 
+              passwordLength={password.length}
+              isUnlocking={isUnlocking}
+            />
+          </div>
+          
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
             <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
