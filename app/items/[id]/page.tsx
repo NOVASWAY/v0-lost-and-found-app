@@ -44,7 +44,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "user"} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Image Section */}
           <div className="space-y-4">
@@ -59,16 +59,16 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           {/* Details Section */}
           <div className="space-y-6">
             <div>
-              <div className="mb-4 flex items-start justify-between">
-                <h1 className="text-3xl font-bold text-foreground">{item.category}</h1>
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground break-words">{item.category}</h1>
                 <StatusBadge status={item.status} />
               </div>
-              <p className="text-lg text-muted-foreground">{item.color}</p>
+              <p className="text-base sm:text-lg text-muted-foreground">{item.color}</p>
             </div>
 
-            <Card className="p-6">
-              <h2 className="mb-4 text-lg font-semibold text-card-foreground">Item Details</h2>
-              <div className="space-y-4">
+            <Card className="p-4 sm:p-6">
+              <h2 className="mb-4 text-base sm:text-lg font-semibold text-card-foreground">Item Details</h2>
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-start gap-3">
                   <Calendar className="mt-0.5 h-5 w-5 text-muted-foreground" />
                   <div>

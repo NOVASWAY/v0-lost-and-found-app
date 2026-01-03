@@ -106,14 +106,14 @@ export default function DashboardPage() {
         delay={450}
       />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">Welcome Back, {user?.name || "User"}!</h1>
-          <p className="text-muted-foreground">Here's your Lost & Found activity summary</p>
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Welcome Back, {user?.name || "User"}!</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Here's your Lost & Found activity summary</p>
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+        <div className="mb-6 sm:mb-8 grid gap-4 sm:grid-cols-2">
           <Link href="/upload">
             <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
               <div className="flex items-center gap-4">

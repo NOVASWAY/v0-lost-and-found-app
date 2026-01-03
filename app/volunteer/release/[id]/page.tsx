@@ -49,7 +49,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-background">
         <Navbar role="volunteer" />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <Card className="p-6 text-center">
             <p className="text-muted-foreground">Claim not found</p>
             <Link href="/volunteer/dashboard">

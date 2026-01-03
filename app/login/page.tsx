@@ -61,11 +61,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <div className="absolute right-4 top-4">
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
+      <div className="absolute right-4 top-4 z-10">
         <ThemeToggle />
       </div>
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-6 sm:p-8">
         <div className="mb-8 text-center">
           {/* Vault Safe Animation */}
           <div className="mb-6 flex justify-center">
@@ -79,8 +79,8 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
             <Shield className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-card-foreground">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">Sign in to your account</p>
+          <h1 className="mb-2 text-xl sm:text-2xl font-bold text-card-foreground">Welcome Back</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

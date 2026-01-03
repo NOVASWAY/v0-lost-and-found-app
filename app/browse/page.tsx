@@ -53,15 +53,15 @@ export default function BrowsePage() {
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "user"} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">Browse Lost Items</h1>
-          <p className="text-muted-foreground">Search through found items to locate your belongings</p>
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Browse Lost Items</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Search through found items to locate your belongings</p>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex gap-4">
+        <div className="mb-6 sm:mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -77,7 +77,7 @@ export default function BrowsePage() {
             </Button>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3 sm:gap-4">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Category" />

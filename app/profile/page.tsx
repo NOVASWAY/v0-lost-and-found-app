@@ -112,11 +112,11 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "user"} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mx-auto max-w-2xl">
-          <div className="mb-8">
-            <h1 className="mb-2 text-3xl font-bold text-foreground">Profile Settings</h1>
-            <p className="text-muted-foreground">Manage your account information</p>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Profile Settings</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your account information</p>
           </div>
 
           <Card className="p-6">

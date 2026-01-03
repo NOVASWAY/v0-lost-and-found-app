@@ -30,18 +30,18 @@ export function FloatingActionIcon({
   }
 
   const positionClasses = {
-    "bottom-right": "bottom-4 right-4 sm:bottom-6 sm:right-6",
-    "bottom-left": "bottom-4 left-4 sm:bottom-6 sm:left-6",
-    "top-right": "top-4 right-4 sm:top-6 sm:right-6",
-    "top-left": "top-4 left-4 sm:top-6 sm:left-6",
+    "bottom-right": "bottom-16 right-4 sm:bottom-6 sm:right-6",
+    "bottom-left": "bottom-16 left-4 sm:bottom-6 sm:left-6",
+    "top-right": "top-20 right-4 sm:top-6 sm:right-6",
+    "top-left": "top-20 left-4 sm:top-6 sm:left-6",
   }
 
   return (
     <Link
       href={href}
       className={cn(
-        "fixed z-50 flex items-center gap-2 sm:gap-3 rounded-full px-3 py-2.5 sm:px-4 sm:py-3 shadow-2xl transition-all duration-300",
-        "hover:scale-110 hover:shadow-3xl animate-float text-sm sm:text-base",
+        "fixed z-40 flex items-center gap-2 sm:gap-3 rounded-full px-3 py-2.5 sm:px-4 sm:py-3 shadow-2xl transition-all duration-300",
+        "hover:scale-110 hover:shadow-3xl animate-float text-sm sm:text-base min-h-[44px] min-w-[44px]",
         colorClasses[color],
         positionClasses[position]
       )}

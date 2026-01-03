@@ -37,7 +37,7 @@ import {
   FileText,
   Settings,
 } from "lucide-react"
-import { type User, type Order, type Playbook, type Location, type Mission } from "@/lib/mock-data"
+import { type User, type Order, type Playbook, type Location, type Mission, type SystemSettings } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
 import { useToast } from "@/hooks/use-toast"
@@ -95,8 +95,8 @@ export default function AdminDashboardPage() {
   const [markAttended, setMarkAttended] = useState(true)
   const [markServed, setMarkServed] = useState(false)
   const [serviceNotes, setServiceNotes] = useState("")
-  const [systemSettings, setSystemSettings] = useState(getSystemSettings())
-  const [expirationDays, setExpirationDays] = useState(systemSettings.itemExpirationDays)
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null)
+  const [expirationDays, setExpirationDays] = useState(30)
 
   useEffect(() => {
     initializeStorage()
@@ -437,21 +437,21 @@ export default function AdminDashboardPage() {
         delay={450}
       />
 
-      <main className="container mx-auto px-6 py-10 max-w-7xl animate-in fade-in duration-700">
-        <div className="mb-12 border-b border-border/50 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-in fade-in duration-700 pb-24 sm:pb-10">
+        <div className="mb-8 sm:mb-12 border-b border-border/50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="bg-primary/10 p-2 rounded-lg border border-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
-                <ShieldCheck className="w-8 h-8 text-primary" />
+            <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+              <div className="bg-primary/10 p-1.5 sm:p-2 rounded-lg border border-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
+                <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
               </div>
-              <h1 className="text-4xl font-black tracking-tighter uppercase italic">Security Command Center</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase italic">Security Command Center</h1>
             </div>
-            <p className="text-muted-foreground text-lg max-w-2xl font-medium">
+            <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl font-medium">
               Vault Church high-security asset management. Authorization level:{" "}
               <span className="text-primary font-bold">SUPERUSER</span>
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               variant="outline"
               className="border-border hover:bg-muted font-bold tracking-tight bg-transparent"
@@ -921,7 +921,7 @@ export default function AdminDashboardPage() {
                   <div className="space-y-2">
                     <Label className="text-sm font-bold">Item Expiration Period (Days)</Label>
                     <p className="text-xs text-muted-foreground">
-                      Set how many days items remain available before automatic expiration. Current: {systemSettings.itemExpirationDays} days
+                      Set how many days items remain available before automatic expiration. Current: {systemSettings?.itemExpirationDays || 30} days
                     </p>
                     <div className="flex items-center gap-4">
                       <Input
@@ -935,7 +935,8 @@ export default function AdminDashboardPage() {
                       <Button
                         onClick={() => {
                           updateSystemSettings({ itemExpirationDays: expirationDays }, user?.id || "admin")
-                          setSystemSettings(getSystemSettings())
+                          const updated = getSystemSettings()
+                          setSystemSettings(updated)
                           addAuditLog("system_settings_updated", "System settings updated", user?.id, user?.name, `Item expiration period changed to ${expirationDays} days`, "info")
                           toast({
                             title: "Settings Updated",

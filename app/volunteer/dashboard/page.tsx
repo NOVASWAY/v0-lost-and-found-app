@@ -57,10 +57,10 @@ export default function VolunteerDashboardPage() {
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "volunteer"} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">Release Dashboard</h1>
-          <p className="text-muted-foreground">Review claims and release items to verified claimants</p>
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Release Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Review claims and release items to verified claimants</p>
         </div>
 
         {/* Search */}
@@ -98,11 +98,11 @@ export default function VolunteerDashboardPage() {
             <table className="w-full">
               <thead className="border-b border-border bg-muted/50">
                 <tr>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Found Item</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Proof Photo</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claimant</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claim Date</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Action</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Found Item</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground hidden sm:table-cell">Proof Photo</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Claimant</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground hidden sm:table-cell">Claim Date</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,9 +111,9 @@ export default function VolunteerDashboardPage() {
 
                   return (
                     <tr key={claim.id} className="border-b border-border last:border-0">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border">
+                      <td className="p-3 sm:p-4">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="relative h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border">
                             <Image
                               src={claim.itemImage || "/placeholder.svg"}
                               alt={claim.itemName}
@@ -122,12 +122,12 @@ export default function VolunteerDashboardPage() {
                             />
                           </div>
                           <div>
-                            <p className="font-medium text-card-foreground">{claim.itemName}</p>
-                            <p className="text-sm text-muted-foreground">ID: {claim.itemId}</p>
+                            <p className="font-medium text-sm sm:text-base text-card-foreground">{claim.itemName}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">ID: {claim.itemId}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3 sm:p-4 hidden sm:table-cell">
                         <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
                           <Image
                             src={claim.proofImage || "/placeholder.svg"}
@@ -137,16 +137,16 @@ export default function VolunteerDashboardPage() {
                           />
                         </div>
                       </td>
-                      <td className="p-4">
-                        <p className="font-medium text-card-foreground">{claim.claimantName}</p>
-                        <p className="text-sm text-muted-foreground">{claim.claimantEmail}</p>
+                      <td className="p-3 sm:p-4">
+                        <p className="font-medium text-sm sm:text-base text-card-foreground">{claim.claimantName}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">{claim.claimantEmail}</p>
                       </td>
-                      <td className="p-4">
-                        <p className="text-sm text-muted-foreground">{daysAgo} days ago</p>
+                      <td className="p-3 sm:p-4 hidden sm:table-cell">
+                        <p className="text-xs sm:text-sm text-muted-foreground">{daysAgo} days ago</p>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3 sm:p-4">
                         <Link href={`/volunteer/release/${claim.id}`}>
-                          <Button size="sm">Review & Release</Button>
+                          <Button size="sm" className="min-h-[36px] min-w-[100px] text-xs sm:text-sm">Review & Release</Button>
                         </Link>
                       </td>
                     </tr>

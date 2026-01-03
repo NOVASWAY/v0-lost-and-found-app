@@ -52,10 +52,10 @@ export default function AdminClaimsPage() {
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "admin"} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">Claims Overview</h1>
-          <p className="text-muted-foreground">Monitor all claims submitted by users</p>
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Claims Overview</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Monitor all claims submitted by users</p>
         </div>
 
         {/* Search */}
@@ -72,22 +72,22 @@ export default function AdminClaimsPage() {
         </Card>
 
         {/* Stats */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-4">
-          <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{claims.length}</p>
-            <p className="text-sm text-muted-foreground">Total Claims</p>
+        <div className="mb-6 sm:mb-8 grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-4">
+          <Card className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">{claims.length}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total Claims</p>
           </Card>
-          <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{pendingCount}</p>
-            <p className="text-sm text-muted-foreground">Pending</p>
+          <Card className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">{pendingCount}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Pending</p>
           </Card>
-          <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{releasedCount}</p>
-            <p className="text-sm text-muted-foreground">Released</p>
+          <Card className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">{releasedCount}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Released</p>
           </Card>
-          <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">0</p>
-            <p className="text-sm text-muted-foreground">Rejected</p>
+          <Card className="p-4 sm:p-6">
+            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">0</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Rejected</p>
           </Card>
         </div>
 
@@ -97,27 +97,27 @@ export default function AdminClaimsPage() {
             <table className="w-full">
               <thead className="border-b border-border bg-muted/50">
                 <tr>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Item</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claimant</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Claim Date</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="p-4 text-left text-sm font-medium text-muted-foreground">Action</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Item</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Claimant</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground hidden sm:table-cell">Claim Date</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="p-3 sm:p-4 text-left text-xs sm:text-sm font-medium text-muted-foreground">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredClaims.map((claim) => (
                   <tr key={claim.id} className="border-b border-border last:border-0">
-                    <td className="p-4 font-medium text-card-foreground">{claim.itemName}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{claim.claimantName}</td>
-                    <td className="p-4 text-sm text-muted-foreground">
+                    <td className="p-3 sm:p-4 font-medium text-sm sm:text-base text-card-foreground">{claim.itemName}</td>
+                    <td className="p-3 sm:p-4 text-xs sm:text-sm text-muted-foreground">{claim.claimantName}</td>
+                    <td className="p-3 sm:p-4 text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
                       {new Date(claim.claimedAt).toLocaleDateString()}
                     </td>
-                    <td className="p-4">
+                    <td className="p-3 sm:p-4">
                       <StatusBadge status={claim.status} />
                     </td>
-                    <td className="p-4">
+                    <td className="p-3 sm:p-4">
                       <Link href={`/items/${claim.itemId}`}>
-                        <Button size="sm" variant="ghost">
+                        <Button size="sm" variant="ghost" className="min-h-[36px] min-w-[60px]">
                           View
                         </Button>
                       </Link>

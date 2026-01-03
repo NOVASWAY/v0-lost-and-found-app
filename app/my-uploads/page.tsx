@@ -39,9 +39,9 @@ export default function MyUploadsPage() {
     <div className="min-h-screen bg-background">
       <Navbar role={user?.role || "user"} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">My Uploads</h1>
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">My Uploads</h1>
           <p className="text-muted-foreground">Items you've found and uploaded to the system</p>
         </div>
 
