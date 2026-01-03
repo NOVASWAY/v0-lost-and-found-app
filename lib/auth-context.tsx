@@ -3,7 +3,8 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { mockUsers, type User } from "./mock-data"
+import { type User } from "./mock-data"
+import { getUsers, updateUser, initializeStorage } from "./storage"
 import { addAuditLog } from "./audit-logger"
 
 interface AuthContextType {
@@ -22,17 +23,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    // Initialize storage on mount
+    initializeStorage()
+    
     // Check for stored user session
     const storedUser = localStorage.getItem("currentUser")
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
-      setIsAuthenticated(true)
+      const parsedUser = JSON.parse(storedUser)
+      // Verify user still exists in storage
+      const users = getUsers()
+      const foundUser = users.find((u) => u.id === parsedUser.id)
+      if (foundUser) {
+        setUser(foundUser)
+        setIsAuthenticated(true)
+      } else {
+        localStorage.removeItem("currentUser")
+      }
     }
   }, [])
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Mock authentication
-    const foundUser = mockUsers.find((u) => u.username === username && u.password === password)
+    // Get users from storage
+    const users = getUsers()
+    const foundUser = users.find((u) => u.username === username && u.password === password)
     if (foundUser) {
       setUser(foundUser)
       setIsAuthenticated(true)
@@ -68,20 +81,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false
 
     // Verify current password
-    const foundUser = mockUsers.find((u) => u.id === user.id && u.password === currentPassword)
+    const users = getUsers()
+    const foundUser = users.find((u) => u.id === user.id && u.password === currentPassword)
     if (!foundUser) {
       return false
     }
 
-    // Update password in mockUsers
-    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
-    if (userIndex !== -1) {
-      mockUsers[userIndex].password = newPassword
-      
+    // Update password in storage
+    const updated = updateUser(user.id, { password: newPassword })
+    if (updated) {
       // Update current user object
       const updatedUser = { ...user, password: newPassword }
       setUser(updatedUser)
       localStorage.setItem("currentUser", JSON.stringify(updatedUser))
+      addAuditLog("user_password_changed", "User password changed", user.id, user.name, `Password changed for user '${user.username}'`, "info")
       return true
     }
 

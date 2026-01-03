@@ -9,13 +9,19 @@ import { Input } from "@/components/ui/input"
 import { StatusBadge } from "@/components/status-badge"
 import { Search } from "lucide-react"
 import Link from "next/link"
-import { mockClaims } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getClaims, initializeStorage } from "@/lib/storage"
 
 export default function AdminClaimsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [claims, setClaims] = useState(getClaims())
+
+  useEffect(() => {
+    initializeStorage()
+    setClaims(getClaims())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -34,13 +40,13 @@ export default function AdminClaimsPage() {
     return null
   }
 
-  const filteredClaims = mockClaims.filter((claim) => {
+  const filteredClaims = claims.filter((claim) => {
     const searchLower = searchQuery.toLowerCase()
     return claim.itemName.toLowerCase().includes(searchLower) || claim.claimantName.toLowerCase().includes(searchLower)
   })
 
-  const pendingCount = mockClaims.filter((c) => c.status === "pending").length
-  const releasedCount = mockClaims.filter((c) => c.status === "released").length
+  const pendingCount = claims.filter((c) => c.status === "pending").length
+  const releasedCount = claims.filter((c) => c.status === "released").length
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,7 +74,7 @@ export default function AdminClaimsPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
           <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{mockClaims.length}</p>
+            <p className="text-3xl font-bold text-card-foreground">{claims.length}</p>
             <p className="text-sm text-muted-foreground">Total Claims</p>
           </Card>
           <Card className="p-6">

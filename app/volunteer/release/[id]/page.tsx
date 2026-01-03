@@ -12,7 +12,8 @@ import { CheckCircle, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { mockClaims, mockItems, mockReleaseLogs, mockUsers, type ReleaseLog } from "@/lib/mock-data"
+import { type ReleaseLog } from "@/lib/mock-data"
+import { getClaims, getItems, addReleaseLog, updateClaim, updateItem, updateUser, initializeStorage } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 
@@ -22,7 +23,15 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
   const { toast } = useToast()
   const [notes, setNotes] = useState("")
   const [isReleased, setIsReleased] = useState(false)
+  const [claims, setClaims] = useState(getClaims())
+  const [items, setItems] = useState(getItems())
   const { id } = use(params)
+
+  useEffect(() => {
+    initializeStorage()
+    setClaims(getClaims())
+    setItems(getItems())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "volunteer") {
@@ -30,7 +39,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
     }
   }, [isAuthenticated, user, router])
 
-  const claim = mockClaims.find((c) => c.id === id)
+  const claim = claims.find((c) => c.id === id)
 
   if (!isAuthenticated || user?.role !== "volunteer") {
     return null
@@ -52,19 +61,21 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
     )
   }
 
-  const item = mockItems.find((i) => i.id === claim.itemId)
+  const item = items.find((i) => i.id === claim.itemId)
 
   const handleRelease = () => {
-    if (!user || !item) return
+    if (!user || !item || !claim) return
 
     // Update claim status
-    claim.status = "released"
-    claim.releasedBy = `Volunteer: ${user.name}`
-    claim.releasedAt = new Date().toISOString()
-    claim.releaseNotes = notes || undefined
+    updateClaim(claim.id, {
+      status: "released",
+      releasedBy: `Volunteer: ${user.name}`,
+      releasedAt: new Date().toISOString(),
+      releaseNotes: notes || undefined,
+    })
 
     // Update item status
-    item.status = "released"
+    updateItem(claim.itemId, { status: "released" })
 
     // Create release log
     const releaseLog: ReleaseLog = {
@@ -76,18 +87,21 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
       timestamp: new Date().toISOString(),
       notes: notes || "Item released to claimant",
     }
-    mockReleaseLogs.push(releaseLog)
+    addReleaseLog(releaseLog)
 
-    // Update user stats (claimant)
-    const claimantIndex = mockUsers.findIndex((u) => u.name === claim.claimantName)
-    if (claimantIndex !== -1) {
-      mockUsers[claimantIndex].vaultPoints += 100 // Award points for successful claim
-      if (mockUsers[claimantIndex].claimedItems) {
-        const claimItem = mockUsers[claimantIndex].claimedItems.find((ci) => ci.itemId === claim.itemId)
-        if (claimItem) {
-          claimItem.claimStatus = "released"
-        }
+    // Update user stats (claimant) - find by name
+    const users = getUsers()
+    const claimant = users.find((u) => u.name === claim.claimantName)
+    if (claimant) {
+      const currentClaimedItems = claimant.claimedItems || []
+      const claimItem = currentClaimedItems.find((ci) => ci.itemId === claim.itemId)
+      if (claimItem) {
+        claimItem.claimStatus = "released"
       }
+      updateUser(claimant.id, {
+        vaultPoints: claimant.vaultPoints + 100, // Award points for successful claim
+        claimedItems: currentClaimedItems,
+      })
     }
 
     // Add audit log

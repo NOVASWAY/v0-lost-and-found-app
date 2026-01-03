@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
-import { mockItems, mockClaims } from "@/lib/mock-data"
+import { getItems, getClaims, initializeStorage } from "@/lib/storage"
 
 export default function ProfilePage() {
   const { user, isAuthenticated, changePassword } = useAuth()
@@ -22,6 +22,14 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [items, setItems] = useState(getItems())
+  const [claims, setClaims] = useState(getClaims())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+    setClaims(getClaims())
+  }, [])
 
   // Protect route - require authentication
   useEffect(() => {
@@ -36,8 +44,8 @@ export default function ProfilePage() {
     return null
   }
 
-  const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
-  const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
+  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
+  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
   const releasedClaims = userClaims.filter((claim) => claim.status === "released")
 
   const handleSave = () => {

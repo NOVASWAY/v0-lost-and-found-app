@@ -6,13 +6,19 @@ import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search, FileText } from "lucide-react"
-import { mockReleaseLogs } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getReleaseLogs, initializeStorage } from "@/lib/storage"
 
 export default function AdminReleasesPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [releaseLogs, setReleaseLogs] = useState(getReleaseLogs())
+
+  useEffect(() => {
+    initializeStorage()
+    setReleaseLogs(getReleaseLogs())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -31,7 +37,7 @@ export default function AdminReleasesPage() {
     return null
   }
 
-  const filteredReleases = mockReleaseLogs.filter((release) => {
+  const filteredReleases = releaseLogs.filter((release) => {
     const searchLower = searchQuery.toLowerCase()
     return (
       release.itemName.toLowerCase().includes(searchLower) ||
@@ -68,13 +74,13 @@ export default function AdminReleasesPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{mockReleaseLogs.length}</p>
+            <p className="text-3xl font-bold text-card-foreground">{releaseLogs.length}</p>
             <p className="text-sm text-muted-foreground">Total Releases</p>
           </Card>
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
               {
-                mockReleaseLogs.filter((r) => {
+                releaseLogs.filter((r) => {
                   const daysDiff = Math.floor((Date.now() - new Date(r.timestamp).getTime()) / (1000 * 60 * 60 * 24))
                   return daysDiff <= 7
                 }).length
@@ -85,7 +91,7 @@ export default function AdminReleasesPage() {
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
               {
-                mockReleaseLogs.filter((r) => {
+                releaseLogs.filter((r) => {
                   const daysDiff = Math.floor((Date.now() - new Date(r.timestamp).getTime()) / (1000 * 60 * 60 * 24))
                   return daysDiff <= 30
                 }).length

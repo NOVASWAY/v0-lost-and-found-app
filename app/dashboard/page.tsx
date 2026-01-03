@@ -22,11 +22,22 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { mockItems, mockClaims, mockPlaybooks } from "@/lib/mock-data"
+import { mockPlaybooks } from "@/lib/mock-data"
+import { getItems, getClaims, getPlaybooks, initializeStorage } from "@/lib/storage"
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [items, setItems] = useState(getItems())
+  const [claims, setClaims] = useState(getClaims())
+  const [playbooks, setPlaybooks] = useState(getPlaybooks())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+    setClaims(getClaims())
+    setPlaybooks(getPlaybooks())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -38,8 +49,8 @@ export default function DashboardPage() {
     return null
   }
 
-  const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
-  const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
+  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
+  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
   const pendingClaims = userClaims.filter((claim) => claim.status === "pending")
   const releasedItems = userClaims.filter((claim) => claim.status === "released")
 
@@ -193,7 +204,7 @@ export default function DashboardPage() {
                 Read-only access to operational procedures and security protocols
               </p>
               <div className="grid gap-4">
-                {mockPlaybooks.map((pb) => (
+                {playbooks.map((pb) => (
                   <Card key={pb.id} className="p-4 hover:border-primary/50 transition-all">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">

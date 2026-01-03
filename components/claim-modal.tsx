@@ -17,7 +17,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { mockClaims, mockItems, mockUsers, type Claim } from "@/lib/mock-data"
+import { type Claim } from "@/lib/mock-data"
+import { getItems, getClaims, addClaim, updateItem, updateUser } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 
@@ -55,7 +56,8 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
     }
 
     // Check if item exists and is available
-    const item = mockItems.find((i) => i.id === itemId)
+    const items = getItems()
+    const item = items.find((i) => i.id === itemId)
     if (!item) {
       toast({
         title: "Item Not Found",
@@ -87,27 +89,27 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
       claimedAt: new Date().toISOString(),
     }
 
-    // Add to mockClaims
-    mockClaims.push(newClaim)
+    // Add to storage
+    addClaim(newClaim)
 
     // Update item status
-    item.status = "claimed"
+    updateItem(itemId, { status: "claimed" })
 
     // Update user stats
-    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
-    if (userIndex !== -1) {
-      mockUsers[userIndex].claimsSubmitted += 1
-      mockUsers[userIndex].vaultPoints += 25 // Award points for claiming
-      if (!mockUsers[userIndex].claimedItems) {
-        mockUsers[userIndex].claimedItems = []
-      }
-      mockUsers[userIndex].claimedItems.push({
-        itemId: itemId,
-        itemName: itemName,
-        claimStatus: "pending",
-        claimedAt: newClaim.claimedAt,
-      })
-    }
+    const currentClaimedItems = user.claimedItems || []
+    updateUser(user.id, {
+      claimsSubmitted: user.claimsSubmitted + 1,
+      vaultPoints: user.vaultPoints + 25, // Award points for claiming
+      claimedItems: [
+        ...currentClaimedItems,
+        {
+          itemId: itemId,
+          itemName: itemName,
+          claimStatus: "pending",
+          claimedAt: newClaim.claimedAt,
+        },
+      ],
+    })
 
     // Add audit log
     addAuditLog("item_claimed", "Item claimed", user.id, user.name, `Claim submitted for ${itemName}`, "info")

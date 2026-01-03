@@ -9,12 +9,19 @@ import { CountdownTimer } from "@/components/countdown-timer"
 import { Clock, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getItems, initializeStorage } from "@/lib/storage"
+import { useState } from "react"
 
 export default function AdminDonationsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [items, setItems] = useState(getItems())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -33,7 +40,7 @@ export default function AdminDonationsPage() {
     return null
   }
 
-  const expiringItems = mockItems
+  const expiringItems = items
     .filter((item) => {
       if (item.status !== "available" || !item.donationDeadline) return false
       const daysUntilDonation = Math.floor(
@@ -48,7 +55,7 @@ export default function AdminDonationsPage() {
     return hoursUntil <= 48
   }).length
 
-  const donatedItems = mockItems.filter((item) => item.status === "donated")
+  const donatedItems = items.filter((item) => item.status === "donated")
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,7 +97,7 @@ export default function AdminDonationsPage() {
           </Card>
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
-              {mockItems.filter((item) => item.status === "available").length}
+              {items.filter((item) => item.status === "available").length}
             </p>
             <p className="text-sm text-muted-foreground">Available Items</p>
           </Card>

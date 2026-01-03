@@ -9,13 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Eye, Download } from "lucide-react"
-import { mockAuditLogs, type AuditLog } from "@/lib/mock-data"
+import { type AuditLog } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getAuditLogs, initializeStorage } from "@/lib/storage"
 
 export default function AuditLogsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [typeFilter, setTypeFilter] = useState("all")
+  const [severityFilter, setSeverityFilter] = useState("all")
+  const [auditLogs, setAuditLogs] = useState(getAuditLogs())
+
+  useEffect(() => {
+    initializeStorage()
+    setAuditLogs(getAuditLogs())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -33,10 +42,8 @@ export default function AuditLogsPage() {
   if (!isAuthenticated || user?.role !== "admin") {
     return null
   }
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [severityFilter, setSeverityFilter] = useState("all")
 
-  const filteredLogs = mockAuditLogs.filter((log) => {
+  const filteredLogs = auditLogs.filter((log) => {
     const matchesSearch =
       log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,18 +144,18 @@ export default function AuditLogsPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
           <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{mockAuditLogs.length}</p>
+            <p className="text-3xl font-bold text-card-foreground">{auditLogs.length}</p>
             <p className="text-sm text-muted-foreground">Total Logs</p>
           </Card>
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
-              {mockAuditLogs.filter((l) => l.severity === "critical" || l.severity === "error").length}
+              {auditLogs.filter((l) => l.severity === "critical" || l.severity === "error").length}
             </p>
             <p className="text-sm text-muted-foreground">Critical/Errors</p>
           </Card>
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
-              {mockAuditLogs.filter((l) => {
+              {auditLogs.filter((l) => {
                 const today = new Date().toDateString()
                 return new Date(l.timestamp).toDateString() === today
               }).length}
@@ -157,7 +164,7 @@ export default function AuditLogsPage() {
           </Card>
           <Card className="p-6">
             <p className="text-3xl font-bold text-card-foreground">
-              {mockAuditLogs.filter((l) => {
+              {auditLogs.filter((l) => {
                 const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
                 return new Date(l.timestamp).getTime() > weekAgo
               }).length}

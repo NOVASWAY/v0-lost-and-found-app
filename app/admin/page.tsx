@@ -32,9 +32,10 @@ import {
   Calendar,
   MapPin,
 } from "lucide-react"
-import { mockUsers, mockPlaybooks, mockLocations, mockAuditLogs, type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
+import { type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
+import { getUsers, getPlaybooks, getLocations, getAuditLogs, addUser, updateUser, deleteUser, addPlaybook, updatePlaybook, deletePlaybook, addLocation, updateLocation, deleteLocation, initializeStorage, addServiceRecord } from "@/lib/storage"
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -43,12 +44,12 @@ export default function AdminDashboardPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const [users, setUsers] = useState<User[]>(getUsers())
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [orderMessage, setOrderMessage] = useState("") // State for order message
   const [orderTitle, setOrderTitle] = useState("")
   const [orderPriority, setOrderPriority] = useState<"low" | "medium" | "high">("medium")
-  const [playbooks, setPlaybooks] = useState<Playbook[]>(mockPlaybooks)
+  const [playbooks, setPlaybooks] = useState<Playbook[]>(getPlaybooks())
   const [isPlaybookDialogOpen, setIsPlaybookDialogOpen] = useState(false)
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null)
   const [newPlaybook, setNewPlaybook] = useState<Partial<Playbook>>({
@@ -57,7 +58,16 @@ export default function AdminDashboardPage() {
     protocol: "",
     priority: "medium",
   })
-  const [locations, setLocations] = useState<Location[]>(mockLocations)
+  const [locations, setLocations] = useState<Location[]>(getLocations())
+  const [auditLogs, setAuditLogs] = useState(getAuditLogs())
+
+  useEffect(() => {
+    initializeStorage()
+    setUsers(getUsers())
+    setPlaybooks(getPlaybooks())
+    setLocations(getLocations())
+    setAuditLogs(getAuditLogs())
+  }, [])
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
   const [newLocation, setNewLocation] = useState<Partial<Location>>({
@@ -101,7 +111,7 @@ export default function AdminDashboardPage() {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault()
     const id = `u${Math.random().toString(36).substr(2, 9)}`
-    const user: User = {
+    const newUserData: User = {
       id,
       name: newUser.name,
       username: newUser.username,
@@ -116,9 +126,9 @@ export default function AdminDashboardPage() {
       serviceCount: 0,
       orders: [],
     }
-    mockUsers.push(user)
-    setUsers([...users, user])
-    addAuditLog("user_created", "User account created", user.id, user.name, `User '${user.username}' created with role '${user.role}'`, "info")
+    addUser(newUserData)
+    setUsers(getUsers())
+    addAuditLog("user_created", "User account created", newUserData.id, newUserData.name, `User '${newUserData.username}' created with role '${newUserData.role}'`, "info")
     setNewUser({ name: "", username: "", password: "", role: "user" })
     setCreateDialogOpen(false)
   }
@@ -127,15 +137,18 @@ export default function AdminDashboardPage() {
     if (!selectedUser) return
 
     const pointsToAdd = (markAttended ? 10 : 0) + (markServed ? 25 : 0)
-    const updatedUser: User = {
-      ...selectedUser,
+    const serviceRecordId = `sr${Date.now()}`
+    const currentServiceRecords = selectedUser.serviceRecords || []
+    
+    // Update in storage
+    updateUser(selectedUser.id, {
       attendanceCount: markAttended ? selectedUser.attendanceCount + 1 : selectedUser.attendanceCount,
       serviceCount: markServed ? selectedUser.serviceCount + 1 : selectedUser.serviceCount,
       vaultPoints: selectedUser.vaultPoints + pointsToAdd,
       serviceRecords: [
-        ...(selectedUser.serviceRecords || []),
+        ...currentServiceRecords,
         {
-          id: `sr${Date.now()}`,
+          id: serviceRecordId,
           serviceDate,
           attended: markAttended,
           served: markServed,
@@ -144,13 +157,19 @@ export default function AdminDashboardPage() {
           recordedAt: new Date().toISOString(),
         },
       ],
-    }
+    })
 
-    // Update in mockUsers
-    const userIndex = mockUsers.findIndex((u) => u.id === selectedUser.id)
-    if (userIndex !== -1) {
-      mockUsers[userIndex] = updatedUser
-    }
+    // Add service record to storage
+    addServiceRecord({
+      id: serviceRecordId,
+      serviceDate,
+      attended: markAttended,
+      served: markServed,
+      notes: serviceNotes || undefined,
+      recordedBy: user?.name || "Admin",
+      recordedAt: new Date().toISOString(),
+      userId: selectedUser.id,
+    } as any)
 
     if (markAttended) {
       addAuditLog("attendance_marked", "Attendance marked", selectedUser.id, selectedUser.name, `Marked attendance for service on ${serviceDate}`, "info")
@@ -159,7 +178,7 @@ export default function AdminDashboardPage() {
       addAuditLog("service_marked", "Service marked", selectedUser.id, selectedUser.name, `Marked service participation for ${serviceDate}`, "info")
     }
 
-    setUsers(users.map((u) => (u.id === selectedUser.id ? updatedUser : u)))
+    setUsers(getUsers())
     setAttendanceDialogOpen(false)
     setSelectedUser(null)
     setServiceDate(new Date().toISOString().split("T")[0])
@@ -171,11 +190,8 @@ export default function AdminDashboardPage() {
   const handleDeactivateUser = () => {
     if (selectedUser) {
       addAuditLog("user_deleted", "User account deactivated", selectedUser.id, selectedUser.name, `User '${selectedUser.username}' deactivated`, "warning")
-      const index = mockUsers.findIndex((u) => u.id === selectedUser.id)
-      if (index !== -1) {
-        mockUsers.splice(index, 1)
-      }
-      setUsers(users.filter((u) => u.id !== selectedUser.id))
+      deleteUser(selectedUser.id)
+      setUsers(getUsers())
       setDeactivateDialogOpen(false)
       setSelectedUser(null)
     }
@@ -193,17 +209,13 @@ export default function AdminDashboardPage() {
       createdAt: new Date().toISOString(),
     }
 
-    setUsers(
-      users.map((u) => {
-        if (u.id === userId) {
-          return {
-            ...u,
-            orders: [...(u.orders || []), newOrder],
-          }
-        }
-        return u
-      }),
-    )
+    const targetUser = users.find((u) => u.id === userId)
+    if (targetUser) {
+      updateUser(userId, {
+        orders: [...(targetUser.orders || []), newOrder],
+      })
+      setUsers(getUsers())
+    }
 
     setOrderTitle("")
     setOrderMessage("")
@@ -225,13 +237,10 @@ export default function AdminDashboardPage() {
     if (!newPlaybook.title || !newPlaybook.protocol) return
 
     if (editingPlaybook) {
-      setPlaybooks(
-        playbooks.map((pb) =>
-          pb.id === editingPlaybook.id
-            ? ({ ...pb, ...newPlaybook, updatedAt: new Date().toISOString() } as Playbook)
-            : pb,
-        ),
-      )
+      updatePlaybook(editingPlaybook.id, {
+        ...newPlaybook,
+        updatedAt: new Date().toISOString(),
+      } as Partial<Playbook>)
       addAuditLog("playbook_updated", "Playbook updated", user?.id, user?.name, `Playbook '${editingPlaybook.title}' updated`, "info")
     } else {
       const playbook: Playbook = {
@@ -242,10 +251,11 @@ export default function AdminDashboardPage() {
         priority: (newPlaybook.priority as any) || "medium",
         updatedAt: new Date().toISOString(),
       }
-      setPlaybooks([...playbooks, playbook])
+      addPlaybook(playbook)
       addAuditLog("playbook_created", "Playbook created", user?.id, user?.name, `Playbook '${playbook.title}' created`, "info")
     }
 
+    setPlaybooks(getPlaybooks())
     setIsPlaybookDialogOpen(false)
     setEditingPlaybook(null)
     setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
@@ -256,7 +266,8 @@ export default function AdminDashboardPage() {
     if (playbook) {
       addAuditLog("playbook_deleted", "Playbook deleted", user?.id, user?.name, `Playbook '${playbook.title}' deleted`, "warning")
     }
-    setPlaybooks(playbooks.filter((pb) => pb.id !== id))
+    deletePlaybook(id)
+    setPlaybooks(getPlaybooks())
   }
 
   const openEditPlaybook = (pb: Playbook) => {
@@ -269,17 +280,7 @@ export default function AdminDashboardPage() {
     if (!newLocation.name) return
 
     if (editingLocation) {
-      setLocations(
-        locations.map((loc) =>
-          loc.id === editingLocation.id
-            ? ({ ...loc, ...newLocation } as Location)
-            : loc,
-        ),
-      )
-      const index = mockLocations.findIndex((loc) => loc.id === editingLocation.id)
-      if (index !== -1) {
-        mockLocations[index] = { ...editingLocation, ...newLocation } as Location
-      }
+      updateLocation(editingLocation.id, newLocation as Partial<Location>)
       addAuditLog("location_updated", "Location updated", user?.id, user?.name, `Location '${editingLocation.name}' updated`, "info")
     } else {
       const location: Location = {
@@ -288,8 +289,7 @@ export default function AdminDashboardPage() {
         description: newLocation.description || undefined,
         createdAt: new Date().toISOString(),
       }
-      mockLocations.push(location)
-      setLocations([...locations, location])
+      addLocation(location)
       addAuditLog("location_created", "Location created", user?.id, user?.name, `Location '${location.name}' created`, "info")
     }
 
@@ -712,7 +712,7 @@ export default function AdminDashboardPage() {
             <Card className="bg-card border-border p-6 h-fit">
               <h3 className="text-lg font-bold mb-6">Recent Security Events</h3>
               <div className="space-y-6">
-                {mockAuditLogs.slice(0, 5).map((log) => {
+                {auditLogs.slice(0, 5).map((log) => {
                   const getIcon = () => {
                     if (log.type.includes("claim")) return FileCheck
                     if (log.severity === "error" || log.severity === "critical") return ShieldAlert
@@ -747,7 +747,7 @@ export default function AdminDashboardPage() {
                     </div>
                   )
                 })}
-                {mockAuditLogs.length === 0 && (
+                {auditLogs.length === 0 && (
                   <div className="text-center py-4">
                     <p className="text-sm text-muted-foreground">No recent events</p>
                   </div>

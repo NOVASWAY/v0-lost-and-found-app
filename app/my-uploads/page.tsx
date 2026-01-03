@@ -10,11 +10,18 @@ import { CountdownTimer } from "@/components/countdown-timer"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { mockItems } from "@/lib/mock-data"
+import { getItems, initializeStorage } from "@/lib/storage"
+import { useState } from "react"
 
 export default function MyUploadsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [items, setItems] = useState(getItems())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -26,7 +33,7 @@ export default function MyUploadsPage() {
     return null
   }
 
-  const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
+  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
 
   return (
     <div className="min-h-screen bg-background">

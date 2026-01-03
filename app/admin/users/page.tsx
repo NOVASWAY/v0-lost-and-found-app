@@ -7,13 +7,19 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
-import { mockUsers } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getUsers, initializeStorage } from "@/lib/storage"
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [users, setUsers] = useState(getUsers())
+
+  useEffect(() => {
+    initializeStorage()
+    setUsers(getUsers())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -32,14 +38,14 @@ export default function AdminUsersPage() {
     return null
   }
 
-  const filteredUsers = mockUsers.filter((u) => {
+  const filteredUsers = users.filter((u) => {
     const searchLower = searchQuery.toLowerCase()
     return u.name.toLowerCase().includes(searchLower) || u.username.toLowerCase().includes(searchLower)
   })
 
-  const regularUsers = mockUsers.filter((u) => u.role === "user").length
-  const volunteers = mockUsers.filter((u) => u.role === "volunteer").length
-  const admins = mockUsers.filter((u) => u.role === "admin").length
+  const regularUsers = users.filter((u) => u.role === "user").length
+  const volunteers = users.filter((u) => u.role === "volunteer").length
+  const admins = users.filter((u) => u.role === "admin").length
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,7 +73,7 @@ export default function AdminUsersPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
           <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{mockUsers.length}</p>
+            <p className="text-3xl font-bold text-card-foreground">{users.length}</p>
             <p className="text-sm text-muted-foreground">Total Users</p>
           </Card>
           <Card className="p-6">

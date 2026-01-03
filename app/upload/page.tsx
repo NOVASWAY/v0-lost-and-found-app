@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { mockItems, mockUsers, mockLocations, type Item } from "@/lib/mock-data"
+import { type Item } from "@/lib/mock-data"
+import { getLocations, addItem, updateUser, initializeStorage } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 
@@ -29,6 +30,12 @@ export default function UploadPage() {
   const [location, setLocation] = useState("")
   const [dateFound, setDateFound] = useState(new Date().toISOString().split("T")[0])
   const [description, setDescription] = useState("")
+  const [locations, setLocations] = useState<{ id: string; name: string; description?: string; createdAt: string }[]>([])
+
+  useEffect(() => {
+    initializeStorage()
+    setLocations(getLocations())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -78,14 +85,18 @@ export default function UploadPage() {
       uniqueMarkings: description || undefined,
     }
 
-    // Add to mockItems
-    mockItems.push(newItem)
+    // Add to storage
+    addItem(newItem)
 
     // Update user stats
-    const userIndex = mockUsers.findIndex((u) => u.id === user.id)
-    if (userIndex !== -1) {
-      mockUsers[userIndex].itemsUploaded += 1
-      mockUsers[userIndex].vaultPoints += 50 // Award points for uploading
+    const currentUser = updateUser(user.id, {
+      itemsUploaded: user.itemsUploaded + 1,
+      vaultPoints: user.vaultPoints + 50, // Award points for uploading
+    })
+    
+    // Update user in context if needed
+    if (currentUser) {
+      // User will be refreshed on next login or page refresh
     }
 
     // Add audit log
@@ -216,7 +227,7 @@ export default function UploadPage() {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockLocations.map((loc) => (
+                    {locations.map((loc) => (
                       <SelectItem key={loc.id} value={loc.name}>
                         {loc.name}
                       </SelectItem>

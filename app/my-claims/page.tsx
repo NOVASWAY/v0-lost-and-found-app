@@ -9,11 +9,18 @@ import { StatusBadge } from "@/components/status-badge"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { mockClaims } from "@/lib/mock-data"
+import { getClaims, initializeStorage } from "@/lib/storage"
+import { useState } from "react"
 
 export default function MyClaimsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [claims, setClaims] = useState(getClaims())
+
+  useEffect(() => {
+    initializeStorage()
+    setClaims(getClaims())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -25,7 +32,7 @@ export default function MyClaimsPage() {
     return null
   }
 
-  const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)
+  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
 
   return (
     <div className="min-h-screen bg-background">

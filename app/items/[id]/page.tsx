@@ -9,13 +9,20 @@ import { CountdownTimer } from "@/components/countdown-timer"
 import { ClaimModal } from "@/components/claim-modal"
 import { MapPin, Calendar, Tag, Info } from "lucide-react"
 import Image from "next/image"
-import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getItems, initializeStorage } from "@/lib/storage"
+import { useState } from "react"
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { id } = use(params)
+  const [items, setItems] = useState(getItems())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -27,7 +34,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     return null
   }
 
-  const item = mockItems.find((i) => i.id === id)
+  const item = items.find((i) => i.id === id)
 
   if (!item) {
     return <div>Item not found</div>

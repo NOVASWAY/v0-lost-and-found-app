@@ -8,12 +8,24 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter } from "lucide-react"
-import { mockItems, mockLocations } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getItems, getLocations, initializeStorage } from "@/lib/storage"
 
 export default function BrowsePage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [colorFilter, setColorFilter] = useState("all")
+  const [locationFilter, setLocationFilter] = useState("all")
+  const [items, setItems] = useState(getItems())
+  const [locations, setLocations] = useState(getLocations())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+    setLocations(getLocations())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,12 +36,8 @@ export default function BrowsePage() {
   if (!isAuthenticated) {
     return null
   }
-  const [searchQuery, setSearchQuery] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [colorFilter, setColorFilter] = useState("all")
-  const [locationFilter, setLocationFilter] = useState("all")
 
-  const filteredItems = mockItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
       item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -106,7 +114,7 @@ export default function BrowsePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                {mockLocations.map((loc) => (
+                {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.name}>
                     {loc.name}
                   </SelectItem>

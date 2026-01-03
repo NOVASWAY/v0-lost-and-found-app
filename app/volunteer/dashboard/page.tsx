@@ -9,12 +9,19 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { mockClaims } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getClaims, initializeStorage } from "@/lib/storage"
 
 export default function VolunteerDashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [claims, setClaims] = useState(getClaims())
+
+  useEffect(() => {
+    initializeStorage()
+    setClaims(getClaims())
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "volunteer") {
@@ -25,22 +32,21 @@ export default function VolunteerDashboardPage() {
   if (!isAuthenticated || user?.role !== "volunteer") {
     return null
   }
-  const [searchQuery, setSearchQuery] = useState("")
 
-  const pendingClaims = mockClaims.filter((claim) => claim.status === "pending")
+  const pendingClaims = claims.filter((claim) => claim.status === "pending")
 
   const filteredClaims = pendingClaims.filter((claim) => {
     const searchLower = searchQuery.toLowerCase()
     return claim.itemName.toLowerCase().includes(searchLower) || claim.claimantName.toLowerCase().includes(searchLower)
   })
 
-  const releasedToday = mockClaims.filter((claim) => {
+  const releasedToday = claims.filter((claim) => {
     if (!claim.releasedAt) return false
     const today = new Date().toDateString()
     return new Date(claim.releasedAt).toDateString() === today
   }).length
 
-  const releasedThisWeek = mockClaims.filter((claim) => {
+  const releasedThisWeek = claims.filter((claim) => {
     if (!claim.releasedAt) return false
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
     return new Date(claim.releasedAt).getTime() > weekAgo

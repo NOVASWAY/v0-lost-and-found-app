@@ -11,13 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
+import { getItems, initializeStorage } from "@/lib/storage"
 
 export default function AdminItemsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [items, setItems] = useState(getItems())
+
+  useEffect(() => {
+    initializeStorage()
+    setItems(getItems())
+  }, [])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -35,9 +42,8 @@ export default function AdminItemsPage() {
   if (!isAuthenticated || user?.role !== "admin") {
     return null
   }
-  const [statusFilter, setStatusFilter] = useState("all")
 
-  const filteredItems = mockItems.filter((item) => {
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
       item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase())
@@ -45,9 +51,9 @@ export default function AdminItemsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const availableCount = mockItems.filter((i) => i.status === "available").length
-  const releasedCount = mockItems.filter((i) => i.status === "released").length
-  const donatedCount = mockItems.filter((i) => i.status === "donated").length
+  const availableCount = items.filter((i) => i.status === "available").length
+  const releasedCount = items.filter((i) => i.status === "released").length
+  const donatedCount = items.filter((i) => i.status === "donated").length
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +97,7 @@ export default function AdminItemsPage() {
         {/* Stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-4">
           <Card className="p-6">
-            <p className="text-3xl font-bold text-card-foreground">{mockItems.length}</p>
+            <p className="text-3xl font-bold text-card-foreground">{items.length}</p>
             <p className="text-sm text-muted-foreground">Total Items</p>
           </Card>
           <Card className="p-6">
