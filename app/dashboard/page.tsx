@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
@@ -20,10 +20,15 @@ import {
   Trophy,
   Star,
   TrendingUp,
+  Activity,
+  CheckCircle,
+  Users,
+  MapPin,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { mockPlaybooks } from "@/lib/mock-data"
-import { getItems, getClaims, getPlaybooks, initializeStorage } from "@/lib/storage"
+import { getItems, getClaims, getPlaybooks, getMissionsByUser, getMissions, initializeStorage, updateMission } from "@/lib/storage"
+import { addAuditLog } from "@/lib/audit-logger"
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -31,13 +36,19 @@ export default function DashboardPage() {
   const [items, setItems] = useState(getItems())
   const [claims, setClaims] = useState(getClaims())
   const [playbooks, setPlaybooks] = useState(getPlaybooks())
+  const [myMissions, setMyMissions] = useState(getMissionsByUser(user?.id || ""))
+  const [allMissions, setAllMissions] = useState(getMissions())
 
   useEffect(() => {
     initializeStorage()
     setItems(getItems())
     setClaims(getClaims())
     setPlaybooks(getPlaybooks())
-  }, [])
+    setAllMissions(getMissions())
+    if (user?.id) {
+      setMyMissions(getMissionsByUser(user.id))
+    }
+  }, [user])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -228,6 +239,164 @@ export default function DashboardPage() {
                     </div>
                   </Card>
                 ))}
+              </div>
+            </div>
+
+            {/* My Missions */}
+            {myMissions.length > 0 && (
+              <div>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-card-foreground">
+                  <Activity className="w-5 h-5 text-primary" />
+                  My Mission Assignments
+                </h2>
+                <div className="grid gap-4">
+                  {myMissions.filter((m) => m.status !== "completed" && m.status !== "cancelled").slice(0, 3).map((mission) => {
+                    const statusColors = {
+                      pending: "bg-yellow-500/20 text-yellow-600 border-yellow-500/50",
+                      in_progress: "bg-blue-500/20 text-blue-600 border-blue-500/50",
+                      completed: "bg-green-500/20 text-green-600 border-green-500/50",
+                      cancelled: "bg-gray-500/20 text-gray-600 border-gray-500/50",
+                    }
+                    const priorityColors = {
+                      critical: "bg-destructive",
+                      high: "bg-amber-600",
+                      medium: "bg-primary",
+                      low: "bg-muted",
+                    }
+                    return (
+                      <Card key={mission.id} className="p-4 hover:border-primary/50 transition-all">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge className={`uppercase text-[10px] font-black ${priorityColors[mission.priority]}`}>
+                                {mission.priority}
+                              </Badge>
+                              <Badge variant="outline" className={`text-[10px] ${statusColors[mission.status]}`}>
+                                {mission.status.replace("_", " ").toUpperCase()}
+                              </Badge>
+                              <h4 className="font-bold text-sm">{mission.title}</h4>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2">{mission.description}</p>
+                            {mission.dueDate && (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                                <Clock className="w-3 h-3" />
+                                Due: {new Date(mission.dueDate).toLocaleDateString()}
+                              </div>
+                            )}
+                            <div className="flex gap-2 mt-2">
+                              {mission.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    updateMission(mission.id, { status: "in_progress" })
+                                    addAuditLog("mission_assigned", "Mission started", user?.id, user?.name, `Mission '${mission.title}' started`, "info")
+                                    setMyMissions(getMissionsByUser(user?.id || ""))
+                                    setAllMissions(getMissions())
+                                  }}
+                                  className="text-xs"
+                                >
+                                  Start Mission
+                                </Button>
+                              )}
+                              {mission.status === "in_progress" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    updateMission(mission.id, { 
+                                      status: "completed",
+                                      completedAt: new Date().toISOString()
+                                    })
+                                    addAuditLog("mission_completed", "Mission completed", user?.id, user?.name, `Mission '${mission.title}' completed`, "info")
+                                    setMyMissions(getMissionsByUser(user?.id || ""))
+                                    setAllMissions(getMissions())
+                                  }}
+                                  className="text-xs"
+                                >
+                                  Mark Complete
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-background/50 border border-border/50 p-2 rounded text-xs font-mono leading-relaxed">
+                          {mission.instructions}
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* All Mission Assignments - Read Only */}
+            <div>
+              <h2 className="text-xl font-black italic uppercase tracking-tighter mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Mission Assignments
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Read-only access to all active mission assignments and security tasks
+              </p>
+              <div className="grid gap-4">
+                {allMissions.filter((m) => m.status !== "completed" && m.status !== "cancelled").map((mission) => {
+                  const statusColors = {
+                    pending: "bg-yellow-500/20 text-yellow-600 border-yellow-500/50",
+                    in_progress: "bg-blue-500/20 text-blue-600 border-blue-500/50",
+                    completed: "bg-green-500/20 text-green-600 border-green-500/50",
+                    cancelled: "bg-gray-500/20 text-gray-600 border-gray-500/50",
+                  }
+                  const priorityColors = {
+                    critical: "bg-destructive",
+                    high: "bg-amber-600",
+                    medium: "bg-primary",
+                    low: "bg-muted",
+                  }
+                  return (
+                    <Card key={mission.id} className="p-4 hover:border-primary/50 transition-all">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={`uppercase text-[10px] font-black ${priorityColors[mission.priority]}`}>
+                              {mission.priority}
+                            </Badge>
+                            <Badge variant="outline" className={`text-[10px] ${statusColors[mission.status]}`}>
+                              {mission.status.replace("_", " ").toUpperCase()}
+                            </Badge>
+                            <h4 className="font-bold text-sm">{mission.title}</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{mission.description}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-2">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              Assigned to: {mission.assignedToName}
+                            </span>
+                            {mission.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {mission.location}
+                              </span>
+                            )}
+                            {mission.dueDate && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Due: {new Date(mission.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-background/50 border border-border/50 p-3 rounded text-xs font-mono leading-relaxed">
+                        {mission.instructions}
+                      </div>
+                    </Card>
+                  )
+                })}
+                {allMissions.filter((m) => m.status !== "completed" && m.status !== "cancelled").length === 0 && (
+                  <Card className="p-8 text-center">
+                    <p className="text-sm text-muted-foreground">No active mission assignments</p>
+                  </Card>
+                )}
               </div>
             </div>
 

@@ -81,7 +81,14 @@ export default function UploadPage() {
       description: description || "",
       status: "available",
       uploadedBy: user.name,
-      donationDeadline: new Date(new Date(dateFound).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      donationDeadline: (() => {
+        const { getSystemSettings } = require("@/lib/storage")
+        const settings = getSystemSettings()
+        const foundDate = new Date(dateFound)
+        const deadline = new Date(foundDate)
+        deadline.setDate(deadline.getDate() + settings.itemExpirationDays)
+        return deadline.toISOString().split("T")[0]
+      })(),
       uniqueMarkings: description || undefined,
     }
 

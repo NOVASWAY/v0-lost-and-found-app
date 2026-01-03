@@ -9,8 +9,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Search,
   UserPlus,
@@ -32,14 +34,16 @@ import {
   Calendar,
   MapPin,
 } from "lucide-react"
-import { type User, type Order, type Playbook, type Location } from "@/lib/mock-data"
+import { type User, type Order, type Playbook, type Location, type Mission } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
-import { getUsers, getPlaybooks, getLocations, getAuditLogs, addUser, updateUser, deleteUser, addPlaybook, updatePlaybook, deletePlaybook, addLocation, updateLocation, deleteLocation, initializeStorage, addServiceRecord } from "@/lib/storage"
+import { useToast } from "@/hooks/use-toast"
+import { getUsers, getPlaybooks, getLocations, getAuditLogs, getMissions, getSystemSettings, updateSystemSettings, addUser, updateUser, deleteUser, addPlaybook, updatePlaybook, deletePlaybook, addLocation, updateLocation, deleteLocation, initializeStorage, addServiceRecord, addMission, updateMission, deleteMission } from "@/lib/storage"
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
@@ -60,6 +64,35 @@ export default function AdminDashboardPage() {
   })
   const [locations, setLocations] = useState<Location[]>(getLocations())
   const [auditLogs, setAuditLogs] = useState(getAuditLogs())
+  const [missions, setMissions] = useState<Mission[]>(getMissions())
+  const [isMissionDialogOpen, setIsMissionDialogOpen] = useState(false)
+  const [editingMission, setEditingMission] = useState<Mission | null>(null)
+  const [newMission, setNewMission] = useState<Partial<Mission>>({
+    title: "",
+    description: "",
+    instructions: "",
+    priority: "medium",
+    status: "pending",
+  })
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null)
+  const [newLocation, setNewLocation] = useState<Partial<Location>>({
+    name: "",
+    description: "",
+  })
+  const [newUser, setNewUser] = useState({
+    name: "",
+    username: "",
+    password: "",
+    role: "user" as "user" | "volunteer" | "admin",
+  })
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false)
+  const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0])
+  const [markAttended, setMarkAttended] = useState(true)
+  const [markServed, setMarkServed] = useState(false)
+  const [serviceNotes, setServiceNotes] = useState("")
+  const [systemSettings, setSystemSettings] = useState(getSystemSettings())
+  const [expirationDays, setExpirationDays] = useState(systemSettings.itemExpirationDays)
 
   useEffect(() => {
     initializeStorage()
@@ -67,13 +100,10 @@ export default function AdminDashboardPage() {
     setPlaybooks(getPlaybooks())
     setLocations(getLocations())
     setAuditLogs(getAuditLogs())
+    setMissions(getMissions())
+    setSystemSettings(getSystemSettings())
+    setExpirationDays(getSystemSettings().itemExpirationDays)
   }, [])
-  const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false)
-  const [editingLocation, setEditingLocation] = useState<Location | null>(null)
-  const [newLocation, setNewLocation] = useState<Partial<Location>>({
-    name: "",
-    description: "",
-  })
 
   const filteredUsers = users.filter((u) => {
     const searchLower = searchQuery.toLowerCase()
@@ -316,17 +346,57 @@ export default function AdminDashboardPage() {
     setIsLocationDialogOpen(true)
   }
 
-  const [newUser, setNewUser] = useState({
-    name: "",
-    username: "",
-    password: "",
-    role: "user" as "user" | "volunteer" | "admin",
-  })
-  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false)
-  const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0])
-  const [markAttended, setMarkAttended] = useState(true)
-  const [markServed, setMarkServed] = useState(false)
-  const [serviceNotes, setServiceNotes] = useState("")
+  const handleSaveMission = () => {
+    if (!newMission.title || !newMission.assignedTo || !newMission.instructions) return
+
+    if (editingMission) {
+      updateMission(editingMission.id, {
+        ...newMission,
+        updatedAt: new Date().toISOString(),
+      } as Partial<Mission>)
+      addAuditLog("mission_assigned", "Mission updated", user?.id, user?.name, `Mission '${editingMission.title}' updated`, "info")
+    } else {
+      const assignedUser = users.find((u) => u.id === newMission.assignedTo)
+      const mission: Mission = {
+        id: `m${Date.now()}`,
+        title: newMission.title,
+        description: newMission.description || "",
+        assignedTo: newMission.assignedTo,
+        assignedToName: assignedUser?.name || "Unknown",
+        assignedBy: user?.id || "",
+        assignedByName: user?.name || "Admin",
+        priority: (newMission.priority as any) || "medium",
+        status: (newMission.status as any) || "pending",
+        dueDate: newMission.dueDate,
+        location: newMission.location,
+        instructions: newMission.instructions,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      addMission(mission)
+      addAuditLog("mission_created", "Mission created", user?.id, user?.name, `Mission '${mission.title}' assigned to ${mission.assignedToName}`, "info")
+    }
+
+    setMissions(getMissions())
+    setIsMissionDialogOpen(false)
+    setEditingMission(null)
+    setNewMission({ title: "", description: "", instructions: "", priority: "medium", status: "pending" })
+  }
+
+  const handleDeleteMission = (id: string) => {
+    const mission = missions.find((m) => m.id === id)
+    if (mission) {
+      addAuditLog("mission_cancelled", "Mission cancelled", user?.id, user?.name, `Mission '${mission.title}' cancelled`, "warning")
+    }
+    deleteMission(id)
+    setMissions(getMissions())
+  }
+
+  const openEditMission = (mission: Mission) => {
+    setEditingMission(mission)
+    setNewMission(mission)
+    setIsMissionDialogOpen(true)
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
@@ -686,6 +756,160 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </Card>
+
+            {/* Mission Assignments Section */}
+            <Card className="bg-card border-border shadow-2xl overflow-hidden">
+              <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                <div>
+                  <h2 className="text-xl font-black tracking-tight uppercase italic flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-primary" />
+                    Mission Assignments
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Assign and track security missions and tasks
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setEditingMission(null)
+                    setNewMission({ title: "", description: "", instructions: "", priority: "medium", status: "pending" })
+                    setIsMissionDialogOpen(true)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/50 text-primary hover:bg-primary/10 font-bold"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> New Mission
+                </Button>
+              </div>
+              <div className="divide-y divide-border">
+                {missions.map((mission) => {
+                  const statusColors = {
+                    pending: "bg-yellow-500/20 text-yellow-600 border-yellow-500/50",
+                    in_progress: "bg-blue-500/20 text-blue-600 border-blue-500/50",
+                    completed: "bg-green-500/20 text-green-600 border-green-500/50",
+                    cancelled: "bg-gray-500/20 text-gray-600 border-gray-500/50",
+                  }
+                  const priorityColors = {
+                    critical: "bg-destructive",
+                    high: "bg-amber-600",
+                    medium: "bg-primary",
+                    low: "bg-muted",
+                  }
+                  return (
+                    <div key={mission.id} className="p-4 hover:bg-muted/30 transition-colors group">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={`uppercase text-[10px] font-black ${priorityColors[mission.priority]}`}>
+                              {mission.priority}
+                            </Badge>
+                            <Badge variant="outline" className={`text-[10px] ${statusColors[mission.status]}`}>
+                              {mission.status.replace("_", " ").toUpperCase()}
+                            </Badge>
+                            <h4 className="font-bold tracking-tight">{mission.title}</h4>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{mission.description}</p>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {mission.assignedToName}
+                            </span>
+                            {mission.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {mission.location}
+                              </span>
+                            )}
+                            {mission.dueDate && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                Due: {new Date(mission.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => openEditMission(mission)}
+                          >
+                            <Edit className="w-3 h-3 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleDeleteMission(mission.id)}
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="bg-background/50 border border-border/50 p-3 rounded text-xs font-mono leading-relaxed mt-2">
+                        {mission.instructions}
+                      </div>
+                    </div>
+                  )
+                })}
+                {missions.length === 0 && (
+                  <div className="p-8 text-center">
+                    <p className="text-sm text-muted-foreground">No missions assigned</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* System Settings Section */}
+            <Card className="bg-card border-border shadow-2xl overflow-hidden">
+              <div className="p-6 border-b border-border flex items-center justify-between bg-primary/5">
+                <div>
+                  <h2 className="text-xl font-black tracking-tight uppercase italic flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-primary" />
+                    System Settings
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Configure system-wide settings and preferences
+                  </p>
+                </div>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold">Item Expiration Period (Days)</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Set how many days items remain available before automatic expiration. Current: {systemSettings.itemExpirationDays} days
+                    </p>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="365"
+                        value={expirationDays}
+                        onChange={(e) => setExpirationDays(parseInt(e.target.value) || 30)}
+                        className="w-32 bg-muted/50"
+                      />
+                      <Button
+                        onClick={() => {
+                          updateSystemSettings({ itemExpirationDays: expirationDays }, user?.id || "admin")
+                          setSystemSettings(getSystemSettings())
+                          addAuditLog("system_settings_updated", "System settings updated", user?.id, user?.name, `Item expiration period changed to ${expirationDays} days`, "info")
+                          toast({
+                            title: "Settings Updated",
+                            description: `Item expiration period set to ${expirationDays} days.`,
+                          })
+                        }}
+                        className="bg-primary font-black uppercase italic"
+                      >
+                        Save Settings
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
 
           {/* System Integrity & Logs */}
@@ -768,7 +992,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Title</label>
                 <Input
-                  value={newPlaybook.title}
+                  value={newPlaybook.title || ""}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, title: e.target.value })}
                   placeholder="e.g., High-Value Asset Recovery"
                   className="bg-muted/50"
@@ -779,7 +1003,7 @@ export default function AdminDashboardPage() {
                   Scenario
                 </label>
                 <Input
-                  value={newPlaybook.scenario}
+                  value={newPlaybook.scenario || ""}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, scenario: e.target.value })}
                   placeholder="What triggers this playbook?"
                   className="bg-muted/50"
@@ -790,7 +1014,7 @@ export default function AdminDashboardPage() {
                   Protocol
                 </label>
                 <textarea
-                  value={newPlaybook.protocol}
+                  value={newPlaybook.protocol || ""}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, protocol: e.target.value })}
                   placeholder="Detailed instructions..."
                   className="w-full min-h-[100px] bg-muted/50 border border-border rounded-md px-3 py-2 text-xs font-mono focus:ring-primary focus:border-primary"
@@ -801,7 +1025,7 @@ export default function AdminDashboardPage() {
                   Priority
                 </label>
                 <select
-                  value={newPlaybook.priority}
+                  value={newPlaybook.priority || "medium"}
                   onChange={(e) => setNewPlaybook({ ...newPlaybook, priority: e.target.value as any })}
                   className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-xs focus:ring-primary focus:border-primary"
                 >
@@ -983,7 +1207,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Location Name</label>
                 <Input
-                  value={newLocation.name}
+                  value={newLocation.name || ""}
                   onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
                   placeholder="e.g., Main Sanctuary - Pew 12"
                   className="bg-muted/50"
@@ -995,7 +1219,7 @@ export default function AdminDashboardPage() {
                   Description (Optional)
                 </label>
                 <Input
-                  value={newLocation.description}
+                  value={newLocation.description || ""}
                   onChange={(e) => setNewLocation({ ...newLocation, description: e.target.value })}
                   placeholder="Brief description of the location"
                   className="bg-muted/50"
@@ -1016,6 +1240,166 @@ export default function AdminDashboardPage() {
                 </Button>
                 <Button onClick={handleSaveLocation} className="flex-1 bg-primary font-black uppercase italic">
                   {editingLocation ? "Update" : "Create"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {isMissionDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border-primary/20 shadow-2xl">
+            <div className="p-6 border-b border-border bg-primary/5">
+              <h3 className="text-xl font-black uppercase italic tracking-tight">
+                {editingMission ? "Edit Mission" : "Create New Mission"}
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Mission Title *
+                </Label>
+                <Input
+                  value={newMission.title || ""}
+                  onChange={(e) => setNewMission({ ...newMission, title: e.target.value })}
+                  placeholder="e.g., Security Patrol - Main Sanctuary"
+                  className="bg-muted/50"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Description
+                </Label>
+                <Input
+                  value={newMission.description || ""}
+                  onChange={(e) => setNewMission({ ...newMission, description: e.target.value })}
+                  placeholder="Brief description of the mission"
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Assign To *
+                  </Label>
+                  <Select
+                    value={newMission.assignedTo || ""}
+                    onValueChange={(value) => setNewMission({ ...newMission, assignedTo: value })}
+                  >
+                    <SelectTrigger className="bg-muted/50">
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.filter((u) => u.role !== "admin").map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name} ({u.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Priority
+                  </Label>
+                  <Select
+                    value={newMission.priority}
+                    onValueChange={(value: any) => setNewMission({ ...newMission, priority: value })}
+                  >
+                    <SelectTrigger className="bg-muted/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Status
+                  </Label>
+                  <Select
+                    value={newMission.status}
+                    onValueChange={(value: any) => setNewMission({ ...newMission, status: value })}
+                  >
+                    <SelectTrigger className="bg-muted/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Due Date
+                  </Label>
+                  <Input
+                    type="date"
+                    value={newMission.dueDate || ""}
+                    onChange={(e) => setNewMission({ ...newMission, dueDate: e.target.value })}
+                    className="bg-muted/50"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Location
+                </Label>
+                <Select
+                  value={newMission.location || undefined}
+                  onValueChange={(value) => setNewMission({ ...newMission, location: value || undefined })}
+                >
+                  <SelectTrigger className="bg-muted/50">
+                    <SelectValue placeholder="Select location (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.id} value={loc.name}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Instructions *
+                </Label>
+                <Textarea
+                  value={newMission.instructions || ""}
+                  onChange={(e) => setNewMission({ ...newMission, instructions: e.target.value })}
+                  placeholder="Detailed instructions for the mission..."
+                  rows={6}
+                  className="bg-muted/50 font-mono text-xs"
+                  required
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => {
+                    setIsMissionDialogOpen(false)
+                    setEditingMission(null)
+                    setNewMission({ title: "", description: "", instructions: "", priority: "medium", status: "pending" })
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveMission} className="flex-1 bg-primary font-black uppercase italic">
+                  {editingMission ? "Update" : "Assign Mission"}
                 </Button>
               </div>
             </div>

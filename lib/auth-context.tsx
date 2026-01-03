@@ -36,6 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (foundUser) {
         setUser(foundUser)
         setIsAuthenticated(true)
+        
+        // Apply user preferences immediately
+        const { getUserPreferences, getDefaultUserPreferences } = require("./storage")
+        const prefs = getUserPreferences(foundUser.id) || getDefaultUserPreferences()
+        if (prefs.theme === "dark") {
+          document.documentElement.classList.add("dark")
+        } else if (prefs.theme === "light") {
+          document.documentElement.classList.remove("dark")
+        } else if (prefs.theme === "system") {
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+          document.documentElement.classList.toggle("dark", systemTheme === "dark")
+        }
       } else {
         localStorage.removeItem("currentUser")
       }

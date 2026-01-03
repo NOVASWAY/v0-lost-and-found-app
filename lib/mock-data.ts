@@ -1,5 +1,5 @@
-export type ItemStatus = "available" | "claimed" | "released" | "donated"
-export type ClaimStatus = "pending" | "released" | "rejected"
+export type ItemStatus = "available" | "claimed" | "released" | "donated" | "expired"
+export type ClaimStatus = "pending" | "approved" | "rejected" | "released"
 
 export interface Item {
   id: string
@@ -58,6 +58,27 @@ export interface Playbook {
   updatedAt: string
 }
 
+export type MissionStatus = "pending" | "in_progress" | "completed" | "cancelled"
+
+export interface Mission {
+  id: string
+  title: string
+  description: string
+  assignedTo: string // User ID
+  assignedToName: string // User name for display
+  assignedBy: string // Admin/User ID who created it
+  assignedByName: string // Admin/User name who created it
+  priority: "low" | "medium" | "high" | "critical"
+  status: MissionStatus
+  dueDate?: string
+  location?: string
+  instructions: string
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
+  completionNotes?: string
+}
+
 export interface Location {
   id: string
   name: string
@@ -81,6 +102,11 @@ export type AuditLogType =
   | "playbook_created"
   | "playbook_updated"
   | "playbook_deleted"
+  | "mission_created"
+  | "mission_assigned"
+  | "mission_completed"
+  | "mission_cancelled"
+  | "system_settings_updated"
   | "login"
   | "logout"
   | "order_sent"
@@ -105,6 +131,24 @@ export interface ServiceRecord {
   notes?: string
   recordedBy: string
   recordedAt: string
+}
+
+export interface SystemSettings {
+  id: string
+  itemExpirationDays: number // Configurable expiration period
+  updatedBy: string
+  updatedAt: string
+}
+
+export interface UserPreferences {
+  userId: string
+  theme: "light" | "dark" | "system"
+  notifications: {
+    push: boolean
+    missionUpdates: boolean
+    claimUpdates: boolean
+  }
+  updatedAt: string
 }
 
 export interface User {
@@ -423,6 +467,42 @@ export const mockPlaybooks: Playbook[] = [
     protocol: "Flag for Superuser review. Freeze all active claims for the entity.",
     priority: "critical",
     updatedAt: "2025-01-21T09:30:00",
+  },
+]
+
+// Mock Missions
+export const mockMissions: Mission[] = [
+  {
+    id: "m1",
+    title: "Security Patrol - Main Sanctuary",
+    description: "Conduct security sweep of main sanctuary area",
+    assignedTo: "u2",
+    assignedToName: "Tom Anderson",
+    assignedBy: "u3",
+    assignedByName: "Admin User",
+    priority: "high",
+    status: "pending",
+    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    location: "Main Sanctuary",
+    instructions: "Check all entry points, verify security cameras operational, report any suspicious activity.",
+    createdAt: "2025-01-22T08:00:00",
+    updatedAt: "2025-01-22T08:00:00",
+  },
+  {
+    id: "m2",
+    title: "Item Recovery - Parking Lot B",
+    description: "Investigate and recover reported lost item in parking area",
+    assignedTo: "u6",
+    assignedToName: "Emily Rodriguez",
+    assignedBy: "u3",
+    assignedByName: "Admin User",
+    priority: "medium",
+    status: "in_progress",
+    dueDate: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString().split("T")[0],
+    location: "Parking Lot B",
+    instructions: "Locate item described in report, secure it, and bring to lost & found office.",
+    createdAt: "2025-01-22T09:00:00",
+    updatedAt: "2025-01-22T10:30:00",
   },
 ]
 

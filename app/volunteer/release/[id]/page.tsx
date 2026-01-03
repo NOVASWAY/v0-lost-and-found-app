@@ -13,7 +13,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { type ReleaseLog } from "@/lib/mock-data"
-import { getClaims, getItems, addReleaseLog, updateClaim, updateItem, updateUser, initializeStorage } from "@/lib/storage"
+import { getClaims, getItems, getUsers, addReleaseLog, updateClaim, updateItem, updateUser, initializeStorage } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 
@@ -63,8 +63,82 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
   const item = items.find((i) => i.id === claim.itemId)
 
+  const handleApprove = () => {
+    if (!user || !item || !claim) return
+
+    // Update claim status to approved
+    updateClaim(claim.id, {
+      status: "approved",
+      releasedBy: `Volunteer: ${user.name}`,
+      releasedAt: new Date().toISOString(),
+      releaseNotes: notes || undefined,
+    })
+
+    // Add audit log
+    addAuditLog("item_claimed", "Claim approved", user.id, user.name, `Claim for ${claim.itemName} approved by ${user.name}`, "info")
+
+    toast({
+      title: "Claim Approved",
+      description: `The claim has been approved. You can now release the item.`,
+    })
+
+    // Refresh data
+    setClaims(getClaims())
+    setItems(getItems())
+  }
+
+  const handleReject = () => {
+    if (!user || !item || !claim) return
+
+    // Update claim status to rejected
+    updateClaim(claim.id, {
+      status: "rejected",
+      releasedBy: `Volunteer: ${user.name}`,
+      releasedAt: new Date().toISOString(),
+      releaseNotes: notes || "Claim rejected",
+    })
+
+    // Update item status back to available
+    updateItem(claim.itemId, { status: "available" })
+
+    // Update user stats (claimant) - remove points
+    const users = getUsers()
+    const claimant = users.find((u) => u.name === claim.claimantName)
+    if (claimant) {
+      const currentClaimedItems = claimant.claimedItems || []
+      const claimItem = currentClaimedItems.find((ci) => ci.itemId === claim.itemId)
+      if (claimItem) {
+        claimItem.claimStatus = "rejected"
+      }
+      updateUser(claimant.id, {
+        claimedItems: currentClaimedItems,
+      })
+    }
+
+    // Add audit log
+    addAuditLog("item_claimed", "Claim rejected", user.id, user.name, `Claim for ${claim.itemName} rejected by ${user.name}`, "warning")
+
+    toast({
+      title: "Claim Rejected",
+      description: `The claim has been rejected and the item is now available again.`,
+      variant: "destructive",
+    })
+
+    setIsReleased(true)
+  }
+
   const handleRelease = () => {
     if (!user || !item || !claim) return
+
+    // Only allow release if claim is approved
+    if (claim.status !== "approved") {
+      toast({
+        title: "Claim Not Approved",
+        description: "Please approve the claim before releasing the item.",
+        variant: "destructive",
+      })
+      return
+    }
 
     // Update claim status
     updateClaim(claim.id, {
@@ -241,29 +315,73 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
         {/* Release Form */}
         <Card className="mt-6 p-6">
-          <h2 className="mb-4 text-xl font-semibold text-card-foreground">Release Item</h2>
+          <h2 className="mb-4 text-xl font-semibold text-card-foreground">
+            {claim.status === "pending" ? "Review Claim" : claim.status === "approved" ? "Release Item" : "Claim Status"}
+          </h2>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="release-notes">Release Notes (Optional)</Label>
-              <Textarea
-                id="release-notes"
-                placeholder="Add any notes about the release process, ID verification, etc..."
-                rows={4}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={handleRelease} size="lg" className="flex-1">
-                <CheckCircle className="mr-2 h-5 w-5" />
-                Release Item to Claimant
-              </Button>
-              <Link href="/volunteer/dashboard">
-                <Button variant="outline" size="lg">
-                  Cancel
-                </Button>
-              </Link>
-            </div>
+            {claim.status === "pending" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="review-notes">Review Notes (Optional)</Label>
+                  <Textarea
+                    id="review-notes"
+                    placeholder="Add any notes about your review..."
+                    rows={4}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={handleApprove} size="lg" className="flex-1 bg-green-600 hover:bg-green-700">
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Approve Claim
+                  </Button>
+                  <Button onClick={handleReject} size="lg" variant="destructive" className="flex-1">
+                    Reject Claim
+                  </Button>
+                </div>
+              </>
+            )}
+            {claim.status === "approved" && (
+              <>
+                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 mb-4">
+                  <p className="text-sm text-green-600 font-medium">✓ Claim has been approved. You can now release the item.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="release-notes">Release Notes (Optional)</Label>
+                  <Textarea
+                    id="release-notes"
+                    placeholder="Add any notes about the release..."
+                    rows={4}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={handleRelease} size="lg" className="flex-1">
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Release Item to Claimant
+                  </Button>
+                  <Link href="/volunteer/dashboard">
+                    <Button variant="outline" size="lg">
+                      Cancel
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
+            {(claim.status === "rejected" || claim.status === "released") && (
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-sm text-muted-foreground">
+                  {claim.status === "rejected" ? "This claim has been rejected." : "This item has been released."}
+                </p>
+                <Link href="/volunteer/dashboard" className="mt-4 block">
+                  <Button variant="outline" size="lg" className="w-full">
+                    Back to Dashboard
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </Card>
       </main>

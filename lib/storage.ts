@@ -3,7 +3,7 @@
  * This makes the system fully functional without a backend
  */
 
-import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord } from "./mock-data"
+import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord, Mission, SystemSettings, UserPreferences } from "./mock-data"
 
 const STORAGE_KEYS = {
   ITEMS: "vault_items",
@@ -14,6 +14,9 @@ const STORAGE_KEYS = {
   PLAYBOOKS: "vault_playbooks",
   AUDIT_LOGS: "vault_audit_logs",
   SERVICE_RECORDS: "vault_service_records",
+  MISSIONS: "vault_missions",
+  SYSTEM_SETTINGS: "vault_system_settings",
+  USER_PREFERENCES: "vault_user_preferences",
 } as const
 
 // Initialize storage with mock data if empty
@@ -21,7 +24,7 @@ export function initializeStorage() {
   if (typeof window === "undefined") return
 
   // Import mock data only when needed
-  import("./mock-data").then(({ mockItems, mockClaims, mockUsers, mockReleaseLogs, mockLocations, mockPlaybooks, mockAuditLogs }) => {
+  import("./mock-data").then(({ mockItems, mockClaims, mockUsers, mockReleaseLogs, mockLocations, mockPlaybooks, mockAuditLogs, mockMissions }) => {
     if (!localStorage.getItem(STORAGE_KEYS.ITEMS)) {
       localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(mockItems))
     }
@@ -43,6 +46,20 @@ export function initializeStorage() {
     if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
       localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(mockAuditLogs))
     }
+    if (!localStorage.getItem(STORAGE_KEYS.MISSIONS)) {
+      localStorage.setItem(STORAGE_KEYS.MISSIONS, JSON.stringify(mockMissions))
+    }
+    // Initialize system settings with default 30 days
+    if (!localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)) {
+      const defaultSettings: SystemSettings = {
+        id: "settings-1",
+        itemExpirationDays: 30,
+        updatedBy: "system",
+        updatedAt: new Date().toISOString(),
+      }
+      localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(defaultSettings))
+    }
+    // User preferences are created on-demand
   })
 }
 
@@ -50,7 +67,28 @@ export function initializeStorage() {
 export function getItems(): Item[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.ITEMS)
-  return data ? JSON.parse(data) : []
+  const items = data ? JSON.parse(data) : []
+  
+  // Auto-expire items past donation deadline
+  const now = new Date()
+  let hasChanges = false
+  const updatedItems = items.map((item: Item) => {
+    if (item.status === "available" && item.donationDeadline) {
+      const deadline = new Date(item.donationDeadline)
+      if (deadline < now) {
+        hasChanges = true
+        return { ...item, status: "expired" as ItemStatus }
+      }
+    }
+    return item
+  })
+  
+  if (hasChanges) {
+    saveItems(updatedItems)
+    return updatedItems
+  }
+  
+  return items
 }
 
 export function saveItems(items: Item[]) {
@@ -274,5 +312,160 @@ export function addServiceRecord(record: ServiceRecord & { userId: string }) {
   records.push(record as any) // ServiceRecord doesn't have userId in interface, but we store it
   saveServiceRecords(records)
   return record
+}
+
+// Missions
+export function getMissions(): Mission[] {
+  if (typeof window === "undefined") return []
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.MISSIONS)
+    if (!data || data === "undefined" || data === "null") return []
+    return JSON.parse(data)
+  } catch (error) {
+    console.error("Error parsing missions from localStorage:", error)
+    return []
+  }
+}
+
+export function saveMissions(missions: Mission[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(STORAGE_KEYS.MISSIONS, JSON.stringify(missions))
+}
+
+export function addMission(mission: Mission) {
+  const missions = getMissions()
+  missions.push(mission)
+  saveMissions(missions)
+  return mission
+}
+
+export function updateMission(id: string, updates: Partial<Mission>) {
+  const missions = getMissions()
+  const index = missions.findIndex((m) => m.id === id)
+  if (index !== -1) {
+    missions[index] = { ...missions[index], ...updates, updatedAt: new Date().toISOString() }
+    saveMissions(missions)
+    return missions[index]
+  }
+  return null
+}
+
+export function deleteMission(id: string) {
+  const missions = getMissions()
+  const filtered = missions.filter((m) => m.id !== id)
+  saveMissions(filtered)
+  return filtered.length < missions.length
+}
+
+export function getMissionsByUser(userId: string): Mission[] {
+  return getMissions().filter((m) => m.assignedTo === userId)
+}
+
+// System Settings
+export function getSystemSettings(): SystemSettings {
+  if (typeof window === "undefined") {
+    return { id: "settings-1", itemExpirationDays: 30, updatedBy: "system", updatedAt: new Date().toISOString() }
+  }
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)
+    if (!data || data === "undefined" || data === "null") {
+      const defaultSettings: SystemSettings = {
+        id: "settings-1",
+        itemExpirationDays: 30,
+        updatedBy: "system",
+        updatedAt: new Date().toISOString(),
+      }
+      saveSystemSettings(defaultSettings)
+      return defaultSettings
+    }
+    return JSON.parse(data)
+  } catch (error) {
+    console.error("Error parsing system settings:", error)
+    return { id: "settings-1", itemExpirationDays: 30, updatedBy: "system", updatedAt: new Date().toISOString() }
+  }
+}
+
+export function saveSystemSettings(settings: SystemSettings) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(settings))
+}
+
+export function updateSystemSettings(updates: Partial<SystemSettings>, updatedBy: string) {
+  const settings = getSystemSettings()
+  const updated = {
+    ...settings,
+    ...updates,
+    updatedBy,
+    updatedAt: new Date().toISOString(),
+  }
+  saveSystemSettings(updated)
+  return updated
+}
+
+// User Preferences
+export function getUserPreferences(userId: string): UserPreferences | null {
+  if (typeof window === "undefined") return null
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES)
+    if (!data || data === "undefined" || data === "null") return null
+    const preferences = JSON.parse(data)
+    return preferences[userId] || null
+  } catch (error) {
+    console.error("Error parsing user preferences:", error)
+    return null
+  }
+}
+
+export function saveUserPreferences(userId: string, preferences: UserPreferences) {
+  if (typeof window === "undefined") return
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES)
+    const allPreferences = data ? JSON.parse(data) : {}
+    allPreferences[userId] = {
+      ...preferences,
+      updatedAt: new Date().toISOString(),
+    }
+    localStorage.setItem(STORAGE_KEYS.USER_PREFERENCES, JSON.stringify(allPreferences))
+  } catch (error) {
+    console.error("Error saving user preferences:", error)
+  }
+}
+
+export function updateUserPreferences(userId: string, updates: Partial<UserPreferences>) {
+  const existing = getUserPreferences(userId)
+  const defaultPreferences: UserPreferences = {
+    userId,
+    theme: "system",
+    notifications: {
+      email: true,
+      push: true,
+      missionUpdates: true,
+      claimUpdates: true,
+    },
+    language: "en",
+    updatedAt: new Date().toISOString(),
+  }
+  const updated = {
+    ...defaultPreferences,
+    ...existing,
+    ...updates,
+    userId,
+    updatedAt: new Date().toISOString(),
+  }
+  saveUserPreferences(userId, updated)
+  return updated
+}
+
+export function getDefaultUserPreferences(): UserPreferences {
+  return {
+    userId: "",
+    theme: "system",
+    notifications: {
+      push: true,
+      missionUpdates: true,
+      claimUpdates: true,
+    },
+    updatedAt: new Date().toISOString(),
+  }
 }
 

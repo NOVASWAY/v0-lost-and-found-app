@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
-import { getItems, getClaims, initializeStorage } from "@/lib/storage"
+import { getItems, getClaims, initializeStorage, getUserPreferences, updateUserPreferences, getDefaultUserPreferences } from "@/lib/storage"
 
 export default function ProfilePage() {
   const { user, isAuthenticated, changePassword } = useAuth()
@@ -24,12 +24,17 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [items, setItems] = useState(getItems())
   const [claims, setClaims] = useState(getClaims())
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null)
 
   useEffect(() => {
     initializeStorage()
     setItems(getItems())
     setClaims(getClaims())
-  }, [])
+    if (user?.id) {
+      const userPrefs = getUserPreferences(user.id) || getDefaultUserPreferences()
+      setPreferences({ ...userPrefs, userId: user.id })
+    }
+  }, [user])
 
   // Protect route - require authentication
   useEffect(() => {
@@ -218,6 +223,99 @@ export default function ProfilePage() {
               </div>
             </div>
           </Card>
+
+          {/* User Preferences */}
+          {preferences && (
+            <Card className="mt-6 p-6">
+              <h3 className="mb-4 text-lg font-semibold text-card-foreground">Preferences</h3>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Theme</Label>
+                  <Select
+                    value={preferences.theme}
+                    onValueChange={(value: "light" | "dark" | "system") => {
+                      const updated = updateUserPreferences(user!.id, { theme: value })
+                      setPreferences(updated)
+                      // Apply theme immediately
+                      if (value === "system") {
+                        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+                        document.documentElement.classList.toggle("dark", systemTheme === "dark")
+                      } else {
+                        document.documentElement.classList.toggle("dark", value === "dark")
+                      }
+                      toast({
+                        title: "Theme Updated",
+                        description: `Theme changed to ${value}.`,
+                      })
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-4">
+                  <Label>Notifications</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="push-notif" className="font-normal">Push Notifications</Label>
+                        <p className="text-xs text-muted-foreground">Receive browser push notifications</p>
+                      </div>
+                      <Checkbox
+                        id="push-notif"
+                        checked={preferences.notifications.push}
+                        onCheckedChange={(checked) => {
+                          const updated = updateUserPreferences(user!.id, {
+                            notifications: { ...preferences.notifications, push: checked === true },
+                          })
+                          setPreferences(updated)
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="mission-notif" className="font-normal">Mission Updates</Label>
+                        <p className="text-xs text-muted-foreground">Get notified about mission assignments</p>
+                      </div>
+                      <Checkbox
+                        id="mission-notif"
+                        checked={preferences.notifications.missionUpdates}
+                        onCheckedChange={(checked) => {
+                          const updated = updateUserPreferences(user!.id, {
+                            notifications: { ...preferences.notifications, missionUpdates: checked === true },
+                          })
+                          setPreferences(updated)
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="claim-notif" className="font-normal">Claim Updates</Label>
+                        <p className="text-xs text-muted-foreground">Get notified about claim status changes</p>
+                      </div>
+                      <Checkbox
+                        id="claim-notif"
+                        checked={preferences.notifications.claimUpdates}
+                        onCheckedChange={(checked) => {
+                          const updated = updateUserPreferences(user!.id, {
+                            notifications: { ...preferences.notifications, claimUpdates: checked === true },
+                          })
+                          setPreferences(updated)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       </main>
     </div>

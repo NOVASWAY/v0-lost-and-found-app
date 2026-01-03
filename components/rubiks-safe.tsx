@@ -313,8 +313,8 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
               {[...Array(12)].map((_, i) => {
                 const angle = (i * 30) * (Math.PI / 180)
                 const radius = 42 // Percentage from center
-                const x = 50 + Math.cos(angle) * radius
-                const y = 50 + Math.sin(angle) * radius
+                const x = Math.round((50 + Math.cos(angle) * radius) * 100) / 100
+                const y = Math.round((50 + Math.sin(angle) * radius) * 100) / 100
                 return (
                   <div
                     key={`outer-${i}`}
@@ -336,8 +336,8 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
               {[...Array(8)].map((_, i) => {
                 const angle = (i * 45) * (Math.PI / 180)
                 const radius = 28
-                const x = 50 + Math.cos(angle) * radius
-                const y = 50 + Math.sin(angle) * radius
+                const x = Math.round((50 + Math.cos(angle) * radius) * 100) / 100
+                const y = Math.round((50 + Math.sin(angle) * radius) * 100) / 100
                 return (
                   <div
                     key={`inner-${i}`}
@@ -377,8 +377,8 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
                   {[...Array(20)].map((_, i) => {
                     const angle = (i * 18) - 90 // 20 numbers = 18 degrees each
                     const baseRadius = 42 // Larger radius for bigger dial
-                    const x = Math.cos((angle * Math.PI) / 180) * baseRadius
-                    const y = Math.sin((angle * Math.PI) / 180) * baseRadius
+                    const x = Math.round(Math.cos((angle * Math.PI) / 180) * baseRadius * 100) / 100
+                    const y = Math.round(Math.sin((angle * Math.PI) / 180) * baseRadius * 100) / 100
                     // Show every 5th number prominently, others smaller
                     const isMajor = i % 5 === 0
                     return (
