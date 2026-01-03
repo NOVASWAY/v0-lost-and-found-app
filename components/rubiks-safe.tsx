@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 
 interface RubiksSafeProps {
@@ -14,8 +15,15 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
   const [rotation, setRotation] = useState(0)
   const [isSpinning, setIsSpinning] = useState(false)
   const [doorOpen, setDoorOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { theme } = useTheme()
   const audioContextRef = useRef<AudioContext | null>(null)
   const lastSoundTimeRef = useRef(0)
+
+  // Handle mounting to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Initialize audio context
   useEffect(() => {
@@ -182,22 +190,68 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
         >
           {/* Main Safe Door */}
           <div className={cn(
-            "relative w-full h-full rounded-lg bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 border-4 border-slate-950 shadow-2xl transition-all duration-1000",
+            "relative w-full h-full rounded-lg border-4 shadow-2xl transition-all duration-1000",
+            // Light mode: metallic silver/steel appearance
+            "dark:bg-gradient-to-br dark:from-slate-800 dark:via-slate-700 dark:to-slate-900 dark:border-slate-950",
+            "bg-gradient-to-br from-zinc-300 via-zinc-200 to-zinc-400 border-zinc-600",
             doorOpen && "brightness-150"
           )}>
-            {/* Metallic Texture Overlay */}
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-slate-600/50 to-slate-800/50 opacity-60" />
+            {/* Metallic Texture Overlay - Theme aware */}
+            <div className={cn(
+              "absolute inset-0 rounded-lg opacity-60",
+              "dark:bg-gradient-to-br dark:from-slate-600/50 dark:to-slate-800/50",
+              "bg-gradient-to-br from-zinc-400/40 to-zinc-500/40"
+            )} />
             
-            {/* Rivets/Decorative Elements */}
-            <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-slate-400 shadow-lg" />
-            <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-slate-400 shadow-lg" />
-            <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-slate-400 shadow-lg" />
-            <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-slate-400 shadow-lg" />
+            {/* Brushed Metal Texture Pattern */}
+            <div className="absolute inset-0 rounded-lg opacity-30" 
+              style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px)',
+              }}
+            />
+            
+            {/* Corner Rivets/Decorative Elements - Theme aware */}
+            <div className={cn(
+              "absolute top-2 left-2 w-2.5 h-2.5 rounded-full shadow-lg",
+              "dark:bg-slate-400 dark:ring-2 dark:ring-slate-300",
+              "bg-zinc-500 ring-2 ring-zinc-400"
+            )} />
+            <div className={cn(
+              "absolute top-2 right-2 w-2.5 h-2.5 rounded-full shadow-lg",
+              "dark:bg-slate-400 dark:ring-2 dark:ring-slate-300",
+              "bg-zinc-500 ring-2 ring-zinc-400"
+            )} />
+            <div className={cn(
+              "absolute bottom-2 left-2 w-2.5 h-2.5 rounded-full shadow-lg",
+              "dark:bg-slate-400 dark:ring-2 dark:ring-slate-300",
+              "bg-zinc-500 ring-2 ring-zinc-400"
+            )} />
+            <div className={cn(
+              "absolute bottom-2 right-2 w-2.5 h-2.5 rounded-full shadow-lg",
+              "dark:bg-slate-400 dark:ring-2 dark:ring-slate-300",
+              "bg-zinc-500 ring-2 ring-zinc-400"
+            )} />
+            
+            {/* Additional decorative rivets for realism */}
+            <div className={cn(
+              "absolute top-1/2 left-3 w-1.5 h-1.5 rounded-full",
+              "dark:bg-slate-500",
+              "bg-zinc-600"
+            )} />
+            <div className={cn(
+              "absolute top-1/2 right-3 w-1.5 h-1.5 rounded-full",
+              "dark:bg-slate-500",
+              "bg-zinc-600"
+            )} />
             
             {/* Combination Dial Container */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              {/* Dial Outer Ring */}
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border-2 sm:border-4 border-slate-950 shadow-inner">
+              {/* Dial Outer Ring - Theme aware */}
+              <div className={cn(
+                "relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-2 sm:border-4 shadow-inner",
+                "dark:bg-gradient-to-br dark:from-slate-600 dark:to-slate-800 dark:border-slate-950",
+                "bg-gradient-to-br from-zinc-400 to-zinc-600 border-zinc-700"
+              )}>
                 {/* Dial Numbers Ring */}
                 <div 
                   className="absolute inset-0 rounded-full"
@@ -216,7 +270,11 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
                     return (
                       <div
                         key={i}
-                        className="absolute text-[10px] sm:text-xs md:text-sm font-bold text-slate-100 drop-shadow-lg"
+                        className={cn(
+                          "absolute text-[10px] sm:text-xs md:text-sm font-bold drop-shadow-lg",
+                          "dark:text-slate-100",
+                          "text-zinc-800"
+                        )}
                         style={{
                           left: `calc(50% + ${x}px)`,
                           top: `calc(50% + ${y}px)`,
@@ -229,52 +287,106 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
                   })}
                 </div>
                 
-                {/* Fixed Indicator Mark (doesn't rotate) */}
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1 h-4 bg-slate-100 rounded-full shadow-lg z-10" />
+                {/* Fixed Indicator Mark (doesn't rotate) - Theme aware */}
+                <div className={cn(
+                  "absolute top-2 left-1/2 -translate-x-1/2 w-1 h-4 rounded-full shadow-lg z-10",
+                  "dark:bg-slate-100",
+                  "bg-zinc-200"
+                )} />
                 
-                {/* Dial Center */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border-2 border-slate-950 shadow-lg">
-                  {/* Center Indicator Line (rotates with dial) */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-5 sm:h-6 md:h-7 bg-slate-200 rounded-full shadow-md" />
+                {/* Dial Center - Theme aware */}
+                <div className={cn(
+                  "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 shadow-lg",
+                  "dark:bg-gradient-to-br dark:from-slate-700 dark:to-slate-900 dark:border-slate-950",
+                  "bg-gradient-to-br from-zinc-500 to-zinc-700 border-zinc-800"
+                )}>
+                  {/* Center Indicator Line (rotates with dial) - Theme aware */}
+                  <div className={cn(
+                    "absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-5 sm:h-6 md:h-7 rounded-full shadow-md",
+                    "dark:bg-slate-200",
+                    "bg-zinc-300"
+                  )} />
                   
-                  {/* Center Dot */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full bg-slate-300 shadow-inner" />
+                  {/* Center Dot - Theme aware */}
+                  <div className={cn(
+                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 rounded-full shadow-inner",
+                    "dark:bg-slate-300",
+                    "bg-zinc-400"
+                  )} />
                 </div>
               </div>
             </div>
 
-            {/* Handle/Lever */}
+            {/* Handle/Lever - Theme aware */}
             <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2">
               <div className={cn(
-                "w-10 h-1.5 sm:w-12 sm:h-2 md:w-16 md:h-3 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border-2 border-slate-950 transition-all duration-300",
-                isActive && passwordLength >= 6 && "bg-gradient-to-br from-green-600 to-green-800"
+                "w-10 h-1.5 sm:w-12 sm:h-2 md:w-16 md:h-3 rounded-full border-2 transition-all duration-300",
+                // Default state
+                "dark:bg-gradient-to-br dark:from-slate-600 dark:to-slate-800 dark:border-slate-950",
+                "bg-gradient-to-br from-zinc-500 to-zinc-700 border-zinc-800",
+                // Active state
+                isActive && passwordLength >= 6 && "dark:bg-gradient-to-br dark:from-green-600 dark:to-green-800 dark:border-green-950",
+                isActive && passwordLength >= 6 && "bg-gradient-to-br from-green-500 to-green-700 border-green-800"
               )}>
                 <div className={cn(
-                  "absolute -top-0.5 sm:-top-1 left-1/2 -translate-x-1/2 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full bg-gradient-to-br from-slate-500 to-slate-700 border-2 border-slate-950 transition-all duration-300",
-                  isActive && passwordLength >= 6 && "bg-gradient-to-br from-green-500 to-green-700"
+                  "absolute -top-0.5 sm:-top-1 left-1/2 -translate-x-1/2 w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 rounded-full border-2 transition-all duration-300",
+                  // Default state
+                  "dark:bg-gradient-to-br dark:from-slate-500 dark:to-slate-700 dark:border-slate-950",
+                  "bg-gradient-to-br from-zinc-400 to-zinc-600 border-zinc-700",
+                  // Active state
+                  isActive && passwordLength >= 6 && "dark:bg-gradient-to-br dark:from-green-500 dark:to-green-700 dark:border-green-950",
+                  isActive && passwordLength >= 6 && "bg-gradient-to-br from-green-400 to-green-600 border-green-700"
                 )} />
               </div>
             </div>
 
-            {/* Lock Mechanism Indicator */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-slate-950 rounded-full">
+            {/* Lock Mechanism Indicator - Theme aware */}
+            <div className={cn(
+              "absolute bottom-2 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full",
+              "dark:bg-slate-950",
+              "bg-zinc-800"
+            )}>
               <div 
                 className={cn(
-                  "h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-300",
+                  "h-full bg-gradient-to-r rounded-full transition-all duration-300",
+                  "dark:from-green-400 dark:to-green-600",
+                  "from-green-500 to-green-700",
                   isActive && passwordLength > 0 ? "w-full" : "w-0"
                 )}
               />
             </div>
 
-            {/* Glowing Effect When Active */}
+            {/* Glowing Effect When Active - Theme aware */}
             {isActive && passwordLength > 0 && (
-              <div className="absolute inset-0 rounded-lg bg-green-500/20 animate-pulse" />
+              <div className={cn(
+                "absolute inset-0 rounded-lg animate-pulse",
+                "dark:bg-green-500/20",
+                "bg-green-400/15"
+              )} />
             )}
+            
+            {/* Realistic highlight on top edge */}
+            <div className={cn(
+              "absolute top-0 left-0 right-0 h-1 rounded-t-lg opacity-40",
+              "dark:bg-gradient-to-r dark:from-transparent dark:via-slate-300 dark:to-transparent",
+              "bg-gradient-to-r from-transparent via-zinc-100 to-transparent"
+            )} />
+            
+            {/* Realistic shadow on bottom edge */}
+            <div className={cn(
+              "absolute bottom-0 left-0 right-0 h-1 rounded-b-lg opacity-30",
+              "dark:bg-gradient-to-r dark:from-slate-950 dark:via-slate-800 dark:to-slate-950",
+              "bg-gradient-to-r from-zinc-800 via-zinc-700 to-zinc-800"
+            )} />
           </div>
 
-          {/* 3D Depth Effect - Side of Safe */}
+          {/* 3D Depth Effect - Side of Safe - Theme aware */}
           <div 
-            className="absolute top-0 left-full w-4 h-full bg-gradient-to-br from-slate-900 to-slate-950 rounded-r-lg"
+            className={cn(
+              "absolute top-0 left-full w-4 h-full rounded-r-lg",
+              "dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950",
+              "bg-gradient-to-br from-zinc-600 to-zinc-800"
+            )}
             style={{
               transform: 'rotateY(90deg)',
               transformOrigin: 'left center'
@@ -291,31 +403,51 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
           </div>
         )}
 
-        {/* Success Glow When Password is Long Enough */}
+        {/* Success Glow When Password is Long Enough - Theme aware */}
         {isActive && passwordLength >= 6 && !doorOpen && (
-          <div className="absolute -inset-4 rounded-lg bg-green-500/30 blur-xl animate-pulse" />
+          <div className={cn(
+            "absolute -inset-4 rounded-lg blur-xl animate-pulse",
+            "dark:bg-green-500/30",
+            "bg-green-400/25"
+          )} />
         )}
 
-        {/* Entrance Portal Effect When Unlocking */}
+        {/* Entrance Portal Effect When Unlocking - Theme aware */}
         {doorOpen && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80">
-              {/* Portal Ring */}
-              <div className="absolute inset-0 rounded-full border-8 border-green-400/50 animate-spin-slow" 
+              {/* Portal Ring - Theme aware */}
+              <div className={cn(
+                "absolute inset-0 rounded-full border-8 animate-spin-slow",
+                "dark:border-green-400/50",
+                "border-green-500/60"
+              )} 
                 style={{ animationDuration: '3s' }} />
-              <div className="absolute inset-4 rounded-full border-4 border-blue-400/50 animate-spin" 
+              <div className={cn(
+                "absolute inset-4 rounded-full border-4 animate-spin",
+                "dark:border-blue-400/50",
+                "border-blue-500/60"
+              )} 
                 style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
               
-              {/* Portal Center */}
-              <div className="absolute inset-8 rounded-full bg-gradient-to-br from-green-500/20 via-blue-500/20 to-purple-500/20 animate-pulse" />
+              {/* Portal Center - Theme aware */}
+              <div className={cn(
+                "absolute inset-8 rounded-full animate-pulse",
+                "dark:bg-gradient-to-br dark:from-green-500/20 dark:via-blue-500/20 dark:to-purple-500/20",
+                "bg-gradient-to-br from-green-400/25 via-blue-400/25 to-purple-400/25"
+              )} />
               
-              {/* Light Rays */}
+              {/* Light Rays - Theme aware */}
               {[...Array(8)].map((_, i) => {
                 const angle = (i * 45) * (Math.PI / 180)
                 return (
                   <div
                     key={i}
-                    className="absolute top-1/2 left-1/2 w-0.5 sm:w-1 h-12 sm:h-16 md:h-20 bg-gradient-to-b from-green-400/50 to-transparent origin-top"
+                    className={cn(
+                      "absolute top-1/2 left-1/2 w-0.5 sm:w-1 h-12 sm:h-16 md:h-20 bg-gradient-to-b origin-top",
+                      "dark:from-green-400/50 dark:to-transparent",
+                      "from-green-500/60 to-transparent"
+                    )}
                     style={{
                       transform: `translate(-50%, -50%) rotate(${angle * (180 / Math.PI)}deg)`,
                       animation: 'pulse 1.5s ease-in-out infinite',
@@ -328,9 +460,13 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
           </div>
         )}
 
-        {/* Vault Door Shadow */}
+        {/* Vault Door Shadow - Theme aware */}
         {!doorOpen && (
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-black/30 blur-xl rounded-full" />
+          <div className={cn(
+            "absolute -bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-4 blur-xl rounded-full",
+            "dark:bg-black/30",
+            "bg-black/20"
+          )} />
         )}
       </div>
     </div>
