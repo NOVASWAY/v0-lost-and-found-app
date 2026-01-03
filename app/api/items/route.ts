@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
+import { sanitizeSearchQuery, validateUrl } from "@/lib/security"
 
 // GET all items
 export async function GET(request: NextRequest) {
@@ -14,14 +15,16 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const search = searchParams.get("search") || ""
+    const search = sanitizeSearchQuery(searchParams.get("search") || "")
     const status = searchParams.get("status")
-    const category = searchParams.get("category")
-    const location = searchParams.get("location")
+    const category = sanitizeSearchQuery(searchParams.get("category") || "")
+    const location = sanitizeSearchQuery(searchParams.get("location") || "")
     const page = parseInt(searchParams.get("page") || "1")
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100) // Max 100 per page
     const skip = (page - 1) * limit
 
+    // Validate status enum
+    const validStatuses = ["available", "claimed", "released", "donated", "pending", "expired"]
     const where: any = {}
 
     if (search) {
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (status) {
+    if (status && validStatuses.includes(status)) {
       where.status = status
     }
 
@@ -114,9 +117,10 @@ export async function POST(request: NextRequest) {
       uploadedById,
     } = validation.data
 
-    // Validate image URL format and size (basic check)
-    if (imageUrl.length > 5000) {
-      return NextResponse.json({ error: "Image URL too long" }, { status: 400 })
+    // Validate image URL to prevent path traversal
+    const urlValidation = validateUrl(imageUrl)
+    if (!urlValidation.valid) {
+      return NextResponse.json({ error: urlValidation.error || "Invalid image URL" }, { status: 400 })
     }
 
     // Calculate donation deadline (30 days from found date)

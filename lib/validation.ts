@@ -26,14 +26,36 @@ export const changePasswordSchema = z.object({
 
 // Item validation schemas
 export const createItemSchema = z.object({
-  imageUrl: z.string().url().max(5000),
-  category: z.string().min(1).max(100).trim(),
-  color: z.string().max(50).trim().optional(),
-  location: z.string().min(1).max(200).trim(),
+  imageUrl: z
+    .string()
+    .url()
+    .max(5000)
+    .refine(
+      (url) => {
+        // Additional validation for path traversal
+        return !url.includes("..") && !url.startsWith("file://") && !/^\/|^[A-Za-z]:\\/.test(url)
+      },
+      { message: "Invalid image URL format" }
+    ),
+  category: z.string().min(1).max(100).trim().refine((val) => !val.includes(".."), {
+    message: "Category contains invalid characters",
+  }),
+  color: z.string().max(50).trim().refine((val) => !val || !val.includes(".."), {
+    message: "Color contains invalid characters",
+  }).optional(),
+  location: z.string().min(1).max(200).trim().refine((val) => !val.includes(".."), {
+    message: "Location contains invalid characters",
+  }),
   dateFounded: z.string().datetime(),
-  description: z.string().max(1000).trim().optional(),
-  uniqueMarkings: z.string().max(500).trim().optional(),
-  uploadedById: z.string().min(1),
+  description: z.string().max(1000).trim().refine((val) => !val || !val.includes(".."), {
+    message: "Description contains invalid characters",
+  }).optional(),
+  uniqueMarkings: z.string().max(500).trim().refine((val) => !val || !val.includes(".."), {
+    message: "Unique markings contains invalid characters",
+  }).optional(),
+  uploadedById: z.string().min(1).refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
+    message: "Invalid user ID format",
+  }),
 })
 
 export const updateItemSchema = z.object({
@@ -43,10 +65,31 @@ export const updateItemSchema = z.object({
 
 // Claim validation schemas
 export const createClaimSchema = z.object({
-  itemId: z.string().min(1),
-  proofImage: z.string().url().max(5000),
-  claimantId: z.string().min(1),
-  notes: z.string().max(500).trim().optional(),
+  itemId: z
+    .string()
+    .min(1)
+    .refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
+      message: "Invalid item ID format",
+    }),
+  proofImage: z
+    .string()
+    .url()
+    .max(5000)
+    .refine(
+      (url) => {
+        return !url.includes("..") && !url.startsWith("file://") && !/^\/|^[A-Za-z]:\\/.test(url)
+      },
+      { message: "Invalid proof image URL format" }
+    ),
+  claimantId: z
+    .string()
+    .min(1)
+    .refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
+      message: "Invalid claimant ID format",
+    }),
+  notes: z.string().max(500).trim().refine((val) => !val || !val.includes(".."), {
+    message: "Notes contains invalid characters",
+  }).optional(),
 })
 
 export const updateClaimSchema = z.object({

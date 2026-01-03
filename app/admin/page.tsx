@@ -2,7 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,7 +37,8 @@ import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
@@ -78,6 +80,23 @@ export default function AdminDashboardPage() {
   const admins = users.filter((u) => u.role === "admin").length
   const totalUploads = users.reduce((sum, u) => sum + u.itemsUploaded, 0)
   const totalClaims = users.reduce((sum, u) => sum + u.claimsSubmitted, 0)
+
+  // Protect route - require authentication and admin role
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+      return
+    }
+    if (user?.role !== "admin") {
+      router.push("/dashboard")
+      return
+    }
+  }, [isAuthenticated, user, router])
+
+  // Show nothing while checking authentication
+  if (!isAuthenticated || user?.role !== "admin") {
+    return null
+  }
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault()

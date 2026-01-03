@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import {
   Upload,
@@ -188,22 +189,31 @@ export default function DashboardPage() {
                 <BookOpen className="w-5 h-5 text-primary" />
                 Situational Playbooks
               </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                Read-only access to operational procedures and security protocols
+              </p>
               <div className="grid gap-4">
                 {mockPlaybooks.map((pb) => (
-                  <Card key={pb.id} className="p-4 hover:border-primary/50 transition-all group cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded bg-muted group-hover:bg-primary/10 transition-colors`}>
-                          <ShieldAlert
-                            className={`w-4 h-4 ${pb.priority === "critical" ? "text-destructive" : "text-primary"}`}
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm">{pb.title}</h4>
-                          <p className="text-xs text-muted-foreground">{pb.scenario}</p>
-                        </div>
+                  <Card key={pb.id} className="p-4 hover:border-primary/50 transition-all">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={`uppercase text-[10px] font-black ${
+                            pb.priority === "critical"
+                              ? "bg-destructive"
+                              : pb.priority === "high"
+                                ? "bg-amber-600"
+                                : "bg-primary"
+                          }`}
+                        >
+                          {pb.priority}
+                        </Badge>
+                        <h4 className="font-bold text-sm">{pb.title}</h4>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <p className="text-xs text-muted-foreground italic mb-2">Scenario: {pb.scenario}</p>
+                    <div className="bg-background/50 border border-border/50 p-3 rounded text-xs font-mono leading-relaxed">
+                      {pb.protocol}
                     </div>
                   </Card>
                 ))}

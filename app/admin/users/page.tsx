@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,8 +11,26 @@ import { mockUsers } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
 export default function AdminUsersPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Protect route - require authentication and admin role
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+      return
+    }
+    if (user?.role !== "admin") {
+      router.push("/dashboard")
+      return
+    }
+  }, [isAuthenticated, user, router])
+
+  // Show nothing while checking authentication
+  if (!isAuthenticated || user?.role !== "admin") {
+    return null
+  }
 
   const filteredUsers = mockUsers.filter((u) => {
     const searchLower = searchQuery.toLowerCase()

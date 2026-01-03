@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { validateRouteId } from "@/lib/security"
 
 // PATCH update location
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    
+    // Validate ID to prevent path traversal
+    const idValidation = validateRouteId(id)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
+    }
     const { name, description, userId } = await request.json()
 
     const location = await prisma.location.findUnique({
@@ -50,6 +57,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    
+    // Validate ID to prevent path traversal
+    const idValidation = validateRouteId(id)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
+    }
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get("userId")
 

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAdminOrVolunteer } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
+import { sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
 // GET all claims
 export async function GET(request: NextRequest) {
@@ -29,11 +30,18 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
 
-    if (status) {
+    // Validate status enum
+    const validStatuses = ["pending", "released", "rejected"]
+    if (status && validStatuses.includes(status)) {
       where.status = status
     }
 
+    // Validate claimantId to prevent path traversal
     if (claimantId) {
+      const idValidation = validateRouteId(claimantId)
+      if (!idValidation.valid) {
+        return NextResponse.json({ error: "Invalid claimant ID format" }, { status: 400 })
+      }
       where.claimantId = claimantId
     }
 
@@ -99,9 +107,10 @@ export async function POST(request: NextRequest) {
 
     const { itemId, proofImage, claimantId, notes } = validation.data
 
-    // Validate image URL
-    if (proofImage.length > 5000) {
-      return NextResponse.json({ error: "Proof image URL too long" }, { status: 400 })
+    // Validate proof image URL to prevent path traversal
+    const urlValidation = validateUrl(proofImage)
+    if (!urlValidation.valid) {
+      return NextResponse.json({ error: urlValidation.error || "Invalid proof image URL" }, { status: 400 })
     }
 
     // Check if item exists and is available

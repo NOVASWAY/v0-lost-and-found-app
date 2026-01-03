@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
@@ -12,9 +12,10 @@ import Image from "next/image"
 import { mockItems } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 
-export default function ItemDetailPage({ params }: { params: { id: string } }) {
+export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { id } = use(params)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -26,7 +27,7 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
     return null
   }
 
-  const item = mockItems.find((i) => i.id === params.id)
+  const item = mockItems.find((i) => i.id === id)
 
   if (!item) {
     return <div>Item not found</div>

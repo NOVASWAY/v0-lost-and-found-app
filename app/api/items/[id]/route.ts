@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { validateRouteId } from "@/lib/security"
 
 // GET item by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    
+    // Validate ID to prevent path traversal
+    const idValidation = validateRouteId(id)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
+    }
     const item = await prisma.item.findUnique({
       where: { id },
       include: {
@@ -45,6 +52,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    
+    // Validate ID to prevent path traversal
+    const idValidation = validateRouteId(id)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
+    }
+    
     const data = await request.json()
 
     const item = await prisma.item.update({
@@ -75,6 +89,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    
+    // Validate ID to prevent path traversal
+    const idValidation = validateRouteId(id)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
+    }
     await prisma.item.delete({
       where: { id },
     })

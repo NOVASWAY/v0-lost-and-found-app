@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { sanitizeSearchQuery } from "@/lib/security"
 
 // GET all audit logs (admin only)
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const search = searchParams.get("search") || ""
+    const search = sanitizeSearchQuery(searchParams.get("search") || "")
     const type = searchParams.get("type")
     const severity = searchParams.get("severity")
     const page = parseInt(searchParams.get("page") || "1")
@@ -37,11 +38,13 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (type) {
+    // Validate type and severity to prevent injection
+    const validSeverities = ["info", "warning", "error", "critical"]
+    if (type && typeof type === "string" && !type.includes("..")) {
       where.type = type
     }
 
-    if (severity) {
+    if (severity && validSeverities.includes(severity)) {
       where.severity = severity
     }
 

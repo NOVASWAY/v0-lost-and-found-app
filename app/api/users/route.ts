@@ -4,6 +4,7 @@ import { hashPassword } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createUserSchema, validateAndSanitize } from "@/lib/validation"
+import { sanitizeSearchQuery } from "@/lib/security"
 
 // GET all users (admin only)
 export async function GET(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const search = searchParams.get("search") || ""
+    const search = sanitizeSearchQuery(searchParams.get("search") || "")
     const page = parseInt(searchParams.get("page") || "1")
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100) // Max 100 per page
     const skip = (page - 1) * limit

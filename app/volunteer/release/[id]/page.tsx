@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -16,12 +16,13 @@ import { mockClaims, mockItems, mockReleaseLogs, mockUsers, type ReleaseLog } fr
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 
-export default function ReleaseItemPage({ params }: { params: { id: string } }) {
+export default function ReleaseItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [notes, setNotes] = useState("")
   const [isReleased, setIsReleased] = useState(false)
+  const { id } = use(params)
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "volunteer") {
@@ -29,7 +30,7 @@ export default function ReleaseItemPage({ params }: { params: { id: string } }) 
     }
   }, [isAuthenticated, user, router])
 
-  const claim = mockClaims.find((c) => c.id === params.id)
+  const claim = mockClaims.find((c) => c.id === id)
 
   if (!isAuthenticated || user?.role !== "volunteer") {
     return null

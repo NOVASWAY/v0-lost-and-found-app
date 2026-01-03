@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { validateRouteId } from "@/lib/security"
+import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET service records for a user
 export async function GET(request: NextRequest) {
@@ -9,6 +11,12 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 })
+    }
+
+    // Validate userId to prevent path traversal
+    const idValidation = validateRouteId(userId)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid user ID format" }, { status: 400 })
     }
 
     const records = await prisma.serviceRecord.findMany({
@@ -26,10 +34,19 @@ export async function GET(request: NextRequest) {
 // POST create service record
 export async function POST(request: NextRequest) {
   try {
-    const { userId, serviceDate, attended, served, notes, recordedBy } = await request.json()
+    const body = await request.json()
+    const validation = validateAndSanitize(createServiceRecordSchema, body)
 
-    if (!userId || !serviceDate) {
-      return NextResponse.json({ error: "User ID and service date are required" }, { status: 400 })
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { userId, serviceDate, attended, served, notes, recordedBy } = validation.data
+
+    // Validate userId to prevent path traversal
+    const idValidation = validateRouteId(userId)
+    if (!idValidation.valid) {
+      return NextResponse.json({ error: idValidation.error || "Invalid user ID format" }, { status: 400 })
     }
 
     const record = await prisma.serviceRecord.create({

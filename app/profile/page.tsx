@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 import { mockItems, mockClaims } from "@/lib/mock-data"
 
 export default function ProfilePage() {
-  const { user, changePassword } = useAuth()
+  const { user, isAuthenticated, changePassword } = useAuth()
+  const router = useRouter()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(user?.name || "")
@@ -20,6 +22,19 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  // Protect route - require authentication
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+      return
+    }
+  }, [isAuthenticated, router])
+
+  // Show nothing while checking authentication
+  if (!isAuthenticated) {
+    return null
+  }
 
   const userUploads = mockItems.filter((item) => item.uploadedBy === user?.name)
   const userClaims = mockClaims.filter((claim) => claim.claimantName === user?.name)

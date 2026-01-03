@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { sanitizeSearchQuery } from "@/lib/security"
 
 // GET all release logs
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const search = searchParams.get("search") || ""
+    const search = sanitizeSearchQuery(searchParams.get("search") || "")
 
     const where: any = {}
 
