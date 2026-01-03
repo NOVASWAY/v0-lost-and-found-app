@@ -6,10 +6,11 @@ import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
+import { Search, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { FloatingActionIcon } from "@/components/floating-action-icon"
 import { getClaims, initializeStorage } from "@/lib/storage"
 
 export default function VolunteerDashboardPage() {

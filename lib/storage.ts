@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Frontend-only data persistence using localStorage
  * This makes the system fully functional without a backend

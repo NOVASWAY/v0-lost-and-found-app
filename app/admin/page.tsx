@@ -33,11 +33,15 @@ import {
   Users,
   Calendar,
   MapPin,
+  Package,
+  FileText,
+  Settings,
 } from "lucide-react"
 import { type User, type Order, type Playbook, type Location, type Mission } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
 import { useToast } from "@/hooks/use-toast"
+import { FloatingActionIcon } from "@/components/floating-action-icon"
 import { getUsers, getPlaybooks, getLocations, getAuditLogs, getMissions, getSystemSettings, updateSystemSettings, addUser, updateUser, deleteUser, addPlaybook, updatePlaybook, deletePlaybook, addLocation, updateLocation, deleteLocation, initializeStorage, addServiceRecord, addMission, updateMission, deleteMission } from "@/lib/storage"
 
 export default function AdminDashboardPage() {
@@ -398,6 +402,40 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
       <Navbar role="admin" />
+      
+      {/* Floating Action Icons */}
+      <FloatingActionIcon
+        href="/admin/users"
+        icon={Users}
+        label="Manage Users"
+        color="primary"
+        position="bottom-right"
+        delay={0}
+      />
+      <FloatingActionIcon
+        href="/admin/items"
+        icon={Package}
+        label="Manage Items"
+        color="accent"
+        position="bottom-right"
+        delay={150}
+      />
+      <FloatingActionIcon
+        href="/admin/claims"
+        icon={FileText}
+        label="Review Claims"
+        color="warning"
+        position="bottom-left"
+        delay={300}
+      />
+      <FloatingActionIcon
+        href="/admin"
+        icon={Settings}
+        label="System Settings"
+        color="info"
+        position="bottom-left"
+        delay={450}
+      />
 
       <main className="container mx-auto px-6 py-10 max-w-7xl animate-in fade-in duration-700">
         <div className="mb-12 border-b border-border/50 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -433,7 +471,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Security Matrix Overview */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8 sm:mb-12">
           {[
             { label: "Active Nodes", value: activeUsers, icon: Activity, color: "text-blue-500" },
             { label: "Secure Vaults", value: totalUploads, icon: Lock, color: "text-amber-500" },
@@ -442,13 +480,19 @@ export default function AdminDashboardPage() {
           ].map((stat, i) => (
             <Card
               key={i}
-              className="bg-card border-border hover:border-primary/50 transition-all p-6 relative overflow-hidden group"
+              className="bg-card border-border hover:border-primary/50 transition-all p-4 sm:p-6 relative overflow-hidden group"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <stat.icon className="w-12 h-12" />
+              <div 
+                className="absolute top-0 right-0 p-2 sm:p-4 opacity-10 group-hover:opacity-20 transition-opacity animate-float-gentle"
+                style={{
+                  animationDelay: `${i * 200}ms`,
+                  animationDuration: '4s',
+                }}
+              >
+                <stat.icon className={`w-8 h-8 sm:w-12 sm:h-12 ${stat.color}`} />
               </div>
-              <p className="text-sm text-muted-foreground font-medium mb-1 uppercase tracking-wider">{stat.label}</p>
-              <h3 className="text-3xl font-bold">{stat.value}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1 uppercase tracking-wider">{stat.label}</p>
+              <h3 className="text-2xl sm:text-3xl font-bold">{stat.value}</h3>
             </Card>
           ))}
         </div>
