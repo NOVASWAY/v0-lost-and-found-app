@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 import { getItems, getClaims, initializeStorage, getUserPreferences, updateUserPreferences, getDefaultUserPreferences } from "@/lib/storage"
+import { type UserPreferences } from "@/lib/mock-data"
 
 export default function ProfilePage() {
   const { user, isAuthenticated, changePassword } = useAuth()

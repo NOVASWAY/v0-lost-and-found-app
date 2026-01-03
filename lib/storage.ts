@@ -3,7 +3,7 @@
  * This makes the system fully functional without a backend
  */
 
-import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord, Mission, SystemSettings, UserPreferences } from "./mock-data"
+import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord, Mission, SystemSettings, UserPreferences, ItemStatus } from "./mock-data"
 
 const STORAGE_KEYS = {
   ITEMS: "vault_items",
@@ -77,7 +77,7 @@ export function getItems(): Item[] {
       const deadline = new Date(item.donationDeadline)
       if (deadline < now) {
         hasChanges = true
-        return { ...item, status: "expired" as ItemStatus }
+        return { ...item, status: "expired" as Item["status"] }
       }
     }
     return item
@@ -437,12 +437,10 @@ export function updateUserPreferences(userId: string, updates: Partial<UserPrefe
     userId,
     theme: "system",
     notifications: {
-      email: true,
       push: true,
       missionUpdates: true,
       claimUpdates: true,
     },
-    language: "en",
     updatedAt: new Date().toISOString(),
   }
   const updated = {

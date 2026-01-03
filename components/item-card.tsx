@@ -12,7 +12,7 @@ interface ItemCardProps {
   color?: string
   dateFound: Date
   location: string
-  status: "available" | "claimed" | "released" | "donated"
+  status: "available" | "claimed" | "released" | "donated" | "expired"
   donationDeadline?: Date
 }
 

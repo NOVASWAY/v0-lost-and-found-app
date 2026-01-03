@@ -1,5 +1,5 @@
 interface StatusBadgeProps {
-  status: "available" | "claimed" | "released" | "donated" | "pending" | "expired" | "rejected"
+  status: "available" | "claimed" | "released" | "donated" | "pending" | "expired" | "rejected" | "approved"
   className?: string
 }
 
@@ -12,6 +12,7 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
     pending: "bg-chart-4/10 text-chart-4",
     expired: "bg-destructive/10 text-destructive",
     rejected: "bg-destructive/10 text-destructive",
+    approved: "bg-green-500/10 text-green-600",
   }
 
   const labels = {
@@ -22,6 +23,7 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
     pending: "Pending",
     expired: "Expired",
     rejected: "Rejected",
+    approved: "Approved",
   }
 
   return (

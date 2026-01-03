@@ -332,12 +332,9 @@ export default function AdminDashboardPage() {
     const location = locations.find((loc) => loc.id === id)
     if (location) {
       addAuditLog("location_deleted", "Location deleted", user?.id, user?.name, `Location '${location.name}' deleted`, "warning")
-      const index = mockLocations.findIndex((loc) => loc.id === id)
-      if (index !== -1) {
-        mockLocations.splice(index, 1)
-      }
     }
-    setLocations(locations.filter((loc) => loc.id !== id))
+    deleteLocation(id)
+    setLocations(getLocations())
   }
 
   const openEditLocation = (loc: Location) => {
