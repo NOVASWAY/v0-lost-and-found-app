@@ -20,6 +20,7 @@ import {
   Gift,
   MapPin,
   Users,
+  Calendar,
 } from "lucide-react"
 import { type User } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
@@ -240,6 +241,20 @@ export default function AdminDashboardPage() {
                 <div>
                   <h3 className="font-semibold text-card-foreground">Missions</h3>
                   <p className="text-sm text-muted-foreground">Assign & track missions</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/meeting-minutes">
+            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-500/10 transition-colors group-hover:bg-teal-500/20">
+                  <Calendar className="h-6 w-6 text-teal-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-card-foreground">Meeting Minutes</h3>
+                  <p className="text-sm text-muted-foreground">Record & manage minutes</p>
                 </div>
               </div>
             </Card>

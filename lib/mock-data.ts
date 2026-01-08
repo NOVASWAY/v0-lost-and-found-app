@@ -110,6 +110,9 @@ export type AuditLogType =
   | "login"
   | "logout"
   | "order_sent"
+  | "meeting_minutes_created"
+  | "meeting_minutes_updated"
+  | "meeting_minutes_deleted"
 
 export interface AuditLog {
   id: string
@@ -148,6 +151,27 @@ export interface UserPreferences {
     missionUpdates: boolean
     claimUpdates: boolean
   }
+  updatedAt: string
+}
+
+export interface MeetingMinutes {
+  id: string
+  title: string
+  meetingDate: string
+  location?: string
+  attendees: string[] // Array of user names
+  agenda: string[] // Array of agenda items
+  discussion: string // Main discussion/notes
+  actionItems: Array<{
+    item: string
+    assignedTo: string // User name
+    dueDate?: string
+    status: "pending" | "in_progress" | "completed"
+  }>
+  decisions: string[] // Array of decisions made
+  nextMeetingDate?: string
+  recordedBy: string // User name who recorded the minutes
+  createdAt: string
   updatedAt: string
 }
 

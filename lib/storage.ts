@@ -5,7 +5,7 @@
  * This makes the system fully functional without a backend
  */
 
-import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord, Mission, SystemSettings, UserPreferences, ItemStatus } from "./mock-data"
+import type { Item, Claim, User, ReleaseLog, Location, Playbook, AuditLog, ServiceRecord, Mission, SystemSettings, UserPreferences, ItemStatus, MeetingMinutes } from "./mock-data"
 
 const STORAGE_KEYS = {
   ITEMS: "vault_items",
@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   MISSIONS: "vault_missions",
   SYSTEM_SETTINGS: "vault_system_settings",
   USER_PREFERENCES: "vault_user_preferences",
+  MEETING_MINUTES: "vault_meeting_minutes",
 } as const
 
 // Initialize storage with mock data if empty
@@ -50,6 +51,9 @@ export function initializeStorage() {
     }
     if (!localStorage.getItem(STORAGE_KEYS.MISSIONS)) {
       localStorage.setItem(STORAGE_KEYS.MISSIONS, JSON.stringify(mockMissions))
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.MEETING_MINUTES)) {
+      localStorage.setItem(STORAGE_KEYS.MEETING_MINUTES, JSON.stringify([]))
     }
     // Initialize system settings with default 30 days
     if (!localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS)) {
@@ -467,5 +471,52 @@ export function getDefaultUserPreferences(): UserPreferences {
     },
     updatedAt: new Date().toISOString(),
   }
+}
+
+// Meeting Minutes
+export function getMeetingMinutes(): MeetingMinutes[] {
+  if (typeof window === "undefined") return []
+  const data = localStorage.getItem(STORAGE_KEYS.MEETING_MINUTES)
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    return JSON.parse(data)
+  } catch {
+    return []
+  }
+}
+
+export function getMeetingMinutesById(id: string): MeetingMinutes | undefined {
+  const minutes = getMeetingMinutes()
+  return minutes.find((m) => m.id === id)
+}
+
+export function addMeetingMinutes(minutes: MeetingMinutes): MeetingMinutes {
+  const allMinutes = getMeetingMinutes()
+  allMinutes.push(minutes)
+  localStorage.setItem(STORAGE_KEYS.MEETING_MINUTES, JSON.stringify(allMinutes))
+  return minutes
+}
+
+export function updateMeetingMinutes(id: string, updates: Partial<MeetingMinutes>): MeetingMinutes | null {
+  const allMinutes = getMeetingMinutes()
+  const index = allMinutes.findIndex((m) => m.id === id)
+  if (index === -1) return null
+  
+  allMinutes[index] = {
+    ...allMinutes[index],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  }
+  localStorage.setItem(STORAGE_KEYS.MEETING_MINUTES, JSON.stringify(allMinutes))
+  return allMinutes[index]
+}
+
+export function deleteMeetingMinutes(id: string): boolean {
+  const allMinutes = getMeetingMinutes()
+  const filtered = allMinutes.filter((m) => m.id !== id)
+  if (filtered.length === allMinutes.length) return false
+  
+  localStorage.setItem(STORAGE_KEYS.MEETING_MINUTES, JSON.stringify(filtered))
+  return true
 }
 
