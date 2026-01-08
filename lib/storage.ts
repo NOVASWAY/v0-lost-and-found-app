@@ -73,7 +73,15 @@ export function initializeStorage() {
 export function getItems(): Item[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.ITEMS)
-  const items = data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  let items: Item[] = []
+  try {
+    const parsed = JSON.parse(data)
+    if (!Array.isArray(parsed)) return []
+    items = parsed
+  } catch {
+    return []
+  }
   
   // Auto-expire items past donation deadline
   const now = new Date()
@@ -161,7 +169,14 @@ export function updateClaim(id: string, updates: Partial<Claim>) {
 export function getUsers(): User[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.USERS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const users = JSON.parse(data)
+    if (!Array.isArray(users)) return []
+    return users
+  } catch {
+    return []
+  }
 }
 
 export function saveUsers(users: User[]) {
@@ -203,7 +218,14 @@ export function deleteUser(id: string) {
 export function getReleaseLogs(): ReleaseLog[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.RELEASE_LOGS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const logs = JSON.parse(data)
+    if (!Array.isArray(logs)) return []
+    return logs
+  } catch {
+    return []
+  }
 }
 
 export function addReleaseLog(log: ReleaseLog) {
@@ -217,7 +239,14 @@ export function addReleaseLog(log: ReleaseLog) {
 export function getLocations(): Location[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.LOCATIONS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const locations = JSON.parse(data)
+    if (!Array.isArray(locations)) return []
+    return locations
+  } catch {
+    return []
+  }
 }
 
 export function saveLocations(locations: Location[]) {
@@ -254,7 +283,14 @@ export function deleteLocation(id: string) {
 export function getPlaybooks(): Playbook[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.PLAYBOOKS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const playbooks = JSON.parse(data)
+    if (!Array.isArray(playbooks)) return []
+    return playbooks
+  } catch {
+    return []
+  }
 }
 
 export function savePlaybooks(playbooks: Playbook[]) {
@@ -291,7 +327,14 @@ export function deletePlaybook(id: string) {
 export function getAuditLogs(): AuditLog[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const logs = JSON.parse(data)
+    if (!Array.isArray(logs)) return []
+    return logs
+  } catch {
+    return []
+  }
 }
 
 export function addAuditLog(log: AuditLog) {
@@ -305,7 +348,14 @@ export function addAuditLog(log: AuditLog) {
 export function getServiceRecords(): ServiceRecord[] {
   if (typeof window === "undefined") return []
   const data = localStorage.getItem(STORAGE_KEYS.SERVICE_RECORDS)
-  return data ? JSON.parse(data) : []
+  if (!data || data === "undefined" || data === "null") return []
+  try {
+    const records = JSON.parse(data)
+    if (!Array.isArray(records)) return []
+    return records
+  } catch {
+    return []
+  }
 }
 
 export function saveServiceRecords(records: ServiceRecord[]) {
@@ -426,7 +476,17 @@ export function saveUserPreferences(userId: string, preferences: UserPreferences
   if (typeof window === "undefined") return
   try {
     const data = localStorage.getItem(STORAGE_KEYS.USER_PREFERENCES)
-    const allPreferences = data ? JSON.parse(data) : {}
+    let allPreferences: Record<string, any> = {}
+    if (data && data !== "undefined" && data !== "null") {
+      try {
+        const parsed = JSON.parse(data)
+        if (typeof parsed === "object" && parsed !== null) {
+          allPreferences = parsed
+        }
+      } catch {
+        allPreferences = {}
+      }
+    }
     allPreferences[userId] = {
       ...preferences,
       updatedAt: new Date().toISOString(),

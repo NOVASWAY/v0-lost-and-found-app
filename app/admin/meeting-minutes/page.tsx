@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Plus, Edit, Trash2, Search, Calendar, Users, CheckCircle, X } from "lucide-react"
+import { FileText, Plus, Edit, Trash2, Search, Calendar, Users, CheckCircle, X, Printer } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { getMeetingMinutes, addMeetingMinutes, updateMeetingMinutes, deleteMeetingMinutes, getUsers, initializeStorage } from "@/lib/storage"
 import { addAuditLog } from "@/lib/audit-logger"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
+import { sanitizeInput, sanitizeStringArray, sanitizeDate, sanitizeTextContent, sanitizeSearchQuery, escapeHtml } from "@/lib/client-security"
 import type { MeetingMinutes } from "@/lib/mock-data"
 
 export default function AdminMeetingMinutesPage() {
@@ -27,6 +29,8 @@ export default function AdminMeetingMinutesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMinutes, setEditingMinutes] = useState<MeetingMinutes | null>(null)
   const [users, setUsers] = useState(getUsers())
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null)
   const [newMinutes, setNewMinutes] = useState<Partial<MeetingMinutes>>({
     title: "",
     meetingDate: new Date().toISOString().split("T")[0],
@@ -77,10 +81,11 @@ export default function AdminMeetingMinutesPage() {
   })
 
   const handleAddAttendee = () => {
-    if (newAttendee.trim() && !newMinutes.attendees?.includes(newAttendee.trim())) {
+    const sanitized = sanitizeInput(newAttendee.trim())
+    if (sanitized && !newMinutes.attendees?.includes(sanitized)) {
       setNewMinutes({
         ...newMinutes,
-        attendees: [...(newMinutes.attendees || []), newAttendee.trim()],
+        attendees: [...(newMinutes.attendees || []), sanitized],
       })
       setNewAttendee("")
     }
@@ -94,10 +99,11 @@ export default function AdminMeetingMinutesPage() {
   }
 
   const handleAddAgendaItem = () => {
-    if (newAgendaItem.trim()) {
+    const sanitized = sanitizeInput(newAgendaItem.trim())
+    if (sanitized) {
       setNewMinutes({
         ...newMinutes,
-        agenda: [...(newMinutes.agenda || []), newAgendaItem.trim()],
+        agenda: [...(newMinutes.agenda || []), sanitized],
       })
       setNewAgendaItem("")
     }
@@ -110,10 +116,11 @@ export default function AdminMeetingMinutesPage() {
   }
 
   const handleAddDecision = () => {
-    if (newDecision.trim()) {
+    const sanitized = sanitizeInput(newDecision.trim())
+    if (sanitized) {
       setNewMinutes({
         ...newMinutes,
-        decisions: [...(newMinutes.decisions || []), newDecision.trim()],
+        decisions: [...(newMinutes.decisions || []), sanitized],
       })
       setNewDecision("")
     }
@@ -126,15 +133,19 @@ export default function AdminMeetingMinutesPage() {
   }
 
   const handleAddActionItem = () => {
-    if (newActionItem.item.trim() && newActionItem.assignedTo.trim()) {
+    const sanitizedItem = sanitizeInput(newActionItem.item.trim())
+    const sanitizedAssignedTo = sanitizeInput(newActionItem.assignedTo.trim())
+    const sanitizedDueDate = newActionItem.dueDate ? sanitizeDate(newActionItem.dueDate) : undefined
+    
+    if (sanitizedItem && sanitizedAssignedTo) {
       setNewMinutes({
         ...newMinutes,
         actionItems: [
           ...(newMinutes.actionItems || []),
           {
-            item: newActionItem.item.trim(),
-            assignedTo: newActionItem.assignedTo.trim(),
-            dueDate: newActionItem.dueDate || undefined,
+            item: sanitizedItem,
+            assignedTo: sanitizedAssignedTo,
+            dueDate: sanitizedDueDate,
             status: "pending",
           },
         ],
@@ -187,7 +198,13 @@ export default function AdminMeetingMinutesPage() {
   }
 
   const handleSaveMinutes = () => {
-    if (!newMinutes.title || !newMinutes.meetingDate) {
+    const sanitizedTitle = sanitizeInput(newMinutes.title || "")
+    const sanitizedDate = newMinutes.meetingDate ? sanitizeDate(newMinutes.meetingDate) : ""
+    const sanitizedLocation = newMinutes.location ? sanitizeInput(newMinutes.location) : undefined
+    const sanitizedDiscussion = newMinutes.discussion ? sanitizeTextContent(newMinutes.discussion) : ""
+    const sanitizedNextDate = newMinutes.nextMeetingDate ? sanitizeDate(newMinutes.nextMeetingDate) : undefined
+
+    if (!sanitizedTitle || !sanitizedDate) {
       toast({
         title: "Error",
         description: "Title and meeting date are required",
@@ -198,10 +215,23 @@ export default function AdminMeetingMinutesPage() {
 
     if (editingMinutes) {
       updateMeetingMinutes(editingMinutes.id, {
-        ...newMinutes,
+        title: sanitizedTitle,
+        meetingDate: sanitizedDate,
+        location: sanitizedLocation,
+        attendees: sanitizeStringArray(newMinutes.attendees || []),
+        agenda: sanitizeStringArray(newMinutes.agenda || []),
+        discussion: sanitizedDiscussion,
+        actionItems: (newMinutes.actionItems || []).map((ai) => ({
+          item: sanitizeInput(ai.item),
+          assignedTo: sanitizeInput(ai.assignedTo),
+          dueDate: ai.dueDate ? sanitizeDate(ai.dueDate) : undefined,
+          status: ai.status,
+        })),
+        decisions: sanitizeStringArray(newMinutes.decisions || []),
+        nextMeetingDate: sanitizedNextDate,
         updatedAt: new Date().toISOString(),
       } as Partial<MeetingMinutes>)
-      addAuditLog("meeting_minutes_updated", "Meeting minutes updated", user.id, user.name, `Meeting minutes '${editingMinutes.title}' updated`, "info")
+      addAuditLog("meeting_minutes_updated", "Meeting minutes updated", user.id, user.name, `Meeting minutes '${sanitizedTitle}' updated`, "info")
       toast({
         title: "Success",
         description: "Meeting minutes updated successfully",
@@ -215,15 +245,20 @@ export default function AdminMeetingMinutesPage() {
     } else {
       const meetingMinutes: MeetingMinutes = {
         id: `mm${Date.now()}`,
-        title: newMinutes.title!,
-        meetingDate: newMinutes.meetingDate!,
-        location: newMinutes.location || undefined,
-        attendees: newMinutes.attendees || [],
-        agenda: newMinutes.agenda || [],
-        discussion: newMinutes.discussion || "",
-        actionItems: newMinutes.actionItems || [],
-        decisions: newMinutes.decisions || [],
-        nextMeetingDate: newMinutes.nextMeetingDate || undefined,
+        title: sanitizedTitle,
+        meetingDate: sanitizedDate,
+        location: sanitizedLocation,
+        attendees: sanitizeStringArray(newMinutes.attendees || []),
+        agenda: sanitizeStringArray(newMinutes.agenda || []),
+        discussion: sanitizedDiscussion,
+        actionItems: (newMinutes.actionItems || []).map((ai) => ({
+          item: sanitizeInput(ai.item),
+          assignedTo: sanitizeInput(ai.assignedTo),
+          dueDate: ai.dueDate ? sanitizeDate(ai.dueDate) : undefined,
+          status: ai.status,
+        })),
+        decisions: sanitizeStringArray(newMinutes.decisions || []),
+        nextMeetingDate: sanitizedNextDate,
         recordedBy: user.name,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -259,15 +294,267 @@ export default function AdminMeetingMinutesPage() {
   }
 
   const handleDelete = (id: string, title: string) => {
-    if (confirm(`Are you sure you want to delete the meeting minutes "${title}"?`)) {
-      deleteMeetingMinutes(id)
-      addAuditLog("meeting_minutes_deleted", "Meeting minutes deleted", user.id, user.name, `Meeting minutes '${title}' deleted`, "warning")
+    setItemToDelete({ id, title })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return
+    deleteMeetingMinutes(itemToDelete.id)
+    addAuditLog("meeting_minutes_deleted", "Meeting minutes deleted", user.id, user.name, `Meeting minutes '${itemToDelete.title}' deleted`, "warning")
+    toast({
+      title: "Success",
+      description: "Meeting minutes deleted successfully",
+    })
+    setMinutes(getMeetingMinutes())
+    setDeleteDialogOpen(false)
+    setItemToDelete(null)
+  }
+
+  const handlePrint = (minute: MeetingMinutes) => {
+    // Create a print-friendly HTML document
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) {
       toast({
-        title: "Success",
-        description: "Meeting minutes deleted successfully",
+        title: "Error",
+        description: "Please allow popups to print this document",
+        variant: "destructive",
       })
-      setMinutes(getMeetingMinutes())
+      return
     }
+
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Meeting Minutes - ${escapeHtml(minute.title)}</title>
+  <style>
+    @page {
+      margin: 1in;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #000;
+      background: #fff;
+      padding: 20px;
+    }
+    .header {
+      border-bottom: 3px solid #000;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 24pt;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #000;
+    }
+    .meta-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      font-size: 10pt;
+      color: #333;
+      margin-top: 10px;
+    }
+    .meta-info div {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .section {
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+    .section-content {
+      font-size: 11pt;
+      line-height: 1.8;
+      color: #333;
+    }
+    ul {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+    li {
+      margin-bottom: 5px;
+    }
+    .action-item {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      page-break-inside: avoid;
+    }
+    .action-item-header {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #000;
+    }
+    .action-item-details {
+      font-size: 10pt;
+      color: #666;
+      margin-top: 5px;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9pt;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status-in_progress {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .status-completed {
+      background: #d1fae5;
+      color: #065f46;
+      text-decoration: line-through;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #ccc;
+      font-size: 10pt;
+      color: #666;
+    }
+    .discussion {
+      white-space: pre-wrap;
+      font-size: 11pt;
+    }
+    @media print {
+      body {
+        padding: 0;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${escapeHtml(minute.title)}</h1>
+    <div class="meta-info">
+      <div><strong>Date:</strong> ${new Date(minute.meetingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      ${minute.location ? `<div><strong>Location:</strong> ${escapeHtml(minute.location)}</div>` : ''}
+      <div><strong>Attendees:</strong> ${minute.attendees.length}</div>
+      <div><strong>Recorded by:</strong> ${escapeHtml(minute.recordedBy)}</div>
+      <div><strong>Date recorded:</strong> ${new Date(minute.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+    </div>
+  </div>
+
+  ${minute.attendees.length > 0 ? `
+  <div class="section">
+    <div class="section-title">Attendees</div>
+    <div class="section-content">
+      <ul>
+        ${minute.attendees.map(attendee => `<li>${escapeHtml(attendee)}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+  ` : ''}
+
+  ${minute.agenda.length > 0 ? `
+  <div class="section">
+    <div class="section-title">Agenda</div>
+    <div class="section-content">
+      <ol>
+        ${minute.agenda.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+      </ol>
+    </div>
+  </div>
+  ` : ''}
+
+  ${minute.discussion ? `
+  <div class="section">
+    <div class="section-title">Discussion</div>
+    <div class="section-content discussion">${escapeHtml(minute.discussion)}</div>
+  </div>
+  ` : ''}
+
+  ${minute.decisions.length > 0 ? `
+  <div class="section">
+    <div class="section-title">Decisions</div>
+    <div class="section-content">
+      <ul>
+        ${minute.decisions.map(decision => `<li>${escapeHtml(decision)}</li>`).join('')}
+      </ul>
+    </div>
+  </div>
+  ` : ''}
+
+  ${minute.actionItems.length > 0 ? `
+  <div class="section">
+    <div class="section-title">Action Items</div>
+    <div class="section-content">
+      ${minute.actionItems.map((actionItem, idx) => `
+        <div class="action-item">
+          <div class="action-item-header">
+            ${idx + 1}. ${escapeHtml(actionItem.item)}
+            <span class="status-badge status-${actionItem.status}">
+              ${actionItem.status === 'pending' ? 'Pending' : actionItem.status === 'in_progress' ? 'In Progress' : 'Completed'}
+            </span>
+          </div>
+          <div class="action-item-details">
+            <strong>Assigned to:</strong> ${escapeHtml(actionItem.assignedTo)}
+            ${actionItem.dueDate ? `<br><strong>Due date:</strong> ${new Date(actionItem.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  ` : ''}
+
+  ${minute.nextMeetingDate ? `
+  <div class="section">
+    <div class="section-title">Next Meeting</div>
+    <div class="section-content">
+      ${new Date(minute.nextMeetingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+    </div>
+  </div>
+  ` : ''}
+
+  <div class="footer">
+    <p><strong>Document generated on:</strong> ${new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+    <p><em>This is a printed copy of the meeting minutes. For the most up-to-date version, please refer to the system.</em></p>
+  </div>
+
+  <script>
+    window.onload = function() {
+      window.print();
+      window.onafterprint = function() {
+        window.close();
+      };
+    };
+  </script>
+</body>
+</html>
+    `
+
+    printWindow.document.write(printContent)
+    printWindow.document.close()
   }
 
   const resetForm = () => {
@@ -348,8 +635,9 @@ export default function AdminMeetingMinutesPage() {
                       <Input
                         id="location"
                         value={newMinutes.location || ""}
-                        onChange={(e) => setNewMinutes({ ...newMinutes, location: e.target.value })}
+                        onChange={(e) => setNewMinutes({ ...newMinutes, location: sanitizeInput(e.target.value) })}
                         placeholder="Meeting location"
+                        maxLength={200}
                       />
                     </div>
                   </div>
@@ -416,9 +704,10 @@ export default function AdminMeetingMinutesPage() {
                     <Textarea
                       id="discussion"
                       value={newMinutes.discussion || ""}
-                      onChange={(e) => setNewMinutes({ ...newMinutes, discussion: e.target.value })}
+                      onChange={(e) => setNewMinutes({ ...newMinutes, discussion: sanitizeTextContent(e.target.value) })}
                       placeholder="Main discussion points and notes"
                       rows={6}
+                      maxLength={10000}
                     />
                   </div>
                   <div>
@@ -426,9 +715,10 @@ export default function AdminMeetingMinutesPage() {
                     <div className="flex gap-2 mb-2">
                       <Input
                         value={newDecision}
-                        onChange={(e) => setNewDecision(e.target.value)}
+                        onChange={(e) => setNewDecision(sanitizeInput(e.target.value))}
                         placeholder="Add decision"
                         onKeyPress={(e) => e.key === "Enter" && handleAddDecision()}
+                        maxLength={500}
                       />
                       <Button type="button" onClick={handleAddDecision} variant="outline">
                         Add
@@ -541,7 +831,8 @@ export default function AdminMeetingMinutesPage() {
               placeholder="Search meeting minutes..."
               className="pl-10"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(sanitizeSearchQuery(e.target.value))}
+              maxLength={200}
             />
           </div>
         </Card>
@@ -569,7 +860,7 @@ export default function AdminMeetingMinutesPage() {
                         {minute.location && (
                           <div className="flex items-center gap-1">
                             <FileText className="h-4 w-4" />
-                            {minute.location}
+                            {escapeHtml(minute.location)}
                           </div>
                         )}
                         <div className="flex items-center gap-1">
@@ -579,10 +870,13 @@ export default function AdminMeetingMinutesPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(minute)}>
+                      <Button variant="outline" size="sm" onClick={() => handlePrint(minute)} title="Print">
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(minute)} title="Edit">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(minute.id, minute.title)}>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(minute.id, minute.title)} title="Delete">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -592,7 +886,7 @@ export default function AdminMeetingMinutesPage() {
                       <h4 className="text-sm font-medium mb-2">Agenda:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {minute.agenda.map((item, idx) => (
-                          <li key={idx}>{item}</li>
+                          <li key={idx}>{escapeHtml(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -608,7 +902,7 @@ export default function AdminMeetingMinutesPage() {
                       <h4 className="text-sm font-medium mb-2">Decisions:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {minute.decisions.map((decision, idx) => (
-                          <li key={idx}>{decision}</li>
+                          <li key={idx}>{escapeHtml(decision)}</li>
                         ))}
                       </ul>
                     </div>
@@ -624,10 +918,10 @@ export default function AdminMeetingMinutesPage() {
                                 <CheckCircle className={`h-4 w-4 mt-0.5 ${actionItem.status === "completed" ? "text-green-500" : "text-muted-foreground"}`} />
                                 <div className="flex-1">
                                   <p className={`text-sm ${actionItem.status === "completed" ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
-                                    {actionItem.item}
+                                    {escapeHtml(actionItem.item)}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">
-                                    Assigned to: {actionItem.assignedTo}
+                                    Assigned to: {escapeHtml(actionItem.assignedTo)}
                                     {actionItem.dueDate && ` • Due: ${new Date(actionItem.dueDate).toLocaleDateString()}`}
                                   </p>
                                 </div>
@@ -661,7 +955,7 @@ export default function AdminMeetingMinutesPage() {
                     </div>
                   )}
                   <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                    Recorded by {minute.recordedBy} on {new Date(minute.createdAt).toLocaleDateString()}
+                    Recorded by {escapeHtml(minute.recordedBy)} on {new Date(minute.createdAt).toLocaleDateString()}
                   </div>
                 </Card>
               ))}

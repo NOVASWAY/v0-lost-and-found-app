@@ -18,6 +18,7 @@ import { getLocations, addItem, updateUser, initializeStorage } from "@/lib/stor
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 import { BackButton } from "@/components/back-button"
+import { sanitizeInput, sanitizeUrl, sanitizeTextContent } from "@/lib/client-security"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuth()
@@ -50,9 +51,40 @@ export default function UploadPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid File",
+          description: "Please upload an image file.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: "Image must be less than 5MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const reader = new FileReader()
       reader.onloadend = () => {
-        setItemImage(reader.result as string)
+        const result = reader.result as string
+        // Validate and sanitize the data URL
+        const sanitized = sanitizeUrl(result)
+        if (sanitized) {
+          setItemImage(sanitized)
+        } else {
+          toast({
+            title: "Invalid Image",
+            description: "Please upload a valid image.",
+            variant: "destructive",
+          })
+        }
       }
       reader.readAsDataURL(file)
     }
@@ -70,17 +102,28 @@ export default function UploadPage() {
       return
     }
 
-    // Create new item
+    // Sanitize all inputs before creating item
+    const sanitizedImageUrl = sanitizeUrl(itemImage)
+    if (!sanitizedImageUrl) {
+      toast({
+        title: "Invalid Image",
+        description: "Please upload a valid image.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Create new item with sanitized data
     const newItem: Item = {
       id: `item-${Date.now()}`,
-      imageUrl: itemImage,
-      category: category.charAt(0).toUpperCase() + category.slice(1),
-      color: color || "Unknown",
-      location: location,
-      dateFounded: dateFound,
-      description: description || "",
+      imageUrl: sanitizedImageUrl,
+      category: sanitizeInput(category.charAt(0).toUpperCase() + category.slice(1)),
+      color: sanitizeInput(color || "Unknown"),
+      location: sanitizeInput(location),
+      dateFounded: dateFound, // Date is already validated by input type="date"
+      description: sanitizeTextContent(description || ""),
       status: "available",
-      uploadedBy: user.name,
+      uploadedBy: sanitizeInput(user.name),
       donationDeadline: (() => {
         const { getSystemSettings } = require("@/lib/storage")
         const settings = getSystemSettings()
@@ -89,7 +132,7 @@ export default function UploadPage() {
         deadline.setDate(deadline.getDate() + settings.itemExpirationDays)
         return deadline.toISOString().split("T")[0]
       })(),
-      uniqueMarkings: description || undefined,
+      uniqueMarkings: description ? sanitizeTextContent(description) : undefined,
     }
 
     // Add to storage
@@ -220,7 +263,8 @@ export default function UploadPage() {
                   type="text"
                   placeholder="e.g., Black, Blue, Red"
                   value={color}
-                  onChange={(e) => setColor(e.target.value)}
+                  onChange={(e) => setColor(sanitizeInput(e.target.value))}
+                  maxLength={50}
                 />
               </div>
 
@@ -261,7 +305,8 @@ export default function UploadPage() {
                   placeholder="Any unique features, brands, or identifying marks..."
                   rows={4}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(sanitizeTextContent(e.target.value))}
+                  maxLength={1000}
                 />
               </div>
 

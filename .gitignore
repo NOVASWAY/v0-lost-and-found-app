@@ -45,4 +45,10 @@ CREDENTIALS.md
 *.credentials
 *.secrets
 
+# Security documentation (contains system architecture details)
+*SECURITY*.md
+SECURITY.md
+CLIENT_SECURITY.md
+SECURITY_PATH_TRAVERSAL.md
+
 /lib/generated/prisma
