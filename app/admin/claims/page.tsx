@@ -10,6 +10,7 @@ import { Search } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { getClaims, initializeStorage } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 
 export default function AdminClaimsPage() {
   const { user, isAuthenticated } = useAuth()
@@ -52,6 +53,9 @@ export default function AdminClaimsPage() {
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <BackButton fallbackHref="/admin" />
+          </div>
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Claims Overview</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Monitor all claims submitted by users</p>
         </div>

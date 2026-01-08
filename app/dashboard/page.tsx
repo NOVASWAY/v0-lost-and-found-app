@@ -144,138 +144,130 @@ export default function DashboardPage() {
             </Card>
           </Link>
 
-          {unreadOrders.length > 0 && (
-            <Link href="/orders">
-              <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md border-primary/50 bg-primary/5">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20 transition-colors group-hover:bg-primary/30">
-                    <MessageSquare className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-card-foreground">Security Orders</h3>
-                      <Badge className="bg-primary text-primary-foreground">{unreadOrders.length} New</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">View important directives</p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          )}
-        </div>
-
-        {/* Widgets and Progress Bars */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Progress Widgets */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 rounded bg-primary/20">
-                    <Trophy className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 italic">
-                    Global Standing
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-4xl font-black italic tracking-tighter">#{user?.rank || "--"}</h3>
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Vault Rank</span>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-xs font-medium text-emerald-500">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>Top 12% of community contributors</span>
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 rounded bg-accent/10">
-                    <Star className="w-5 h-5 text-accent" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
-                    Contribution Value
-                  </span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-4xl font-black italic tracking-tighter text-accent">{user?.vaultPoints || 0}</h3>
-                  <span className="text-xs font-bold text-muted-foreground uppercase">Vault Credits</span>
-                </div>
-                <div className="mt-4 space-y-1">
-                  <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
-                    <span>Next Reward Tier</span>
-                    <span>{Math.max(0, 1000 - (user?.vaultPoints || 0))} pts to Gold</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent transition-all duration-1000"
-                      style={{ width: `${Math.min(100, ((user?.vaultPoints || 0) / 1000) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            {/* Stats Widgets */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <Card className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <Package className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-card-foreground">{userUploads.length}</p>
-                <p className="text-sm text-muted-foreground">Items Uploaded</p>
-              </Card>
-
-              <Card className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <Search className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-card-foreground">{userClaims.length}</p>
-                <p className="text-sm text-muted-foreground">Total Claims</p>
-              </Card>
-
-              <Card className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-card-foreground">{pendingClaims.length}</p>
-                <p className="text-sm text-muted-foreground">Pending Release</p>
-              </Card>
-
-              <Card className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <CheckCircle className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-3xl font-bold text-card-foreground">{releasedItems.length}</p>
-                <p className="text-sm text-muted-foreground">Items Received</p>
-              </Card>
-            </div>
-
-            {/* Security Identity Progress Bar */}
-            <Card className="p-6 border-primary/20 bg-primary/5">
-              <h3 className="text-sm font-black uppercase tracking-widest mb-4 italic">Security Identity</h3>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded bg-primary flex items-center justify-center text-primary-foreground font-black text-xl italic">
-                  {user?.name?.[0].toUpperCase()}
+          <Link href="/orders">
+            <Card className={`group cursor-pointer p-6 transition-shadow hover:shadow-md ${unreadOrders.length > 0 ? "border-primary/50 bg-primary/5" : ""}`}>
+              <div className="flex items-center gap-4">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${unreadOrders.length > 0 ? "bg-primary/20 group-hover:bg-primary/30" : "bg-slate-500/10 group-hover:bg-slate-500/20"}`}>
+                  <MessageSquare className={`h-6 w-6 ${unreadOrders.length > 0 ? "text-primary" : "text-slate-500"}`} />
                 </div>
                 <div>
-                  <p className="font-bold leading-tight">{user?.name}</p>
-                  <p className="text-[10px] text-muted-foreground font-mono">{user?.id}</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
-                  <span>Clearance Status</span>
-                  <span className="text-primary">Verified</span>
-                </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div className="h-full w-full bg-primary" />
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-card-foreground">Security Orders</h3>
+                    {unreadOrders.length > 0 && (
+                      <Badge className="bg-primary text-primary-foreground">{unreadOrders.length} New</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">View important directives</p>
                 </div>
               </div>
             </Card>
-          </div>
+          </Link>
+        </div>
+
+        {/* Stats Widgets */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card className="p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <Package className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold text-card-foreground">{userUploads.length}</p>
+            <p className="text-sm text-muted-foreground">Items Uploaded</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <Search className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold text-card-foreground">{userClaims.length}</p>
+            <p className="text-sm text-muted-foreground">Total Claims</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold text-card-foreground">{pendingClaims.length}</p>
+            <p className="text-sm text-muted-foreground">Pending Release</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="mb-2 flex items-center justify-between">
+              <CheckCircle className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold text-card-foreground">{releasedItems.length}</p>
+            <p className="text-sm text-muted-foreground">Items Received</p>
+          </Card>
+        </div>
+
+        {/* Progress Widgets */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 rounded bg-primary/20">
+                <Trophy className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 italic">
+                Global Standing
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-4xl font-black italic tracking-tighter">#{user?.rank || "--"}</h3>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Vault Rank</span>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-xs font-medium text-emerald-500">
+              <TrendingUp className="w-3 h-3" />
+              <span>Top 12% of community contributors</span>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-card border-border">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 rounded bg-accent/10">
+                <Star className="w-5 h-5 text-accent" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
+                Contribution Value
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-4xl font-black italic tracking-tighter text-accent">{user?.vaultPoints || 0}</h3>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Vault Credits</span>
+            </div>
+            <div className="mt-4 space-y-1">
+              <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                <span>Next Reward Tier</span>
+                <span>{Math.max(0, 1000 - (user?.vaultPoints || 0))} pts to Gold</span>
+              </div>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-accent transition-all duration-1000"
+                  style={{ width: `${Math.min(100, ((user?.vaultPoints || 0) / 1000) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 border-primary/20 bg-primary/5">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4 italic">Security Identity</h3>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded bg-primary flex items-center justify-center text-primary-foreground font-black text-xl italic">
+                {user?.name?.[0].toUpperCase()}
+              </div>
+              <div>
+                <p className="font-bold leading-tight">{user?.name}</p>
+                <p className="text-[10px] text-muted-foreground font-mono">{user?.id}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold uppercase text-muted-foreground">
+                <span>Clearance Status</span>
+                <span className="text-primary">Verified</span>
+              </div>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-full w-full bg-primary" />
+              </div>
+            </div>
+          </Card>
         </div>
       </main>
     </div>

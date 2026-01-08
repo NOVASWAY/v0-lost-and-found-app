@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context"
 interface BackButtonProps {
   fallbackHref?: string
   className?: string
-  variant?: "default" | "outline" | "ghost"
+  variant?: "default" | "outline" | "ghost" | "destructive" | "secondary" | "link"
   size?: "default" | "sm" | "lg" | "icon"
 }
 

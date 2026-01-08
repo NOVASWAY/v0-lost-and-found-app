@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
 import { getItems, getClaims, initializeStorage, getUserPreferences, updateUserPreferences, getDefaultUserPreferences } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 import { type UserPreferences } from "@/lib/mock-data"
 
 export default function ProfilePage() {
@@ -113,6 +114,9 @@ export default function ProfilePage() {
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mx-auto max-w-2xl">
           <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <BackButton fallbackHref="/dashboard" />
+            </div>
             <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Profile Settings</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Manage your account information</p>
           </div>

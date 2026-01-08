@@ -10,6 +10,7 @@ import { MapPin, Calendar, Tag, Info } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { getItems, initializeStorage } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 import { useState } from "react"
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,6 +44,9 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     <div className="min-h-screen bg-background">
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6">
+          <BackButton fallbackHref="/browse" />
+        </div>
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Image Section */}
           <div className="space-y-4">

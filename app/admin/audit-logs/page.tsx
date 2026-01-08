@@ -11,6 +11,7 @@ import { Search, Eye, Download } from "lucide-react"
 import { type AuditLog } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
 import { getAuditLogs, initializeStorage } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 
 export default function AuditLogsPage() {
   const { user, isAuthenticated } = useAuth()
@@ -76,18 +77,23 @@ export default function AuditLogsPage() {
   return (
     <div className="min-h-screen bg-background">
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold text-foreground">Audit Logs</h1>
-            <p className="text-muted-foreground">
-              Complete immutable record of all system events and security activities
-            </p>
+      <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <BackButton fallbackHref="/admin" />
           </div>
-          <Button variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export Logs
-          </Button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="mb-2 text-3xl font-bold text-foreground">Audit Logs</h1>
+              <p className="text-muted-foreground">
+                Complete immutable record of all system events and security activities
+              </p>
+            </div>
+            <Button variant="outline" className="gap-2">
+              <Download className="w-4 h-4" />
+              Export Logs
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

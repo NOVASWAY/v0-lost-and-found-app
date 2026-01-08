@@ -7,10 +7,10 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, ArrowLeft } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { BackButton } from "@/components/back-button"
 import { type ReleaseLog } from "@/lib/mock-data"
 import { getClaims, getItems, getUsers, addReleaseLog, updateClaim, updateItem, updateUser, initializeStorage } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
@@ -50,9 +50,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <Card className="p-6 text-center">
             <p className="text-muted-foreground">Claim not found</p>
-            <Link href="/volunteer/dashboard">
-              <Button className="mt-4">Back to Dashboard</Button>
-            </Link>
+            <BackButton fallbackHref="/volunteer/dashboard" />
           </Card>
         </main>
       </div>
@@ -198,9 +196,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
               The item has been successfully released to {claim.claimantName}. The release has been logged in the
               system.
             </p>
-            <Link href="/volunteer/dashboard">
-              <Button className="w-full">Back to Dashboard</Button>
-            </Link>
+            <BackButton fallbackHref="/volunteer/dashboard" className="w-full" />
           </Card>
         </main>
       </div>
@@ -210,14 +206,9 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-background">
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
         <div className="mb-6">
-          <Link href="/volunteer/dashboard">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </Link>
+          <BackButton fallbackHref="/volunteer/dashboard" />
         </div>
 
         <div className="mb-6">
@@ -358,11 +349,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
                     <CheckCircle className="mr-2 h-5 w-5" />
                     Release Item to Claimant
                   </Button>
-                  <Link href="/volunteer/dashboard">
-                    <Button variant="outline" size="lg">
-                      Cancel
-                    </Button>
-                  </Link>
+                  <BackButton fallbackHref="/volunteer/dashboard" variant="outline" />
                 </div>
               </>
             )}
@@ -371,11 +358,9 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
                 <p className="text-sm text-muted-foreground">
                   {claim.status === "rejected" ? "This claim has been rejected." : "This item has been released."}
                 </p>
-                <Link href="/volunteer/dashboard" className="mt-4 block">
-                  <Button variant="outline" size="lg" className="w-full">
-                    Back to Dashboard
-                  </Button>
-                </Link>
+                <div className="mt-4">
+                  <BackButton fallbackHref="/volunteer/dashboard" variant="outline" className="w-full" />
+                </div>
               </div>
             )}
           </div>

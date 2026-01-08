@@ -12,7 +12,7 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
 
   // Show navbar on public pages or desktop
   const isPublicPage = !user || pathname === "/" || pathname === "/login" || pathname === "/signup"
-  const showNavbar = isPublicPage
+  const showNavbar = isPublicPage && pathname !== "/" // Don't show navbar on landing page (it has its own header)
   const showMobileHeader = user && !isPublicPage
 
   return (

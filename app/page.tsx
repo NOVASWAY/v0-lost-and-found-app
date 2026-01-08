@@ -1,13 +1,23 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Upload, Search, Shield, Lock, Eye, BookOpen } from "lucide-react"
+import { Shield, Lock, Eye, BookOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { mockItems } from "@/lib/mock-data"
+import { getItems, initializeStorage } from "@/lib/storage"
+import { type Item } from "@/lib/mock-data"
 import Image from "next/image"
+import { useEffect, useState } from "react"
 
 export default function HomePage() {
-  const recentItems = mockItems.filter((item) => item.status === "available").slice(0, 4)
+  const [recentItems, setRecentItems] = useState<Item[]>([])
+
+  useEffect(() => {
+    initializeStorage()
+    const items = getItems().filter((item) => item.status === "available").slice(0, 4)
+    setRecentItems(items)
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,32 +124,39 @@ export default function HomePage() {
             <Button variant="ghost">View All</Button>
           </Link>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {recentItems.map((item) => (
-            <Link key={item.id} href={`/items/${item.id}`}>
-              <Card className="overflow-hidden transition-all hover:shadow-lg">
-                <div className="aspect-square bg-muted">
-                  <img
-                    src={item.imageUrl || "/placeholder.svg"}
-                    alt={item.category}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-card-foreground">{item.category}</span>
-                    <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                      {item.status}
-                    </span>
+        {recentItems.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {recentItems.map((item) => (
+              <Link key={item.id} href={`/items/${item.id}`}>
+                <Card className="overflow-hidden transition-all hover:shadow-lg">
+                  <div className="relative aspect-square bg-muted">
+                    <Image
+                      src={item.imageUrl || "/placeholder.svg"}
+                      alt={item.category}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Found {new Date(item.dateFounded).toLocaleDateString()}
-                  </p>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <div className="p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-medium text-card-foreground">{item.category}</span>
+                      <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                        {item.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Found {new Date(item.dateFounded).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card className="p-12 text-center">
+            <p className="text-muted-foreground">No items available at the moment. Check back later!</p>
+          </Card>
+        )}
       </section>
 
       {/* Footer */}

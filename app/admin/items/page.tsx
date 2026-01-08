@@ -12,6 +12,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { getItems, initializeStorage } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 
 export default function AdminItemsPage() {
   const { user, isAuthenticated } = useAuth()
@@ -57,8 +58,11 @@ export default function AdminItemsPage() {
   return (
     <div className="min-h-screen bg-background">
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
         <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <BackButton fallbackHref="/admin" />
+          </div>
           <h1 className="mb-2 text-3xl font-bold text-foreground">Items Management</h1>
           <p className="text-muted-foreground">View and monitor all items in the system</p>
         </div>
