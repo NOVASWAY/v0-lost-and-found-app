@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,7 +49,6 @@ export default function AdminClaimsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "admin"} />
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">

@@ -2,7 +2,6 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
@@ -36,7 +35,6 @@ export default function MyClaimsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "user"} />
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">

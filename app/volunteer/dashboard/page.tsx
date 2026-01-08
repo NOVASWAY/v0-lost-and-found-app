@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +9,6 @@ import { Search, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { FloatingActionIcon } from "@/components/floating-action-icon"
 import { getClaims, initializeStorage } from "@/lib/storage"
 
 export default function VolunteerDashboardPage() {
@@ -55,8 +53,6 @@ export default function VolunteerDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "volunteer"} />
-
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Release Dashboard</h1>

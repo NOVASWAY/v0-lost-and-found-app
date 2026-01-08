@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +28,6 @@ import { useAuth } from "@/lib/auth-context"
 import { mockPlaybooks } from "@/lib/mock-data"
 import { getItems, getClaims, getPlaybooks, getMissionsByUser, getMissions, initializeStorage, updateMission } from "@/lib/storage"
 import { addAuditLog } from "@/lib/audit-logger"
-import { FloatingActionIcon } from "@/components/floating-action-icon"
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -70,42 +68,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "user"} />
-      
-      {/* Floating Action Icons */}
-      <FloatingActionIcon
-        href="/upload"
-        icon={Upload}
-        label="Upload Item"
-        color="primary"
-        position="bottom-right"
-        delay={0}
-      />
-      <FloatingActionIcon
-        href="/browse"
-        icon={Search}
-        label="Browse Items"
-        color="accent"
-        position="bottom-right"
-        delay={150}
-      />
-      <FloatingActionIcon
-        href="/my-uploads"
-        icon={Package}
-        label="My Uploads"
-        color="info"
-        position="bottom-left"
-        delay={300}
-      />
-      <FloatingActionIcon
-        href="/my-claims"
-        icon={CheckCircle}
-        label="My Claims"
-        color="success"
-        position="bottom-left"
-        delay={450}
-      />
-
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Welcome Back, {user?.name || "User"}!</h1>

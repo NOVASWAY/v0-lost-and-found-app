@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -48,7 +47,6 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
   if (!claim) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar role="volunteer" />
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <Card className="p-6 text-center">
             <p className="text-muted-foreground">Claim not found</p>
@@ -192,7 +190,6 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
   if (isReleased) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar role="volunteer" />
         <main className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
           <Card className="max-w-md p-8 text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-accent" />
@@ -212,7 +209,6 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role="volunteer" />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +48,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "admin"} />
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

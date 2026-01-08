@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -120,7 +119,6 @@ export default function UploadPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar role={user?.role || "user"} />
         <main className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
           <Card className="max-w-md p-8 text-center">
             <CheckCircle className="mx-auto mb-4 h-16 w-16 text-accent" />
@@ -144,7 +142,6 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "user"} />
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mx-auto max-w-2xl">

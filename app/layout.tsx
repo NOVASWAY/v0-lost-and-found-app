@@ -6,6 +6,7 @@ import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
+import { NavigationWrapper } from "@/components/navigation-wrapper"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
-            {children}
+            <NavigationWrapper>
+              {children}
+            </NavigationWrapper>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

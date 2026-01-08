@@ -39,7 +39,7 @@ export function Navbar({ role = "user" }: NavbarProps) {
   if (role === "admin") links = adminLinks
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-xl hidden md:block">
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
         <Link href="/" className="flex items-center gap-4 group">
           <div className="relative h-10 w-10 sm:h-12 sm:w-12 grayscale group-hover:grayscale-0 transition-all duration-500 border border-primary/20 rounded-lg p-1 bg-white/5 shadow-[0_0_15px_rgba(180,140,40,0.1)]">
@@ -78,28 +78,6 @@ export function Navbar({ role = "user" }: NavbarProps) {
               </Button>
             </>
           )}
-
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <nav className="flex flex-col gap-4 pt-8">
-                {links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>

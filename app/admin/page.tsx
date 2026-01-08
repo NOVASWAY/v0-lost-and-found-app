@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +40,6 @@ import { type User, type Order, type Playbook, type Location, type Mission, type
 import { useAuth } from "@/lib/auth-context"
 import { addAuditLog } from "@/lib/audit-logger"
 import { useToast } from "@/hooks/use-toast"
-import { FloatingActionIcon } from "@/components/floating-action-icon"
 import { getUsers, getPlaybooks, getLocations, getAuditLogs, getMissions, getSystemSettings, updateSystemSettings, addUser, updateUser, deleteUser, addPlaybook, updatePlaybook, deletePlaybook, addLocation, updateLocation, deleteLocation, initializeStorage, addServiceRecord, addMission, updateMission, deleteMission } from "@/lib/storage"
 
 export default function AdminDashboardPage() {
@@ -401,42 +399,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
-      <Navbar role="admin" />
-      
-      {/* Floating Action Icons */}
-      <FloatingActionIcon
-        href="/admin/users"
-        icon={Users}
-        label="Manage Users"
-        color="primary"
-        position="bottom-right"
-        delay={0}
-      />
-      <FloatingActionIcon
-        href="/admin/items"
-        icon={Package}
-        label="Manage Items"
-        color="accent"
-        position="bottom-right"
-        delay={150}
-      />
-      <FloatingActionIcon
-        href="/admin/claims"
-        icon={FileText}
-        label="Review Claims"
-        color="warning"
-        position="bottom-left"
-        delay={300}
-      />
-      <FloatingActionIcon
-        href="/admin"
-        icon={Settings}
-        label="System Settings"
-        color="info"
-        position="bottom-left"
-        delay={450}
-      />
-
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-in fade-in duration-700 pb-24 sm:pb-10">
         <div className="mb-8 sm:mb-12 border-b border-border/50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>

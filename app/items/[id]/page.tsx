@@ -2,7 +2,6 @@
 
 import { useEffect, use } from "react"
 import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/navbar"
 import { Card } from "@/components/ui/card"
 import { StatusBadge } from "@/components/status-badge"
 import { CountdownTimer } from "@/components/countdown-timer"
@@ -42,7 +41,6 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar role={user?.role || "user"} />
 
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="grid gap-8 lg:grid-cols-2">
