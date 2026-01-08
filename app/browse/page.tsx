@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { getItems, getLocations, initializeStorage } from "@/lib/storage"
+import { BackButton } from "@/components/back-button"
 
 export default function BrowsePage() {
   const { user, isAuthenticated } = useAuth()

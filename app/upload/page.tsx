@@ -17,6 +17,7 @@ import { type Item } from "@/lib/mock-data"
 import { getLocations, addItem, updateUser, initializeStorage } from "@/lib/storage"
 import { useToast } from "@/hooks/use-toast"
 import { addAuditLog } from "@/lib/audit-logger"
+import { BackButton } from "@/components/back-button"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuth()

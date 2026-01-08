@@ -17,6 +17,10 @@ import {
   Calendar,
   Gift,
   Eye,
+  Activity,
+  BookOpen,
+  MessageSquare,
+  MapPin,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,8 +35,11 @@ const userNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["user"] },
   { href: "/browse", label: "Browse", icon: Search, roles: ["user"] },
   { href: "/upload", label: "Upload", icon: Upload, roles: ["user"] },
+  { href: "/missions", label: "Missions", icon: Activity, roles: ["user"] },
+  { href: "/playbooks", label: "Playbooks", icon: BookOpen, roles: ["user"] },
   { href: "/my-uploads", label: "My Items", icon: Package, roles: ["user"] },
   { href: "/my-claims", label: "Claims", icon: FileCheck, roles: ["user"] },
+  { href: "/orders", label: "Orders", icon: MessageSquare, roles: ["user"] },
   { href: "/profile", label: "Profile", icon: Settings, roles: ["user", "volunteer", "admin"] },
 ]
 
@@ -44,9 +51,10 @@ const volunteerNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
+  { href: "/admin/users", label: "Users", icon: Users, roles: ["admin"] },
   { href: "/admin/items", label: "Items", icon: Package, roles: ["admin"] },
   { href: "/admin/claims", label: "Claims", icon: FileCheck, roles: ["admin"] },
-  { href: "/admin/users", label: "Users", icon: Users, roles: ["admin"] },
+  { href: "/admin/locations", label: "Locations", icon: MapPin, roles: ["admin"] },
   { href: "/profile", label: "Profile", icon: Settings, roles: ["admin"] },
 ]
 
