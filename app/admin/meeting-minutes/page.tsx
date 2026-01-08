@@ -46,6 +46,7 @@ export default function AdminMeetingMinutesPage() {
   const [newAgendaItem, setNewAgendaItem] = useState("")
   const [newDecision, setNewDecision] = useState("")
   const [newActionItem, setNewActionItem] = useState({ item: "", assignedTo: "", dueDate: "" })
+  const [editingActionItemIndex, setEditingActionItemIndex] = useState<number | null>(null)
 
   useEffect(() => {
     initializeStorage()
@@ -138,18 +139,35 @@ export default function AdminMeetingMinutesPage() {
     const sanitizedDueDate = newActionItem.dueDate ? sanitizeDate(newActionItem.dueDate) : undefined
     
     if (sanitizedItem && sanitizedAssignedTo) {
-      setNewMinutes({
-        ...newMinutes,
-        actionItems: [
-          ...(newMinutes.actionItems || []),
-          {
-            item: sanitizedItem,
-            assignedTo: sanitizedAssignedTo,
-            dueDate: sanitizedDueDate,
-            status: "pending",
-          },
-        ],
-      })
+      if (editingActionItemIndex !== null) {
+        // Update existing action item
+        const updatedActionItems = [...(newMinutes.actionItems || [])]
+        updatedActionItems[editingActionItemIndex] = {
+          item: sanitizedItem,
+          assignedTo: sanitizedAssignedTo,
+          dueDate: sanitizedDueDate,
+          status: updatedActionItems[editingActionItemIndex].status, // Preserve existing status
+        }
+        setNewMinutes({
+          ...newMinutes,
+          actionItems: updatedActionItems,
+        })
+        setEditingActionItemIndex(null)
+      } else {
+        // Add new action item
+        setNewMinutes({
+          ...newMinutes,
+          actionItems: [
+            ...(newMinutes.actionItems || []),
+            {
+              item: sanitizedItem,
+              assignedTo: sanitizedAssignedTo,
+              dueDate: sanitizedDueDate,
+              status: "pending",
+            },
+          ],
+        })
+      }
       setNewActionItem({ item: "", assignedTo: "", dueDate: "" })
     } else {
       toast({
@@ -158,6 +176,23 @@ export default function AdminMeetingMinutesPage() {
         variant: "destructive",
       })
     }
+  }
+
+  const handleEditActionItem = (index: number) => {
+    const actionItem = newMinutes.actionItems?.[index]
+    if (actionItem) {
+      setNewActionItem({
+        item: actionItem.item,
+        assignedTo: actionItem.assignedTo,
+        dueDate: actionItem.dueDate || "",
+      })
+      setEditingActionItemIndex(index)
+    }
+  }
+
+  const handleCancelEditActionItem = () => {
+    setNewActionItem({ item: "", assignedTo: "", dueDate: "" })
+    setEditingActionItemIndex(null)
   }
 
   const handleUpdateActionItemStatus = (minuteId: string, actionIndex: number, newStatus: "pending" | "in_progress" | "completed") => {
@@ -195,6 +230,12 @@ export default function AdminMeetingMinutesPage() {
     const newActionItems = [...(newMinutes.actionItems || [])]
     newActionItems.splice(index, 1)
     setNewMinutes({ ...newMinutes, actionItems: newActionItems })
+    if (editingActionItemIndex === index) {
+      setEditingActionItemIndex(null)
+      setNewActionItem({ item: "", assignedTo: "", dueDate: "" })
+    } else if (editingActionItemIndex !== null && editingActionItemIndex > index) {
+      setEditingActionItemIndex(editingActionItemIndex - 1)
+    }
   }
 
   const handleSaveMinutes = () => {
@@ -574,6 +615,7 @@ export default function AdminMeetingMinutesPage() {
     setNewDecision("")
     setNewActionItem({ item: "", assignedTo: "", dueDate: "" })
     setEditingMinutes(null)
+    setEditingActionItemIndex(null)
   }
 
   const handleDialogClose = () => {
@@ -635,7 +677,7 @@ export default function AdminMeetingMinutesPage() {
                       <Input
                         id="location"
                         value={newMinutes.location || ""}
-                        onChange={(e) => setNewMinutes({ ...newMinutes, location: sanitizeInput(e.target.value) })}
+                        onChange={(e) => setNewMinutes({ ...newMinutes, location: e.target.value })}
                         placeholder="Meeting location"
                         maxLength={200}
                       />
@@ -704,7 +746,7 @@ export default function AdminMeetingMinutesPage() {
                     <Textarea
                       id="discussion"
                       value={newMinutes.discussion || ""}
-                      onChange={(e) => setNewMinutes({ ...newMinutes, discussion: sanitizeTextContent(e.target.value) })}
+                      onChange={(e) => setNewMinutes({ ...newMinutes, discussion: e.target.value })}
                       placeholder="Main discussion points and notes"
                       rows={6}
                       maxLength={10000}
@@ -715,7 +757,7 @@ export default function AdminMeetingMinutesPage() {
                     <div className="flex gap-2 mb-2">
                       <Input
                         value={newDecision}
-                        onChange={(e) => setNewDecision(sanitizeInput(e.target.value))}
+                        onChange={(e) => setNewDecision(e.target.value)}
                         placeholder="Add decision"
                         onKeyPress={(e) => e.key === "Enter" && handleAddDecision()}
                         maxLength={500}
@@ -745,10 +787,11 @@ export default function AdminMeetingMinutesPage() {
                     <Label>Action Items</Label>
                     <div className="space-y-2 mb-2">
                       <Input
-                        placeholder="Action item"
+                        placeholder={editingActionItemIndex !== null ? "Edit action item" : "Action item"}
                         value={newActionItem.item}
                         onChange={(e) => setNewActionItem({ ...newActionItem, item: e.target.value })}
                         onKeyPress={(e) => e.key === "Enter" && e.preventDefault()}
+                        maxLength={500}
                       />
                       <div className="grid gap-2 sm:grid-cols-2">
                         <Select value={newActionItem.assignedTo} onValueChange={(value) => setNewActionItem({ ...newActionItem, assignedTo: value })}>
@@ -767,36 +810,75 @@ export default function AdminMeetingMinutesPage() {
                           type="date"
                           placeholder="Due date"
                           value={newActionItem.dueDate}
-                          onChange={(e) => setNewActionItem({ ...newActionItem, dueDate: e.target.value })}
+                          onChange={(e) => {
+                            const sanitized = sanitizeDate(e.target.value)
+                            setNewActionItem({ ...newActionItem, dueDate: sanitized || e.target.value })
+                          }}
                         />
                       </div>
-                      <Button type="button" onClick={handleAddActionItem} variant="outline" className="w-full">
-                        Add Action Item
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={handleAddActionItem} variant="outline" className="flex-1">
+                          {editingActionItemIndex !== null ? "Update Action Item" : "Add Action Item"}
+                        </Button>
+                        {editingActionItemIndex !== null && (
+                          <Button type="button" onClick={handleCancelEditActionItem} variant="ghost">
+                            Cancel
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       {newMinutes.actionItems?.map((actionItem, idx) => (
                         <Card key={idx} className="p-3">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
-                              <p className="font-medium text-sm">{actionItem.item}</p>
-                              <p className="text-xs text-muted-foreground">Assigned to: {actionItem.assignedTo}</p>
+                              <p className="font-medium text-sm">{escapeHtml(actionItem.item)}</p>
+                              <p className="text-xs text-muted-foreground">Assigned to: {escapeHtml(actionItem.assignedTo)}</p>
                               {actionItem.dueDate && (
                                 <p className="text-xs text-muted-foreground">Due: {new Date(actionItem.dueDate).toLocaleDateString()}</p>
                               )}
-                              <Badge variant={actionItem.status === "completed" ? "default" : "secondary"} className="mt-1">
-                                {actionItem.status}
-                              </Badge>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Select
+                                  value={actionItem.status}
+                                  onValueChange={(value: "pending" | "in_progress" | "completed") => {
+                                    const updatedActionItems = [...(newMinutes.actionItems || [])]
+                                    updatedActionItems[idx] = { ...updatedActionItems[idx], status: value }
+                                    setNewMinutes({ ...newMinutes, actionItems: updatedActionItems })
+                                  }}
+                                >
+                                  <SelectTrigger className="w-[130px] h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="in_progress">In Progress</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveActionItem(idx)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditActionItem(idx)}
+                                className="h-6 w-6 p-0"
+                                title="Edit"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveActionItem(idx)}
+                                className="h-6 w-6 p-0"
+                                title="Remove"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </Card>
                       ))}
