@@ -98,18 +98,18 @@ See [SECURITY.md](./SECURITY.md) for detailed security documentation.
 ### Installation
 
 1. Clone the repository:
-```bash
+\`\`\`bash
 git clone https://github.com/NOVASWAY/v0-lost-and-found-app.git
 cd v0-lost-and-found-app
-```
+\`\`\`
 
 2. Install dependencies:
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 3. Set up the database:
-```bash
+\`\`\`bash
 # Run migrations
 npm run db:migrate
 
@@ -118,12 +118,12 @@ npm run db:generate
 
 # Seed the database
 npm run db:seed
-```
+\`\`\`
 
 4. Start the development server:
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
@@ -136,7 +136,7 @@ After seeding, you can login with:
 
 ## Project Structure
 
-```
+\`\`\`
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   ├── admin/             # Admin pages
@@ -157,7 +157,7 @@ After seeding, you can login with:
 │   ├── schema.prisma      # Database schema
 │   └── migrations/        # Database migrations
 └── public/                 # Static assets
-```
+\`\`\`
 
 ## API Documentation
 
@@ -199,9 +199,9 @@ See `prisma/schema.prisma` for the complete schema.
 
 Create a `.env` file in the root directory:
 
-```env
+\`\`\`env
 DATABASE_URL="file:./prisma/dev.db"
-```
+\`\`\`
 
 ## Deployment
 
@@ -209,9 +209,9 @@ The project is configured for deployment on Vercel. See the [Vercel documentatio
 
 For production, update the `DATABASE_URL` to use PostgreSQL:
 
-```env
+\`\`\`env
 DATABASE_URL="postgresql://user:password@host:5432/database"
-```
+\`\`\`
 
 ## Contributing
 

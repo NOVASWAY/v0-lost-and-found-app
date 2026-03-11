@@ -92,4 +92,3 @@ export async function requireAdminOrVolunteer(
 ): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
   return requireRole(request, ["admin", "volunteer"])
 }
-

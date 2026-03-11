@@ -1073,4 +1073,3 @@ export default function AdminMeetingMinutesPage() {
     </div>
   )
 }
-

@@ -413,4 +413,3 @@ export default function AdminMissionsPage() {
     </div>
   )
 }
-

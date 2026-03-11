@@ -579,4 +579,3 @@ export function deleteMeetingMinutes(id: string): boolean {
   localStorage.setItem(STORAGE_KEYS.MEETING_MINUTES, JSON.stringify(filtered))
   return true
 }
-

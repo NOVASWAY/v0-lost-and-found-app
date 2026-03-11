@@ -607,4 +607,3 @@ export function RubiksSafe({ isActive, passwordLength, isUnlocking = false, clas
     </div>
   )
 }
-

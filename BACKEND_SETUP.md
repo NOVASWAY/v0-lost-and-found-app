@@ -16,7 +16,7 @@ All required dependencies are already installed:
 
 The database is already initialized. To reset or recreate:
 
-```bash
+\`\`\`bash
 # Run migrations
 npm run db:migrate
 
@@ -25,7 +25,7 @@ npm run db:generate
 
 # Seed the database with initial data
 npm run db:seed
-```
+\`\`\`
 
 ### 3. Database Schema
 
@@ -104,25 +104,25 @@ After seeding, you can login with:
 
 ### 7. Database Management
 
-```bash
+\`\`\`bash
 # Open Prisma Studio (database GUI)
 npm run db:studio
 
 # View database file
 # SQLite database is located at: prisma/dev.db
-```
+\`\`\`
 
 ### 8. Migrations
 
 When you modify the Prisma schema:
 
-```bash
+\`\`\`bash
 # Create and apply migration
 npm run db:migrate
 
 # Regenerate Prisma client
 npm run db:generate
-```
+\`\`\`
 
 ## Frontend Integration
 
@@ -133,7 +133,7 @@ The frontend can now use the API client (`lib/api-client.ts`) instead of mock da
 - Consistent request/response format
 
 Example usage:
-```typescript
+\`\`\`typescript
 import { itemsApi } from "@/lib/api-client"
 
 // Get all items
@@ -145,7 +145,7 @@ const { item } = await itemsApi.create({
   category: "Wallet",
   // ... other fields
 })
-```
+\`\`\`
 
 ## Next Steps
 
@@ -165,4 +165,3 @@ For production:
 5. Enable CORS if needed
 6. Set up database backups
 7. Add monitoring and logging
-
