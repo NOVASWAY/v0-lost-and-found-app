@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { type User } from "./mock-data"
 import { getUsers, updateUser, initializeStorage } from "./storage"
@@ -24,21 +24,24 @@ const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutes
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [sessionTimeout, setSessionTimeout] = useState<NodeJS.Timeout | null>(null)
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
-  // Secure session management
+  // Secure session management - use useCallback with empty deps to avoid circular dependency
   const resetSessionTimeout = useCallback(() => {
-    if (sessionTimeout) clearTimeout(sessionTimeout)
+    if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     
-    const newTimeout = setTimeout(() => {
-      logout()
+    sessionTimeoutRef.current = setTimeout(() => {
+      setUser(null)
+      setIsAuthenticated(false)
+      sessionStorage.removeItem("sessionToken")
+      sessionStorage.removeItem("userId")
+      router.push("/")
       console.log("[Security] Session expired due to inactivity")
     }, SESSION_TIMEOUT)
-    
-    setSessionTimeout(newTimeout)
-  }, [sessionTimeout])
+  }, [router])
 
+  // Single useEffect for initialization - runs only on mount
   useEffect(() => {
     // Initialize storage on mount
     initializeStorage()
@@ -89,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("mousedown", handleUserActivity)
       window.removeEventListener("keydown", handleUserActivity)
-      if (sessionTimeout) clearTimeout(sessionTimeout)
+      if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     }
   }, [resetSessionTimeout])
 
@@ -156,9 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem("sessionToken")
     sessionStorage.removeItem("userId")
     sessionStorage.removeItem("loginAttempts")
-    if (sessionTimeout) clearTimeout(sessionTimeout)
+    if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     router.push("/")
-  }, [user, sessionTimeout, router])
+  }, [user, router])
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
     if (!user) return false
