@@ -6,10 +6,17 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+export const passwordStrengthSchema = z.string()
+  .min(12, "Password must be at least 12 characters long")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/\d/, "Password must contain at least one number")
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, "Password must contain at least one special character")
+
 export const createUserSchema = z.object({
   name: z.string().min(2).max(100).trim(),
   username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
-  password: z.string().min(6).max(100),
+  password: passwordStrengthSchema,
   role: z.enum(["user", "volunteer", "admin"]),
 })
 
@@ -21,7 +28,7 @@ export const updateUserSchema = z.object({
 export const changePasswordSchema = z.object({
   userId: z.string().min(1),
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(6).max(100).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+  newPassword: passwordStrengthSchema,
 })
 
 // Item validation schemas

@@ -14,7 +14,6 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RubiksSafe } from "@/components/rubiks-safe"
-import { mockUsers } from "@/lib/mock-data"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -29,31 +28,31 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Check credentials
-    const foundUser = mockUsers.find((u) => u.username === username && u.password === password)
-    
-    if (foundUser) {
-      // Show unlock animation
-      setIsUnlocking(true)
+    try {
+      // Perform secure login via API endpoint
+      const success = await login(username, password)
       
-      // Perform login (sets user state)
-      await login(username, password)
-      
-      // Wait for animation to complete (1.5s) then redirect
-      setTimeout(() => {
-        if (foundUser.role === "admin") {
-          router.push("/admin")
-        } else if (foundUser.role === "volunteer") {
-          router.push("/volunteer/dashboard")
-        } else {
-          router.push("/dashboard")
-        }
-      }, 1500)
-    } else {
+      if (success) {
+        // Show unlock animation
+        setIsUnlocking(true)
+        
+        // Wait for animation to complete (1.5s) then redirect
+        // Router will be called by auth context
+        setTimeout(() => {
+          setIsLoading(false)
+        }, 1500)
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid username or password. Please try again.",
+          variant: "destructive",
+        })
+        setIsLoading(false)
+      }
+    } catch (error) {
       toast({
-        title: "Login Failed",
-        description:
-          "Invalid username or password. Try user: johndoe, volunteer: tomanderson, or admin: admin",
+        title: "Login Error",
+        description: "An error occurred during login. Please try again.",
         variant: "destructive",
       })
       setIsLoading(false)
