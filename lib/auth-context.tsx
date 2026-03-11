@@ -108,42 +108,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const users = getUsers()
-      const foundUser = users.find((u) => u.username === sanitizedUsername && u.password === password)
-      
-      if (foundUser) {
-        // Generate session token (secure random string)
-        const sessionToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("")
-        
-        setUser(foundUser)
-        setIsAuthenticated(true)
-        
-        // Use sessionStorage instead of localStorage for sensitive data
-        sessionStorage.setItem("sessionToken", sessionToken)
-        sessionStorage.setItem("userId", foundUser.id)
-        sessionStorage.removeItem("loginAttempts")
-        
-        resetSessionTimeout()
+      // Make API call to secure backend endpoint
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: sanitizedUsername, password }),
+      })
 
-        // Add audit log
-        addAuditLog("login", "User logged in", foundUser.id, foundUser.name, `User '${foundUser.username}' logged in`, "info")
-
-        // Route based on role
-        if (foundUser.role === "admin") {
-          router.push("/admin")
-        } else if (foundUser.role === "volunteer") {
-          router.push("/volunteer/dashboard")
-        } else {
-          router.push("/dashboard")
-        }
-        return true
-      } else {
+      if (!response.ok) {
         // Log failed attempt
         sessionStorage.setItem("loginAttempts", (loginAttempts + 1).toString())
         return false
       }
+
+      const data = await response.json()
+      const foundUser = data.user
+
+      // Generate session token (secure random string)
+      const sessionToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+      
+      setUser(foundUser)
+      setIsAuthenticated(true)
+      
+      // Use sessionStorage instead of localStorage for sensitive data
+      sessionStorage.setItem("sessionToken", sessionToken)
+      sessionStorage.setItem("userId", foundUser.id)
+      sessionStorage.removeItem("loginAttempts")
+      
+      resetSessionTimeout()
+
+      // Add audit log
+      addAuditLog("login", "User logged in", foundUser.id, foundUser.name, `User '${foundUser.username}' logged in`, "info")
+
+      // Route based on role
+      if (foundUser.role === "admin") {
+        router.push("/admin")
+      } else if (foundUser.role === "volunteer") {
+        router.push("/volunteer/dashboard")
+      } else {
+        router.push("/dashboard")
+      }
+      return true
     } catch (error) {
       console.error("[Security] Login error:", error)
       return false
