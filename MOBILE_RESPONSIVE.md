@@ -83,4 +83,3 @@ Test on:
 - Fast initial page load
 
 The application is fully functional and optimized for mobile devices! 📱
-

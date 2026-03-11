@@ -19,7 +19,7 @@ All admin routes require:
 - ✅ `/admin/audit-logs` - Audit logs
 
 **Protection Mechanism:**
-```typescript
+\`\`\`typescript
 useEffect(() => {
   if (!isAuthenticated) {
     router.push("/login")
@@ -34,7 +34,7 @@ useEffect(() => {
 if (!isAuthenticated || user?.role !== "admin") {
   return null
 }
-```
+\`\`\`
 
 ### Volunteer Routes (Require Volunteer Role)
 All volunteer routes require:
@@ -46,7 +46,7 @@ All volunteer routes require:
 - ✅ `/volunteer/release/[id]` - Release item page
 
 **Protection Mechanism:**
-```typescript
+\`\`\`typescript
 useEffect(() => {
   if (!isAuthenticated || user?.role !== "volunteer") {
     router.push("/login")
@@ -56,7 +56,7 @@ useEffect(() => {
 if (!isAuthenticated || user?.role !== "volunteer") {
   return null
 }
-```
+\`\`\`
 
 ### User Routes (Require Authentication)
 All user routes require:
@@ -73,7 +73,7 @@ All user routes require:
 - ✅ `/items/[id]` - Item detail page
 
 **Protection Mechanism:**
-```typescript
+\`\`\`typescript
 useEffect(() => {
   if (!isAuthenticated) {
     router.push("/login")
@@ -83,7 +83,7 @@ useEffect(() => {
 if (!isAuthenticated) {
   return null
 }
-```
+\`\`\`
 
 ## Public Routes
 
@@ -136,4 +136,3 @@ While checking authentication, components return `null` to prevent flash of cont
 - All user routes require authentication
 - Public routes remain accessible
 - No unauthorized access possible
-

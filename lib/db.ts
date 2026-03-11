@@ -12,4 +12,3 @@ export async function comparePassword(password: string, hash: string): Promise<b
   const bcrypt = await import("bcryptjs")
   return bcrypt.compare(password, hash)
 }
-

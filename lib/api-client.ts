@@ -233,4 +233,3 @@ export const releaseLogsApi = {
   getAll: (search?: string) =>
     fetchApi<{ logs: any[] }>(`/release-logs${search ? `?search=${encodeURIComponent(search)}` : ""}`),
 }
-

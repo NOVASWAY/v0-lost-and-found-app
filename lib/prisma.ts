@@ -39,4 +39,3 @@ export const prisma = new Proxy({} as any, {
     return instance[prop]
   },
 })
-

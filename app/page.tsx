@@ -26,7 +26,7 @@ export default function HomePage() {
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
+              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 32px, 40px" className="object-contain" priority />
             </div>
             <span className="text-base sm:text-xl font-semibold text-foreground truncate">Vault Church Security System</span>
           </div>
@@ -44,7 +44,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-8 flex justify-center">
             <div className="relative h-32 w-32">
-              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
+              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="128px" className="object-contain" priority />
             </div>
           </div>
           <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight text-foreground md:text-6xl">

@@ -43,7 +43,7 @@ export function Navbar({ role = "user" }: NavbarProps) {
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
         <Link href="/" className="flex items-center gap-4 group">
           <div className="relative h-10 w-10 sm:h-12 sm:w-12 grayscale group-hover:grayscale-0 transition-all duration-500 border border-primary/20 rounded-lg p-1 bg-white/5 shadow-[0_0_15px_rgba(180,140,40,0.1)]">
-            <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill className="object-contain" priority />
+            <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 40px, 48px" className="object-contain" priority />
           </div>
           <div className="flex flex-col">
             <span className="text-base sm:text-lg font-black tracking-tighter text-foreground leading-none">THE VAULT</span>

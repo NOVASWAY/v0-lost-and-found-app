@@ -17,29 +17,29 @@ You need to use a cloud database. Here are your options:
 
 2. **Update Prisma Schema:**
    - Change the provider in `prisma/schema.prisma`:
-   ```prisma
+   \`\`\`prisma
    datasource db {
      provider = "postgresql"
    }
-   ```
+   \`\`\`
 
 3. **Environment Variables:**
    - Vercel will automatically add `POSTGRES_URL` to your environment variables
    - Update `prisma.config.ts` to use it:
-   ```typescript
+   \`\`\`typescript
    datasource: {
      url: process.env["POSTGRES_URL"] || process.env["DATABASE_URL"],
    },
-   ```
+   \`\`\`
 
 4. **Run Migrations:**
    - Add a build script to run migrations:
-   ```json
+   \`\`\`json
    "scripts": {
      "postinstall": "prisma generate",
      "vercel-build": "prisma migrate deploy && prisma generate && next build"
    }
-   ```
+   \`\`\`
 
 ### Option 2: External PostgreSQL Database
 
@@ -56,12 +56,12 @@ Use services like:
    - Format: `postgresql://user:password@host:5432/database?sslmode=require`
 
 3. **Update Prisma Schema:**
-   ```prisma
+   \`\`\`prisma
    datasource db {
      provider = "postgresql"
      url      = env("DATABASE_URL")
    }
-   ```
+   \`\`\`
 
 ### Option 3: Turso (libSQL Cloud) - Best for Current Setup
 
@@ -80,7 +80,7 @@ Since you're already using libSQL adapter, Turso is perfect:
 
 ### Update package.json scripts:
 
-```json
+\`\`\`json
 {
   "scripts": {
     "build": "prisma generate && next build",
@@ -88,18 +88,18 @@ Since you're already using libSQL adapter, Turso is perfect:
     "vercel-build": "prisma migrate deploy && prisma generate && next build"
   }
 }
-```
+\`\`\`
 
 ### Add vercel.json (optional):
 
-```json
+\`\`\`json
 {
   "buildCommand": "prisma generate && next build",
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1"]
 }
-```
+\`\`\`
 
 ## Environment Variables in Vercel
 
@@ -116,44 +116,44 @@ Add these in Vercel Dashboard → Project Settings → Environment Variables:
 
 ### Option 1: During Build (Recommended)
 Add to `package.json`:
-```json
+\`\`\`json
 "vercel-build": "prisma migrate deploy && prisma generate && next build"
-```
+\`\`\`
 
 ### Option 2: Manual Migration
 After deployment, run migrations manually:
-```bash
+\`\`\`bash
 npx prisma migrate deploy
-```
+\`\`\`
 
 Or use Vercel CLI:
-```bash
+\`\`\`bash
 vercel env pull
 npx prisma migrate deploy
-```
+\`\`\`
 
 ## Seeding Database on Vercel
 
 After first deployment, seed the database:
 
 1. **Pull environment variables:**
-   ```bash
+   \`\`\`bash
    vercel env pull
-   ```
+   \`\`\`
 
 2. **Run seed script:**
-   ```bash
+   \`\`\`bash
    npm run db:seed
-   ```
+   \`\`\`
 
 Or create a one-time API route for seeding (admin-only):
-```typescript
+\`\`\`typescript
 // app/api/seed/route.ts
 export async function POST(request: NextRequest) {
   // Add admin authentication check
   // Run seed script
 }
-```
+\`\`\`
 
 ## Current Deployment Status
 
@@ -216,4 +216,3 @@ Since you're already using libSQL adapter, Turso is the easiest option:
 **Your app is live at**: https://v0-lost-and-found-app-sepia-eight.vercel.app/
 
 Once the database is configured, all features will work on the deployed version! 🚀
-
