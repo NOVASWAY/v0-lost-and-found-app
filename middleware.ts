@@ -5,18 +5,27 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
   // Security Headers
-  response.headers.set("X-DNS-Prefetch-Control", "on")
+  response.headers.set("X-DNS-Prefetch-Control", "off")
   response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
-  response.headers.set("X-Frame-Options", "SAMEORIGIN")
+  response.headers.set("X-Frame-Options", "DENY")
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("X-XSS-Protection", "1; mode=block")
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
-  // CSP - Allow unsafe-inline for Next.js and Tailwind, but restrict other sources
+  response.headers.set("Referrer-Policy", "no-referrer")
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none")
+  
+  // Enhanced CSP - Allow audio for background music
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; audio-src 'self' https://assets.mixkit.co; connect-src 'self'; media-src 'self' https://assets.mixkit.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
   )
-  response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+  
+  // Permissions Policy - Deny dangerous features
+  response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()")
+  
+  // Additional security headers
+  response.headers.set("Cross-Origin-Embedder-Policy", "require-corp")
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin")
+  response.headers.set("Cross-Origin-Resource-Policy", "same-origin")
 
   return response
 }

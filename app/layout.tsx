@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { NavigationWrapper } from "@/components/navigation-wrapper"
+import { BackgroundMusic } from "@/components/background-music"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             <NavigationWrapper>
               {children}
             </NavigationWrapper>
+            <BackgroundMusic />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
