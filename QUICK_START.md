@@ -8,49 +8,49 @@
 ## 🚀 Getting Started in 5 Minutes
 
 ### 1. Install Dependencies
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 ### 2. Setup Database
-```bash
+\`\`\`bash
 npm run db:generate
 npm run db:migrate
 npm run db:seed
-```
+\`\`\`
 
 ### 3. Start Development Server
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 ### 4. Access the Application
-```
+\`\`\`
 Open: http://localhost:3000
-```
+\`\`\`
 
 ---
 
 ## 🔐 Test Credentials
 
 ### Admin Account (Full System Access)
-```
+\`\`\`
 Username: admin
 Password: admin123
 Role: Administrator
 Access: Admin Dashboard, User Management, Settings
-```
+\`\`\`
 
 ### Volunteer Account (Release Management)
-```
+\`\`\`
 Username: volunteer
 Password: volunteer123
 Role: Volunteer
 Access: Volunteer Dashboard, Release Processing, Service Tracking
-```
+\`\`\`
 
 ### Regular User Accounts
-```
+\`\`\`
 Username: johndoe
 Password: user123
 Role: User
@@ -65,23 +65,23 @@ Username: michaelchen
 Password: password123
 Role: User
 Access: Item Upload, View Items, Submit Claims
-```
+\`\`\`
 
 ---
 
 ## 📋 Main Features Walkthrough
 
 ### 1. Login
-```
+\`\`\`
 1. Navigate to http://localhost:3000/login
 2. Enter username (e.g., "johndoe")
 3. Enter password (e.g., "user123")
 4. Click "Unlock the Vault"
 5. Redirected to dashboard
-```
+\`\`\`
 
 ### 2. Upload Lost Item (User)
-```
+\`\`\`
 1. Click "Upload Item" from dashboard
 2. Fill in item details:
    - Upload photo
@@ -91,10 +91,10 @@ Access: Item Upload, View Items, Submit Claims
    - Add unique markings (optional)
 3. Click "Submit"
 4. Item appears in "My Uploads"
-```
+\`\`\`
 
 ### 3. Browse & Claim Item (User)
-```
+\`\`\`
 1. Go to "Browse Items"
 2. Filter by category or location
 3. Click item to view details
@@ -102,10 +102,10 @@ Access: Item Upload, View Items, Submit Claims
 5. Upload proof image
 6. Submit claim
 7. Status shows as "pending"
-```
+\`\`\`
 
 ### 4. Approve Release (Volunteer)
-```
+\`\`\`
 1. Login as volunteer (volunteer/volunteer123)
 2. Go to "Volunteer Dashboard"
 3. View pending releases
@@ -113,24 +113,24 @@ Access: Item Upload, View Items, Submit Claims
 5. Add release notes (optional)
 6. Click "Confirm Release"
 7. Audit log records action
-```
+\`\`\`
 
 ### 5. Admin Dashboard (Admin)
-```
+\`\`\`
 1. Login as admin (admin/admin123)
 2. Go to "Admin Dashboard"
 3. View all users, items, claims
 4. Manage system settings
 5. Review audit logs
 6. Create/update locations
-```
+\`\`\`
 
 ---
 
 ## 🔒 Security Features Verification
 
 ### Verify Password Hashing
-```bash
+\`\`\`bash
 # Check database (sqlite3)
 sqlite3 vault-production.db
 SELECT id, username, password FROM User LIMIT 1;
@@ -139,20 +139,20 @@ SELECT id, username, password FROM User LIMIT 1;
 # $2b$10$...60+ character hash...
 
 # Never plaintext!
-```
+\`\`\`
 
 ### Verify Session Security
-```javascript
+\`\`\`javascript
 // Open browser DevTools Console
 sessionStorage.getItem("sessionToken")
 // Shows: 64-character hex token (32-byte random)
 
 sessionStorage.getItem("userId")
 // Shows: User ID (CUID format)
-```
+\`\`\`
 
 ### Verify API Security
-```bash
+\`\`\`bash
 # Test login with invalid password
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -168,7 +168,7 @@ for i in {1..6}; do
 done
 
 # 6th attempt gets 429 Too Many Requests
-```
+\`\`\`
 
 ---
 
@@ -202,16 +202,16 @@ done
 ## 🛠️ Common Tasks
 
 ### Change Your Password
-```
+\`\`\`
 1. Go to Profile
 2. Click "Change Password"
 3. Enter current password
 4. Enter new password (8+ chars, mixed case, numbers)
 5. Confirm
-```
+\`\`\`
 
 ### Create New User (Admin Only)
-```
+\`\`\`
 1. Go to Admin > Users
 2. Click "New User"
 3. Fill in details:
@@ -220,10 +220,10 @@ done
    - Password (8+ chars, mixed case, numbers)
    - Role (User/Volunteer/Admin)
 4. Click "Create"
-```
+\`\`\`
 
 ### Update Item Status (Admin Only)
-```
+\`\`\`
 1. Go to Admin > Items
 2. Click item to edit
 3. Change status:
@@ -232,10 +232,10 @@ done
    - Released (when released)
    - Donated (if not claimed)
 4. Save changes
-```
+\`\`\`
 
 ### View Audit Logs (Admin Only)
-```
+\`\`\`
 1. Go to Admin > Audit Logs
 2. View all system activities:
    - Login/Logout events
@@ -244,14 +244,14 @@ done
    - User management actions
 3. Filter by type or date
 4. Logs are immutable (cannot delete)
-```
+\`\`\`
 
 ---
 
 ## 🔍 API Testing
 
 ### Test Login Endpoint
-```bash
+\`\`\`bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
@@ -260,10 +260,10 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 
 # Response: {"user": {...}, "message": "Login successful"}
-```
+\`\`\`
 
 ### Test Item Upload
-```bash
+\`\`\`bash
 curl -X POST http://localhost:3000/api/items \
   -H "Content-Type: application/json" \
   -d '{
@@ -275,38 +275,38 @@ curl -X POST http://localhost:3000/api/items \
     "description": "iPhone 14",
     "uploadedById": "USER_ID"
   }'
-```
+\`\`\`
 
 ### Test Get Items
-```bash
+\`\`\`bash
 curl http://localhost:3000/api/items
 
 # Returns: [{"id": "...", "category": "...", ...}]
-```
+\`\`\`
 
 ---
 
 ## 📈 Performance Checks
 
 ### Check Database Performance
-```bash
+\`\`\`bash
 # Open admin dashboard
 # Navigate to Admin > Items
 # Should load in <1 second
 
 # Check network tab in DevTools
 # All API calls should be <500ms
-```
+\`\`\`
 
 ### Monitor Audit Logs
-```bash
+\`\`\`bash
 # Admin > Audit Logs
 # Should see entries for:
 # - Login events
 # - Item uploads
 # - Claim submissions
 # - User management
-```
+\`\`\`
 
 ---
 
@@ -345,20 +345,20 @@ curl http://localhost:3000/api/items
 ## 📝 Audit Logging Test
 
 ### Verify Audit Logs Working
-```
+\`\`\`
 1. Login (should create audit log)
 2. Upload item (should create audit log)
 3. Submit claim (should create audit log)
 4. Go to Admin > Audit Logs
 5. Should see all actions listed
-```
+\`\`\`
 
 ### Check Audit Log Data
-```bash
+\`\`\`bash
 # View audit logs in database
 sqlite3 vault-production.db
 SELECT type, userId, action, createdAt FROM AuditLog ORDER BY createdAt DESC LIMIT 10;
-```
+\`\`\`
 
 ---
 
