@@ -9,7 +9,7 @@
 ## Pre-Deployment Checklist
 
 ### 1. Database Setup
-```bash
+\`\`\`bash
 # Generate Prisma client
 npm run db:generate
 
@@ -18,11 +18,11 @@ npm run db:migrate
 
 # Seed initial data (users, locations, playbooks)
 npm run db:seed
-```
+\`\`\`
 
 ### 2. Environment Configuration
 Create `.env.local` file:
-```
+\`\`\`
 # Database URL (production)
 DATABASE_URL="file:./vault-production.db"
 
@@ -39,10 +39,10 @@ SESSION_TIMEOUT="1800000"
 
 # Security headers
 ENABLE_SECURITY_HEADERS="true"
-```
+\`\`\`
 
 ### 3. Build & Verify
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
@@ -51,7 +51,7 @@ npm run build
 
 # Start production server
 npm run start
-```
+\`\`\`
 
 ## Default Credentials
 
@@ -217,22 +217,22 @@ npm run start
 ## Backup & Recovery
 
 ### Database Backup
-```bash
+\`\`\`bash
 # SQLite backup
 cp vault-production.db vault-production.backup.db
 
 # Or use Prisma snapshot
 npm run db:migrate -- --name backup
-```
+\`\`\`
 
 ### Migration Rollback
-```bash
+\`\`\`bash
 # Rollback to previous migration
 npm run db:migrate -- --revert
 
 # Check migration history
 npx prisma migrate status
-```
+\`\`\`
 
 ## Performance Optimization
 

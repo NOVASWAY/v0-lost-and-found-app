@@ -364,7 +364,7 @@
 ## Test Cases
 
 ### Authentication Flow
-```
+\`\`\`
 1. Navigate to login page ✅
 2. Enter valid username (johndoe) ✅
 3. Enter valid password (user123) ✅
@@ -373,19 +373,19 @@
 6. Verify session token created ✅
 7. Verify user redirected to dashboard ✅
 8. Verify audit log recorded ✅
-```
+\`\`\`
 
 ### Password Security
-```
+\`\`\`
 1. View database (password is hash, not plaintext) ✅
 2. Attempt to reverse hash (impossible) ✅
 3. Attempt to use hash as password (fails) ✅
 4. Verify bcryptjs.hash used 10-salt rounds ✅
 5. Change password - verify old hash different ✅
-```
+\`\`\`
 
 ### Session Management
-```
+\`\`\`
 1. Login successfully ✅
 2. Check sessionStorage (token present) ✅
 3. Close browser tab ✅
@@ -393,17 +393,17 @@
 5. Login again ✅
 6. Wait 30+ minutes (simulate inactivity) ✅
 7. Verify session auto-expired and logout ✅
-```
+\`\`\`
 
 ### Item Management
-```
+\`\`\`
 1. Navigate to upload page ✅
 2. Fill form with valid data ✅
 3. Submit - verify item saved to database ✅
 4. Verify item appears in list ✅
 5. Click item - verify detail page loads ✅
 6. Change status - verify update reflected ✅
-```
+\`\`\`
 
 ---
 

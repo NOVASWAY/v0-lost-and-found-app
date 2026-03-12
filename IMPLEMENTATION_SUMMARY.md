@@ -15,7 +15,7 @@ The Vault Church Lost & Found Application has been thoroughly audited, hardened,
 ## Security Implementation ✅
 
 ### Password Security (Confidentiality)
-```javascript
+\`\`\`javascript
 // ✅ Bcryptjs Implementation
 const hashPassword = async (password: string): Promise<string> => {
   return await bcrypt.hash(password, 10) // 10-salt rounds
@@ -24,7 +24,7 @@ const hashPassword = async (password: string): Promise<string> => {
 const comparePassword = async (plaintext: string, hash: string): Promise<boolean> => {
   return await bcrypt.compare(plaintext, hash)
 }
-```
+\`\`\`
 
 **Implementation Details:**
 - ✅ All passwords hashed with bcryptjs (10-salt rounds = 1024 iterations)
@@ -34,7 +34,7 @@ const comparePassword = async (plaintext: string, hash: string): Promise<boolean
 - ✅ Login API endpoint uses secure comparison
 
 ### Session Management (Confidentiality)
-```javascript
+\`\`\`javascript
 // ✅ Secure Session Implementation
 const sessionToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
   .map((b) => b.toString(16).padStart(2, "0"))
@@ -46,7 +46,7 @@ sessionStorage.setItem("userId", foundUser.id)
 
 // 30-minute inactivity timeout
 const SESSION_TIMEOUT = 30 * 60 * 1000
-```
+\`\`\`
 
 **Session Features:**
 - ✅ Cryptographically secure random token (32-byte)
@@ -56,7 +56,7 @@ const SESSION_TIMEOUT = 30 * 60 * 1000
 - ✅ Automatic cleanup on logout
 
 ### Input Validation (Integrity)
-```typescript
+\`\`\`typescript
 // ✅ Comprehensive Zod Schemas
 export const loginSchema = z.object({
   username: z.string().min(3).max(50).trim(),
@@ -70,7 +70,7 @@ export const createUserSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
   role: z.enum(["user", "volunteer", "admin"])
 })
-```
+\`\`\`
 
 **Validation Coverage:**
 - ✅ Username: 3-50 chars, alphanumeric + underscore
@@ -82,7 +82,7 @@ export const createUserSchema = z.object({
 - ✅ SQL Injection: Parameterized queries via Prisma
 
 ### API Security (All three CIA dimensions)
-```typescript
+\`\`\`typescript
 // ✅ Secure Login Endpoint
 export async function POST(request: NextRequest) {
   // Rate limiting: 5 attempts/minute
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   const { password: _, ...userWithoutPassword } = user
   return NextResponse.json({ user: userWithoutPassword })
 }
-```
+\`\`\`
 
 ---
 
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
 ## Infrastructure & Data Integrity ✅
 
 ### Database Schema
-```
+\`\`\`
 ✅ User (authentication, roles, points)
 ✅ Item (inventory, status tracking)
 ✅ Claim (ownership claims, proof)
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 ✅ Order (notification queue)
 ✅ MeetingMinutes (meeting records)
 ✅ SystemSettings (configuration)
-```
+\`\`\`
 
 ### Database Constraints
 - ✅ Primary keys enforce uniqueness
@@ -182,11 +182,11 @@ export async function POST(request: NextRequest) {
 - ✅ Indexes on frequently queried columns
 
 ### Prisma Migrations
-```bash
+\`\`\`bash
 ✅ Initial schema (20251227170129_init)
 ✅ Security indexes (20251227181442_add_security_indexes)
 ✅ Database generated and ready
-```
+\`\`\`
 
 ---
 
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
 ## CIA Triad Compliance ✅
 
 ### CONFIDENTIALITY ✅
-```
+\`\`\`
 ✅ Passwords: Bcryptjs 10-salt hashed
 ✅ Transport: HTTPS/TLS enforced
 ✅ Sessions: Secure token generation (32-byte)
@@ -236,10 +236,10 @@ export async function POST(request: NextRequest) {
 ✅ Logging: No passwords logged ever
 ✅ Headers: CSP, XSS, Clickjacking protection
 ✅ Rate Limiting: Brute force protection
-```
+\`\`\`
 
 ### INTEGRITY ✅
-```
+\`\`\`
 ✅ Validation: Zod schema validation all inputs
 ✅ Database: Foreign keys, constraints enforced
 ✅ Transactions: ACID compliant operations
@@ -248,10 +248,10 @@ export async function POST(request: NextRequest) {
 ✅ Queries: Parameterized (no SQL injection)
 ✅ Uniqueness: Constraints prevent duplicates
 ✅ Relationships: Referential integrity enforced
-```
+\`\`\`
 
 ### AVAILABILITY ✅
-```
+\`\`\`
 ✅ Persistence: SQLite database
 ✅ Recovery: Database backup via migrations
 ✅ Redundancy: Transaction support
@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
 ✅ Failover: Error handling, graceful degradation
 ✅ Scalability: Stateless API design
 ✅ Response Times: <500ms for core operations
-```
+\`\`\`
 
 ---
 
@@ -302,32 +302,32 @@ export async function POST(request: NextRequest) {
 ## Deployment Readiness ✅
 
 ### Pre-Deployment Checklist
-```bash
+\`\`\`bash
 ✅ npm install - Dependencies installed
 ✅ npm run db:generate - Prisma client generated
 ✅ npm run db:migrate - Migrations applied
 ✅ npm run db:seed - Initial data loaded
 ✅ npm run build - Production build created
 ✅ npm run start - Server starts successfully
-```
+\`\`\`
 
 ### Default Test Credentials
-```
+\`\`\`
 Admin:     admin / admin123
 Volunteer: volunteer / volunteer123
 User 1:    johndoe / user123
 User 2:    sarahjohnson / password123
 User 3:    michaelchen / password123
-```
+\`\`\`
 
 ### Production Environment
-```env
+\`\`\`env
 DATABASE_URL="file:./vault-production.db"
 AUDIT_LOGGING="true"
 RATE_LIMIT_ENABLED="true"
 SESSION_TIMEOUT="1800000"
 ENABLE_SECURITY_HEADERS="true"
-```
+\`\`\`
 
 ---
 

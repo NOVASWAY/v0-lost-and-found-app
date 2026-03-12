@@ -99,7 +99,7 @@ This document validates that the Vault Church Lost & Found Application meets all
 ## Security Implementation Details
 
 ### Login Flow
-```
+\`\`\`
 User Input → Input Validation → Sanitization 
   → API Call (/api/auth/login)
   → Database Lookup (username)
@@ -108,26 +108,26 @@ User Input → Input Validation → Sanitization
   → sessionStorage Storage
   → Audit Log Record
   → Response (user data, NO password)
-```
+\`\`\`
 
 ### Session Management
-```
+\`\`\`
 Login → Generate Random Token (32-byte crypto.getRandomValues)
      → Store in sessionStorage
      → Set 30-min timeout
      → Clear on logout
      → Clear on timeout
      → Clear on browser close (sessionStorage auto)
-```
+\`\`\`
 
 ### Database Security
-```
+\`\`\`
 Passwords:  Bcryptjs Hash (10 rounds)
 Queries:    Parameterized via Prisma
 Logs:       Immutable audit trail
 Access:     Role-based enforcement
 Backup:     Migration-based versioning
-```
+\`\`\`
 
 ---
 

@@ -3,16 +3,16 @@
 ## Pre-Deployment Checklist
 
 ### 1. Environment Setup
-```bash
+\`\`\`bash
 # Create .env.local with the following:
 DATABASE_URL="postgresql://user:password@host:port/dbname"
 NODE_ENV="production"
 NEXTAUTH_SECRET="$(openssl rand -base64 32)"
 NEXT_PUBLIC_APP_URL="https://yourdomain.com"
-```
+\`\`\`
 
 ### 2. Database Setup
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
@@ -21,30 +21,30 @@ npx prisma migrate deploy
 
 # Seed production data
 npx prisma db seed
-```
+\`\`\`
 
 ### 3. Verify Installations
-```bash
+\`\`\`bash
 # Check database connection
 npx prisma db validate
 
 # Run validation script
 npx ts-node scripts/validate-production.ts
-```
+\`\`\`
 
 ## Deployment Steps
 
 ### Step 1: Pre-Production Build
-```bash
+\`\`\`bash
 # Build the Next.js application
 npm run build
 
 # Test the production build locally
 npm run start
-```
+\`\`\`
 
 ### Step 2: Deploy to Vercel (Recommended)
-```bash
+\`\`\`bash
 # Install Vercel CLI
 npm install -g vercel
 
@@ -55,16 +55,16 @@ vercel --prod
 # - DATABASE_URL
 # - NODE_ENV=production
 # - NEXTAUTH_SECRET
-```
+\`\`\`
 
 ### Step 3: Post-Deployment Verification
-```
+\`\`\`
 1. Navigate to https://yourdomain.com
 2. Test login with all three account types
 3. Verify all features are working
 4. Check error logs in production
 5. Run validation script in production
-```
+\`\`\`
 
 ## Security Hardening
 
@@ -105,13 +105,13 @@ vercel --prod
 
 ## Rollback Procedure
 
-```bash
+\`\`\`bash
 # If deployment fails:
 vercel rollback
 
 # Or manually redeploy previous version
 vercel --prod --confirm
-```
+\`\`\`
 
 ## Production Account Credentials
 
@@ -137,13 +137,13 @@ vercel --prod --confirm
 - Encryption at rest
 
 ### Manual Backup
-```bash
+\`\`\`bash
 # Export database
 pg_dump $DATABASE_URL > backup.sql
 
 # Restore from backup
 psql $DATABASE_URL < backup.sql
-```
+\`\`\`
 
 ## Performance Optimization
 
@@ -165,28 +165,28 @@ psql $DATABASE_URL < backup.sql
 ## Troubleshooting
 
 ### Database Connection Issues
-```
+\`\`\`
 Error: "getaddrinfo ENOTFOUND"
 Solution: Verify DATABASE_URL format and connectivity
-```
+\`\`\`
 
 ### Authentication Failures
-```
+\`\`\`
 Error: "Invalid credentials"
 Solution: Check password hashing, verify user exists
-```
+\`\`\`
 
 ### Rate Limiting
-```
+\`\`\`
 Error: "429 Too Many Requests"
 Solution: Wait or clear rate limit cache
-```
+\`\`\`
 
 ### Memory Issues
-```
+\`\`\`
 Error: "OutOfMemory"
 Solution: Increase Node.js heap size or optimize queries
-```
+\`\`\`
 
 ## Support & Escalation
 
