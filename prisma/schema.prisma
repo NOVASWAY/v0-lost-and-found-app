@@ -3,10 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Neon serverless driver for PostgreSQL
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
