@@ -3,8 +3,8 @@
 
 generator client {
   provider = "prisma-client-js"
-  // Prisma 7 requires passing database URL to client constructor
-  // See: https://pris.ly/d/prisma7-client-config
+  // Neon serverless driver for PostgreSQL
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
