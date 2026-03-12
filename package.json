@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
-    "@libsql/client": "^0.15.15",
     "@prisma/client": "^7.2.0",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -48,7 +47,7 @@
     "@vercel/analytics": "1.3.1",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -74,7 +73,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
     "@types/bcryptjs": "^2.4.6",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
