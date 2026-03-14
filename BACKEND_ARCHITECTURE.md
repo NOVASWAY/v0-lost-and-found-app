@@ -31,7 +31,7 @@ The Vault Church Lost & Found application uses a full-stack Next.js architecture
 
 ### Core Data Model
 
-```
+\`\`\`
 User
 ├── Profile Data (name, email, role)
 ├── Credentials (password hash)
@@ -94,7 +94,7 @@ Order (Notifications)
 ├── Priority (low, medium, high)
 └── Relationships
     └── user → User
-```
+\`\`\`
 
 ### Database Schema Relationships
 
@@ -110,14 +110,14 @@ Order (Notifications)
 - Claim → ReleaseLog (one release per claim)
 
 **Indexes for Performance:**
-```
+\`\`\`
 User:        username (unique), role, vaultPoints
 Item:        status, category, uploadedById, dateFounded, location
 Claim:       status, itemId, claimantId, claimedAt
 ReleaseLog:  claimId (unique), volunteerId
 ServiceRecord: userId, serviceDate
 AuditLog:    type, severity, userId, timestamp
-```
+\`\`\`
 
 ---
 
@@ -125,7 +125,7 @@ AuditLog:    type, severity, userId, timestamp
 
 ### Route Organization
 
-```
+\`\`\`
 /api
 ├── /auth
 │   ├── /login         [POST] - User authentication
@@ -171,7 +171,7 @@ AuditLog:    type, severity, userId, timestamp
 │   ├── [POST]         - Create release log (volunteer)
 ├── /audit-logs
 │   └── [GET]          - View audit logs (admin)
-```
+\`\`\`
 
 ### API Authentication & Authorization
 
@@ -190,7 +190,7 @@ AuditLog:    type, severity, userId, timestamp
 - **Admin**: User management, settings, audit logs, playbooks
 
 **Middleware Chain:**
-```
+\`\`\`
 Request
   ↓
 Authentication Check (verify JWT token)
@@ -206,7 +206,7 @@ Route Handler (execute business logic)
 Audit Logging (record action)
   ↓
 Response
-```
+\`\`\`
 
 ---
 
@@ -265,40 +265,40 @@ Response
 ## Business Logic Layers
 
 ### Authentication Service
-```typescript
+\`\`\`typescript
 // lib/db.ts
 hashPassword(password) → bcryptjs hash
 comparePassword(input, hash) → boolean
 generateToken(userId, role) → JWT token
 verifyToken(token) → { userId, role }
-```
+\`\`\`
 
 ### Item Management
-```typescript
+\`\`\`typescript
 uploadItem(userId, metadata) → Item
 updateItem(itemId, changes) → Item
 deleteItem(itemId) → void
 getItems(filters: { status, category, location }) → Item[]
-```
+\`\`\`
 
 ### Claim Processing Workflow
-```
+\`\`\`
 User submits claim with proof image
   ↓ [pending]
 Volunteer reviews claim
   ↓ [released] or [rejected]
 If released: ReleaseLog created, Item status updated
 If rejected: Claimant notified, Item remains available
-```
+\`\`\`
 
 ### Service Tracking
-```
+\`\`\`
 Admin records service: date, attendance, service completed
 System updates: attendanceCount, serviceCount, vaultPoints
-```
+\`\`\`
 
 ### Audit Logging
-```
+\`\`\`
 Every mutation tracked:
   - Type: user_created, item_uploaded, claim_submitted, etc.
   - Action: created, updated, deleted
@@ -306,7 +306,7 @@ Every mutation tracked:
   - Details: JSON of changes
   - Timestamp: ISO 8601
   - Severity: info, warning, error, critical
-```
+\`\`\`
 
 ---
 
@@ -315,42 +315,42 @@ Every mutation tracked:
 ### Error Types
 
 **Validation Errors (400)**
-```
+\`\`\`
 Invalid input format
 Missing required fields
 Invalid enum values
-```
+\`\`\`
 
 **Authentication Errors (401)**
-```
+\`\`\`
 Missing or expired token
 Invalid credentials
 Session expired
-```
+\`\`\`
 
 **Authorization Errors (403)**
-```
+\`\`\`
 Insufficient permissions
 Unauthorized resource access
 Role restrictions
-```
+\`\`\`
 
 **Not Found Errors (404)**
-```
+\`\`\`
 Resource does not exist
 User not found
 Item not found
-```
+\`\`\`
 
 **Server Errors (500)**
-```
+\`\`\`
 Database connection failed
 Unexpected exception
 Service unavailable
-```
+\`\`\`
 
 ### Error Response Format
-```json
+\`\`\`json
 {
   "error": "string",
   "code": "error_code",
@@ -359,7 +359,7 @@ Service unavailable
   },
   "timestamp": "2024-01-01T00:00:00Z"
 }
-```
+\`\`\`
 
 ---
 
@@ -401,27 +401,27 @@ Service unavailable
 ## Deployment Architecture
 
 ### Local Development
-```
+\`\`\`
 SQLite database (/data/dev.db)
 Next.js dev server (http://localhost:3000)
 Hot module reloading
 Seed data from fixtures
-```
+\`\`\`
 
 ### Production (Vercel + Neon)
-```
+\`\`\`
 Neon PostgreSQL (cloud database)
 Vercel serverless functions (API routes)
 Vercel edge caching
 Automatic deployments on git push
-```
+\`\`\`
 
 ### Environment Configuration
-```
+\`\`\`
 .env.local        - Local development (SQLite)
 .env.production   - Production secrets (Neon URL)
 Vercel Settings   - Deployment environment variables
-```
+\`\`\`
 
 ---
 
@@ -448,13 +448,13 @@ Vercel Settings   - Deployment environment variables
 
 ### Health Checks
 
-```bash
+\`\`\`bash
 # Database connection
 GET /api/health → { status: 'ok', db: 'connected' }
 
 # User count
 GET /api/admin/stats → { users: 4, items: 0, claims: 0 }
-```
+\`\`\`
 
 ---
 
@@ -486,19 +486,19 @@ GET /api/admin/stats → { users: 4, items: 0, claims: 0 }
 - Point-in-time recovery available
 
 **Manual Backup:**
-```bash
+\`\`\`bash
 # Export schema and data
 npx prisma db pull > backup.prisma
 pg_dump $DATABASE_URL > backup.sql
-```
+\`\`\`
 
 **Recovery:**
-```bash
+\`\`\`bash
 # Restore from backup
 psql $DATABASE_URL < backup.sql
 npx prisma generate
 npx prisma migrate resolve --rolled-back <migration_id>
-```
+\`\`\`
 
 ---
 

@@ -42,8 +42,8 @@ The build will now:
 - ✓ Deploy to Vercel successfully
 
 ## Testing Locally
-```bash
+\`\`\`bash
 export DATABASE_URL="postgresql://user:password@host/database"
 npm install
 npm run build
-```
+\`\`\`

@@ -55,41 +55,41 @@ A **production-grade backend and database infrastructure** has been fully create
 ## Quick Start (5 Steps)
 
 ### Step 1: Get Neon Connection String
-```
+\`\`\`
 1. Create account at https://neon.tech
 2. Create PostgreSQL database
 3. Copy connection string
-```
+\`\`\`
 
 ### Step 2: Configure Environment
-```bash
+\`\`\`bash
 # Add to .env.local
 DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
-```
+\`\`\`
 
 ### Step 3: Automated Setup
-```bash
+\`\`\`bash
 npm install
 npx ts-node scripts/setup-neon-database.ts
-```
+\`\`\`
 
 ### Step 4: Verify
-```bash
+\`\`\`bash
 npx ts-node scripts/verify-database.ts
 # Should show: ✅ Connection successful
-```
+\`\`\`
 
 ### Step 5: Start Development
-```bash
+\`\`\`bash
 npm run dev
 # Login at http://localhost:3000
-```
+\`\`\`
 
 ---
 
 ## Test Credentials Ready to Use
 
-```
+\`\`\`
 ADMIN
   Email:    admin@vaultchurch.org
   Password: AdminVault123!@#
@@ -105,7 +105,7 @@ USER #1
 USER #2
   Email:    sarah.johnson@vaultchurch.org
   Password: SecureUser123!@#
-```
+\`\`\`
 
 ---
 
@@ -185,11 +185,11 @@ USER #2
 ## Deployment Ready
 
 ### Local Development
-```bash
+\`\`\`bash
 npm install
 npx ts-node scripts/setup-neon-database.ts
 npm run dev
-```
+\`\`\`
 
 ### Production (Vercel)
 1. Add `DATABASE_URL` to Vercel environment variables
@@ -320,7 +320,7 @@ The Vault Church Lost & Found system now has:
 
 ## Get Started Immediately
 
-```bash
+\`\`\`bash
 # 1. Install dependencies
 npm install
 
@@ -336,7 +336,7 @@ npx ts-node scripts/setup-neon-database.ts
 npm run dev
 
 # 6. Login with: admin@vaultchurch.org / AdminVault123!@#
-```
+\`\`\`
 
 That's it! Your backend and database are ready.
 

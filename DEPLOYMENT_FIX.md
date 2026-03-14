@@ -2,9 +2,9 @@
 
 ## Issue
 The deployment failed with error:
-```
+\`\`\`
 Error: The datasource property `url` is no longer supported in schema files.
-```
+\`\`\`
 
 This is because **Prisma 7.x** changed how database configuration works. The connection URL must now be configured via `prisma.config.ts` instead of the schema file.
 
@@ -41,10 +41,10 @@ This is because **Prisma 7.x** changed how database configuration works. The con
 ## Deployment Steps
 
 1. **Ensure Neon is connected:**
-   ```bash
+   \`\`\`bash
    # Check Vercel project settings → Integrations
    # Confirm Neon PostgreSQL is added
-   ```
+   \`\`\`
 
 2. **Set DATABASE_URL environment variable:**
    - Go to Vercel project → Settings → Environment Variables
@@ -52,11 +52,11 @@ This is because **Prisma 7.x** changed how database configuration works. The con
    - Format: `postgresql://user:password@host/database`
 
 3. **Deploy:**
-   ```bash
+   \`\`\`bash
    git add .
    git commit -m "Fix: Prisma 7 configuration for PostgreSQL"
    git push
-   ```
+   \`\`\`
 
 ## Prisma 7 Key Changes
 
@@ -78,19 +78,19 @@ This is because **Prisma 7.x** changed how database configuration works. The con
 After deployment succeeds:
 
 1. Run migrations:
-   ```bash
+   \`\`\`bash
    npx prisma migrate deploy
-   ```
+   \`\`\`
 
 2. Seed database (optional):
-   ```bash
+   \`\`\`bash
    npx prisma db seed
-   ```
+   \`\`\`
 
 3. Verify connection:
-   ```bash
+   \`\`\`bash
    npx prisma db execute --stdin < /dev/null
-   ```
+   \`\`\`
 
 ## Support
 

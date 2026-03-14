@@ -4,33 +4,33 @@
 
 ### Admin Account
 ```
-Username: admin@vaultchurch.org
-Password: AdminVault123!@#
+Username: admin
+Password: admin123
 Role: Admin (Full system access)
 ```
 
 ### Volunteer Account
 ```
-Username: volunteer@vaultchurch.org
-Password: Volunteer@2024#Secure
+Username: volunteer
+Password: volunteer123
 Role: Volunteer (Claims processing, item release, service logging)
 ```
 
 ### Regular User Accounts
 ```
 User 1:
-Username: john.doe@vaultchurch.org
-Password: SecureUser123!@#
+Username: john
+Password: user123
 Role: User
 
 User 2:
-Username: sarah.johnson@vaultchurch.org
-Password: SecureUser123!@#
+Username: sarah
+Password: user123
 Role: User
 
 User 3:
-Username: michael.chen@vaultchurch.org
-Password: SecureUser123!@#
+Username: michael
+Password: user123
 Role: User
 ```
 
@@ -155,8 +155,8 @@ Role: User
 
 #### Step 1: Volunteer Login
 1. Go to `/login`
-2. Username: `volunteer@vaultchurch.org`
-3. Password: `Volunteer@2024#Secure`
+2. Username: `volunteer`
+3. Password: `volunteer123`
 4. Click Login
 5. **Expected**: Redirected to dashboard with volunteer options
 
@@ -223,8 +223,8 @@ Role: User
 
 #### Step 1: Admin Login
 1. Go to `/login`
-2. Username: `admin@vaultchurch.org`
-3. Password: `AdminVault123!@#`
+2. Username: `admin`
+3. Password: `admin123`
 4. Click Login
 5. **Expected**: Dashboard with admin stats
 

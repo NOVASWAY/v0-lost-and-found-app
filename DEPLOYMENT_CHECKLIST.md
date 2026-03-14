@@ -99,10 +99,10 @@
 ### Pre-Deployment Verification
 
 #### Database Tests
-```bash
+\`\`\`bash
 # Run database verification
 npx ts-node scripts/verify-database.ts
-```
+\`\`\`
 Expected:
 - ✅ Connection successful
 - ✅ All tables exist
@@ -110,20 +110,20 @@ Expected:
 - ✅ Seed data loaded
 
 #### Build Test
-```bash
+\`\`\`bash
 # Test production build
 npm run build
-```
+\`\`\`
 Expected:
 - ✅ No build errors
 - ✅ All pages compile
 - ✅ All API routes compile
 
 #### Type Checking
-```bash
+\`\`\`bash
 # Check TypeScript types
 npx tsc --noEmit
-```
+\`\`\`
 Expected:
 - ✅ No type errors
 
@@ -132,11 +132,11 @@ Expected:
 ### Deployment Steps
 
 #### Step 1: Final Git Commit
-```bash
+\`\`\`bash
 git add .
 git commit -m "feat: Prepare for production deployment"
 git push origin main
-```
+\`\`\`
 
 #### Step 2: Vercel Deployment
 1. Go to Vercel Dashboard
@@ -151,7 +151,7 @@ git push origin main
 3. Verify database tables created in Neon
 
 #### Step 4: Post-Deployment Verification
-```bash
+\`\`\`bash
 # Visit your production URL
 https://yourdomain.com
 
@@ -164,20 +164,20 @@ Password: AdminVault123!@#
 - [ ] Upload item works
 - [ ] Search/filter works
 - [ ] User profile accessible
-```
+\`\`\`
 
 ---
 
 ### Health Checks
 
 #### Application Health
-```bash
+\`\`\`bash
 # Check production API
 curl https://yourdomain.com/api/health
 
 # Expected response:
 # { "status": "ok", "db": "connected" }
-```
+\`\`\`
 
 #### Database Health
 - [ ] Neon console shows active connection
@@ -251,26 +251,26 @@ curl https://yourdomain.com/api/health
 If deployment fails:
 
 #### Option 1: Revert Vercel Deployment
-```
+\`\`\`
 1. Go to Vercel Dashboard
 2. Click "Deployments"
 3. Select previous successful deployment
 4. Click "Promote to Production"
-```
+\`\`\`
 
 #### Option 2: Revert Database
-```bash
+\`\`\`bash
 # If migration caused issues
 npx prisma migrate resolve --rolled-back <migration_id>
 # Or restore from Neon backup
-```
+\`\`\`
 
 #### Option 3: Full Rollback
-```bash
+\`\`\`bash
 git revert <commit_id>
 git push origin main
 # Vercel will auto-deploy reverted code
-```
+\`\`\`
 
 ---
 
