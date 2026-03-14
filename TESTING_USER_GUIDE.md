@@ -3,21 +3,21 @@
 ## Test Accounts
 
 ### Admin Account
-```
+\`\`\`
 Username: admin
 Password: admin123
 Role: Admin (Full system access)
-```
+\`\`\`
 
 ### Volunteer Account
-```
+\`\`\`
 Username: volunteer
 Password: volunteer123
 Role: Volunteer (Claims processing, item release, service logging)
-```
+\`\`\`
 
 ### Regular User Accounts
-```
+\`\`\`
 User 1:
 Username: john
 Password: user123
@@ -32,7 +32,7 @@ User 3:
 Username: michael
 Password: user123
 Role: User
-```
+\`\`\`
 
 ---
 
