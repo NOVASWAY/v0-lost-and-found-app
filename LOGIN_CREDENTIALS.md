@@ -7,11 +7,11 @@ All test accounts are pre-configured and ready to use. Simply navigate to `/logi
 ---
 
 ## Admin Account
-```
+\`\`\`
 Username: admin
 Password: admin123
 Role: Administrator (Full system access)
-```
+\`\`\`
 
 **Access:**
 - Admin Dashboard - view system stats and metrics
@@ -24,11 +24,11 @@ Role: Administrator (Full system access)
 ---
 
 ## Volunteer Account
-```
+\`\`\`
 Username: volunteer
 Password: volunteer123
 Role: Volunteer (Staff)
-```
+\`\`\`
 
 **Access:**
 - Volunteer Dashboard - view pending claims
@@ -43,25 +43,25 @@ Role: Volunteer (Staff)
 ## User Accounts (Regular Users)
 
 ### User 1
-```
+\`\`\`
 Username: john
 Password: user123
 Role: User
-```
+\`\`\`
 
 ### User 2
-```
+\`\`\`
 Username: sarah
 Password: user123
 Role: User
-```
+\`\`\`
 
 ### User 3
-```
+\`\`\`
 Username: michael
 Password: user123
 Role: User
-```
+\`\`\`
 
 **Access:**
 - Upload Items - add lost/found items to the system

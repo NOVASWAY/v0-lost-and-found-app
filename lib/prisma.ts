@@ -6,11 +6,13 @@ import { Pool } from "@neondatabase/serverless"
 // This prevents multiple instances from being created during hot-reload in development
 const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
+const connectionString = process.env.DATABASE_URL || ""
+
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter: new PrismaNeon(
-      new Pool({ connectionString: process.env.DATABASE_URL })
+      new Pool({ connectionString: connectionString as string })
     ),
     log:
       process.env.NODE_ENV === "development"
