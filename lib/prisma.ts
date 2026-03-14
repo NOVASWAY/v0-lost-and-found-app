@@ -8,28 +8,37 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient | null }
 
 // Check if using mock mode (disconnected from database)
 const USE_MOCK_MODE = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
+const HAS_DATABASE_URL = typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.length > 0
 
 let prismaClient: PrismaClient | null = null
 
-if (!USE_MOCK_MODE && process.env.DATABASE_URL) {
-  const connectionString = process.env.DATABASE_URL || ""
+if (!USE_MOCK_MODE && HAS_DATABASE_URL) {
+  try {
+    const connectionString = process.env.DATABASE_URL
 
-  prismaClient =
-    globalForPrisma.prisma ||
-    new PrismaClient({
-      adapter: new PrismaNeon(
-        new Pool({ connectionString: connectionString as string })
-      ),
-      log:
-        process.env.NODE_ENV === "development"
-          ? ["query", "error", "warn"]
-          : ["error"],
-    })
+    prismaClient =
+      globalForPrisma.prisma ||
+      new PrismaClient({
+        adapter: new PrismaNeon(
+          new Pool({ connectionString })
+        ),
+        log:
+          process.env.NODE_ENV === "development"
+            ? ["query", "error", "warn"]
+            : ["error"],
+      })
 
-  if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prismaClient
+    if (process.env.NODE_ENV !== "production") {
+      globalForPrisma.prisma = prismaClient
+    }
+  } catch (error) {
+    console.error("[v0] Failed to initialize Prisma with Neon adapter:", error)
+    // Fall back to null if initialization fails
+    prismaClient = null
+  }
 }
 
-export const prisma = prismaClient as any
+export const prisma = prismaClient
 
 // Flag to indicate if we're in mock mode
-export const isMockMode = USE_MOCK_MODE || !process.env.DATABASE_URL
+export const isMockMode = USE_MOCK_MODE || !HAS_DATABASE_URL
