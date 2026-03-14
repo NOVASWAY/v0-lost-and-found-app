@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { isMockMode } from "@/lib/prisma"
+import { mockUsers } from "@/lib/mock-api"
 import { prisma } from "@/lib/db"
 import { comparePassword } from "@/lib/db"
 import { addAuditLog } from "@/lib/audit-logger"
@@ -34,30 +36,42 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = validation.data
 
-    const user = await prisma.user.findUnique({
-      where: { username },
-    })
+    let user: any
 
-    if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    // Use mock data if database is disconnected
+    if (isMockMode) {
+      // For mock mode, accept admin/admin123, volunteer/volunteer123, or any user/user123
+      const mockUser = mockUsers.find(u => u.username === username)
+      if (!mockUser || password !== "admin123" && password !== "volunteer123" && password !== "user123") {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      }
+      user = mockUser
+    } else {
+      user = await prisma.user.findUnique({
+        where: { username },
+      })
+
+      if (!user) {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      }
+
+      const isValidPassword = await comparePassword(password, user.password)
+
+      if (!isValidPassword) {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      }
+
+      // Add audit log
+      await prisma.auditLog.create({
+        data: {
+          type: "login",
+          action: "User logged in",
+          details: `User '${user.username}' logged in`,
+          severity: "info",
+          userId: user.id,
+        },
+      })
     }
-
-    const isValidPassword = await comparePassword(password, user.password)
-
-    if (!isValidPassword) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-    }
-
-    // Add audit log
-    await prisma.auditLog.create({
-      data: {
-        type: "login",
-        action: "User logged in",
-        details: `User '${user.username}' logged in`,
-        severity: "info",
-        userId: user.id,
-      },
-    })
 
     // Return user data (excluding password)
     const { password: _, ...userWithoutPassword } = user
