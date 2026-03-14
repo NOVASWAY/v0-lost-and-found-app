@@ -20,18 +20,18 @@ This document provides complete instructions for setting up the Vault Church Los
 ### Step 2: Configure Environment Variables
 
 1. Create a `.env.local` file in the project root (if it doesn't exist):
-   ```bash
+   \`\`\`bash
    cp .env.example .env.local
-   ```
+   \`\`\`
 
 2. Add your Neon database URL:
-   ```env
+   \`\`\`env
    # Database
    DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
    
    # Prisma
    PRISMA_DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-   ```
+   \`\`\`
 
 3. For Vercel deployment, add environment variable in Vercel settings:
    - Go to Project Settings → Environment Variables
@@ -39,25 +39,25 @@ This document provides complete instructions for setting up the Vault Church Los
 
 ### Step 3: Install Dependencies
 
-```bash
+\`\`\`bash
 npm install
 # or
 yarn install
-```
+\`\`\`
 
 ### Step 4: Generate Prisma Client
 
-```bash
+\`\`\`bash
 npx prisma generate
-```
+\`\`\`
 
 ### Step 5: Run Database Migrations
 
 #### Option A: Automated Setup (Recommended)
 
-```bash
+\`\`\`bash
 npx ts-node scripts/setup-neon-database.ts
-```
+\`\`\`
 
 This script will:
 - Generate Prisma Client
@@ -68,7 +68,7 @@ This script will:
 
 #### Option B: Manual Migration
 
-```bash
+\`\`\`bash
 # Create/update database schema
 npx prisma migrate deploy
 
@@ -77,17 +77,17 @@ npx prisma db seed
 
 # Verify database
 npx ts-node scripts/verify-database.ts
-```
+\`\`\`
 
 ### Step 6: Verify Setup
 
 Run the verification script:
-```bash
+\`\`\`bash
 npx ts-node scripts/verify-database.ts
-```
+\`\`\`
 
 Expected output:
-```
+\`\`\`
 ✅ Connection successful
 📊 Users: 4
 📊 Items: 0
@@ -95,7 +95,7 @@ Expected output:
 📊 Locations: 6
 📊 Playbooks: 2
 ✅ Database verification complete
-```
+\`\`\`
 
 ### Test Credentials
 
@@ -126,11 +126,11 @@ The system uses 8 core tables:
 
 After setup, start the development server:
 
-```bash
+\`\`\`bash
 npm run dev
 # or
 yarn dev
-```
+\`\`\`
 
 The application will be available at http://localhost:3000
 
@@ -142,30 +142,30 @@ The application will be available at http://localhost:3000
 - Check your firewall allows connections to Neon
 
 #### Migration Failed
-```bash
+\`\`\`bash
 # Reset and retry
 npx prisma migrate reset
 npx ts-node scripts/setup-neon-database.ts
-```
+\`\`\`
 
 #### Missing Tables
-```bash
+\`\`\`bash
 # Reapply migrations
 npx prisma migrate deploy
 
 # Reseed data
 npx prisma db seed
-```
+\`\`\`
 
 #### Connection Pool Issues
 If using serverless functions, add to your Prisma schema:
-```prisma
+\`\`\`prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-```
+\`\`\`
 
 Then add both URLs to your environment variables.
 
@@ -187,13 +187,13 @@ To backup your Neon database:
 4. To restore, go to "Restore from backup"
 
 Or using CLI:
-```bash
+\`\`\`bash
 # Export data
 npx prisma db pull
 
 # Create a local backup
 pg_dump $DATABASE_URL > backup.sql
-```
+\`\`\`
 
 ### Monitoring
 

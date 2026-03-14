@@ -15,7 +15,7 @@ A complete production-ready backend and database infrastructure has been created
 ## What Has Been Created
 
 ### 1. Database Schema (8 Tables)
-```
+\`\`\`
 User (Authentication & Profiles)
 ├── 4 unique columns
 ├── 6 relationship fields
@@ -61,7 +61,7 @@ Order (Notifications)
 ├── Message system
 ├── Read/unread status
 └── Priority levels
-```
+\`\`\`
 
 ### 2. Migration Files
 
@@ -151,15 +151,15 @@ Order (Notifications)
 
 ### Local Development
 Create `.env.local`:
-```env
+\`\`\`env
 DATABASE_URL="file:./dev.db"  # SQLite for local dev
-```
+\`\`\`
 
 ### Production (Neon)
 Create environment variable in Vercel:
-```
+\`\`\`
 DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
-```
+\`\`\`
 
 ---
 
@@ -171,35 +171,35 @@ DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
 3. Copy connection string from console
 
 ### Step 2: Configure Environment
-```bash
+\`\`\`bash
 # Add to .env.local
 DATABASE_URL="postgresql://..."
 
 # For production, add to Vercel dashboard
-```
+\`\`\`
 
 ### Step 3: Run Setup (Choose One)
 
 **Automated (Recommended):**
-```bash
+\`\`\`bash
 npm install
 npx ts-node scripts/setup-neon-database.ts
-```
+\`\`\`
 
 **Manual:**
-```bash
+\`\`\`bash
 npm install
 npx prisma generate
 npx prisma migrate deploy
 npx prisma db seed
 npx ts-node scripts/verify-database.ts
-```
+\`\`\`
 
 ### Step 4: Start Development
-```bash
+\`\`\`bash
 npm run dev
 # Visit http://localhost:3000
-```
+\`\`\`
 
 ### Step 5: Login
 Use test credentials:

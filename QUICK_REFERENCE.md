@@ -2,7 +2,7 @@
 
 ### Database Structure at a Glance
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────┐
 │                    NEON POSTGRESQL                          │
 │                   (Cloud Hosted)                            │
@@ -31,13 +31,13 @@
         ┌──────▼──────┐  ┌──────────┐  ┌─────────┐
         │ Location    │  │ Playbook │  │ Order   │
         └─────────────┘  └──────────┘  └─────────┘
-```
+\`\`\`
 
 ---
 
 ### Setup Commands
 
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
@@ -55,13 +55,13 @@ npx ts-node scripts/verify-database.ts
 
 # Full automated setup
 npx ts-node scripts/setup-neon-database.ts
-```
+\`\`\`
 
 ---
 
 ### Environment Variables
 
-```env
+\`\`\`env
 # Local Development (SQLite)
 DATABASE_URL="file:./dev.db"
 
@@ -70,13 +70,13 @@ DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 
 # Optional
 PRISMA_DATABASE_URL="postgresql://..."  # If different from above
-```
+\`\`\`
 
 ---
 
 ### Test Credentials
 
-```
+\`\`\`
 Admin:
   Email: admin@vaultchurch.org
   Pass:  AdminVault123!@#
@@ -88,7 +88,7 @@ Volunteer:
 User:
   Email: john.doe@vaultchurch.org
   Pass:  SecureUser123!@#
-```
+\`\`\`
 
 ---
 
@@ -110,7 +110,7 @@ User:
 
 ### API Routes Quick Reference
 
-```
+\`\`\`
 POST   /api/auth/login               - User login
 POST   /api/auth/logout              - User logout
 POST   /api/auth/change-password     - Change password
@@ -147,13 +147,13 @@ POST   /api/service-records          - Create record (admin)
 GET    /api/release-logs             - List logs
 
 GET    /api/audit-logs               - View logs (admin)
-```
+\`\`\`
 
 ---
 
 ### Password Requirements
 
-```
+\`\`\`
 ✅ Minimum 12 characters
 ✅ Uppercase letter required
 ✅ Lowercase letter required
@@ -161,13 +161,13 @@ GET    /api/audit-logs               - View logs (admin)
 ✅ Special character required (!@#$%^&*)
 
 Example: AdminVault123!@#
-```
+\`\`\`
 
 ---
 
 ### User Roles & Permissions
 
-```
+\`\`\`
 ┌──────────┬─────────┬──────────┬───────┐
 │ Feature  │ User    │ Volunteer│ Admin │
 ├──────────┼─────────┼──────────┼───────┤
@@ -180,13 +180,13 @@ Example: AdminVault123!@#
 │ Settings │    ✗    │    ✗     │  ✅   │
 │ Audit    │    ✗    │    ✗     │  ✅   │
 └──────────┴─────────┴──────────┴───────┘
-```
+\`\`\`
 
 ---
 
 ### Common Queries
 
-```typescript
+\`\`\`typescript
 // Find user
 const user = await prisma.user.findUnique({
   where: { username: "admin@vaultchurch.org" }
@@ -209,13 +209,13 @@ const stats = await prisma.item.groupBy({
   by: ['status'],
   _count: { id: true }
 })
-```
+\`\`\`
 
 ---
 
 ### Troubleshooting Checklist
 
-```
+\`\`\`
 ❌ Can't connect to database
   → Check DATABASE_URL in .env.local
   → Verify Neon connection string
@@ -244,26 +244,26 @@ const stats = await prisma.item.groupBy({
   → Run: npx prisma db seed
   → Verify database has data
   → Check user was created successfully
-```
+\`\`\`
 
 ---
 
 ### Performance Indexes
 
-```
+\`\`\`
 User:        username (unique), role, vaultPoints
 Item:        status, category, uploadedById, dateFounded, location
 Claim:       status, itemId, claimantId, claimedAt
 ReleaseLog:  claimId (unique), volunteerId
 ServiceRec:  userId, serviceDate
 AuditLog:    type, severity, userId, timestamp
-```
+\`\`\`
 
 ---
 
 ### Security Checklist
 
-```
+\`\`\`
 ✅ Passwords hashed with bcryptjs (10 rounds)
 ✅ No plaintext passwords in database
 ✅ JWT tokens for authentication
@@ -274,13 +274,13 @@ AuditLog:    type, severity, userId, timestamp
 ✅ SQL injection prevention (Prisma)
 ✅ Audit logging enabled
 ✅ Role-based access control
-```
+\`\`\`
 
 ---
 
 ### Deployment Steps
 
-```
+\`\`\`
 1. Create Neon database account
 2. Get PostgreSQL connection string
 3. Add DATABASE_URL to .env.local
@@ -291,13 +291,13 @@ AuditLog:    type, severity, userId, timestamp
 8. Verify: npx ts-node scripts/verify-database.ts
 9. Deploy: git push origin main
 10. Monitor logs in Vercel dashboard
-```
+\`\`\`
 
 ---
 
 ### Documentation Map
 
-```
+\`\`\`
 📚 NEON_SETUP.md
    └─ Step-by-step setup guide
 
@@ -312,13 +312,13 @@ AuditLog:    type, severity, userId, timestamp
 
 📚 QUICK_REFERENCE.md  (← you are here)
    └─ Quick lookup guide
-```
+\`\`\`
 
 ---
 
 ### Key Files
 
-```
+\`\`\`
 prisma/
 ├── schema.prisma              (database definition)
 ├── seed.ts                    (test data)
@@ -340,13 +340,13 @@ lib/
 ├── prisma.ts                  (Prisma client)
 ├── auth-context.tsx           (auth state)
 └── validation.ts              (input validation)
-```
+\`\`\`
 
 ---
 
 ### Useful Commands
 
-```bash
+\`\`\`bash
 # View database
 npx prisma studio
 
@@ -367,7 +367,7 @@ npx prisma generate
 
 # Deploy migrations
 npx prisma migrate deploy
-```
+\`\`\`
 
 ---
 
