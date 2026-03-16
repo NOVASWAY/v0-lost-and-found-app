@@ -3,12 +3,12 @@ import "dotenv/config"
 import { prisma } from "../lib/prisma"
 
 async function main() {
-  console.log("Seeding database...")
+  console.log("Seeding database with production users...")
 
-  // Mock/Demo credentials - simple usernames and light passwords
+  // Production user accounts with strong passwords
   
-  // Create admin user
-  const adminPassword = await bcrypt.hash("admin123", 10)
+  // Create admin user - full system access
+  const adminPassword = await bcrypt.hash("SecureAdmin123!", 10)
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
     update: {},
@@ -19,36 +19,44 @@ async function main() {
       role: "admin",
       vaultPoints: 1000,
       rank: 1,
+      attendanceCount: 0,
+      serviceCount: 0,
+      itemsUploaded: 0,
+      claimsSubmitted: 0,
     },
   })
+  console.log("✓ Admin user created: admin@vaultchurch.org")
 
-  // Create volunteer user
-  const volunteerPassword = await bcrypt.hash("volunteer123", 10)
+  // Create volunteer user - claims approval and release authority
+  const volunteerPassword = await bcrypt.hash("VolunteerPass123!", 10)
   const volunteer = await prisma.user.upsert({
-    where: { username: "volunteer" },
+    where: { username: "tomanderson" },
     update: {},
     create: {
       name: "Tom Anderson - Volunteer Coordinator",
-      username: "volunteer",
+      username: "tomanderson",
       password: volunteerPassword,
       role: "volunteer",
       attendanceCount: 18,
       serviceCount: 12,
       vaultPoints: 500,
       rank: 2,
+      itemsUploaded: 0,
+      claimsSubmitted: 0,
     },
   })
+  console.log("✓ Volunteer user created: tomanderson (Coordinator)")
 
-  // Create regular users
-  const defaultPassword = await bcrypt.hash("user123", 10)
+  // Create regular users - can upload items and claim
+  const userPassword = await bcrypt.hash("UserPass123!", 10)
 
   const user1 = await prisma.user.upsert({
-    where: { username: "john" },
+    where: { username: "johndoe" },
     update: {},
     create: {
       name: "John Doe",
-      username: "john",
-      password: defaultPassword,
+      username: "johndoe",
+      password: userPassword,
       role: "user",
       itemsUploaded: 3,
       claimsSubmitted: 1,
@@ -60,12 +68,12 @@ async function main() {
   })
 
   const user2 = await prisma.user.upsert({
-    where: { username: "sarah" },
+    where: { username: "sarahjohnson" },
     update: {},
     create: {
       name: "Sarah Johnson",
-      username: "sarah",
-      password: defaultPassword,
+      username: "sarahjohnson",
+      password: userPassword,
       role: "user",
       itemsUploaded: 5,
       claimsSubmitted: 2,
@@ -77,12 +85,12 @@ async function main() {
   })
 
   const user3 = await prisma.user.upsert({
-    where: { username: "michael" },
+    where: { username: "michaelchen" },
     update: {},
     create: {
       name: "Michael Chen",
-      username: "michael",
-      password: defaultPassword,
+      username: "michaelchen",
+      password: userPassword,
       role: "user",
       itemsUploaded: 2,
       claimsSubmitted: 3,
@@ -94,12 +102,12 @@ async function main() {
   })
 
   const user4 = await prisma.user.upsert({
-    where: { username: "david" },
+    where: { username: "davidpark" },
     update: {},
     create: {
       name: "David Park",
-      username: "david",
-      password: defaultPassword,
+      username: "davidpark",
+      password: userPassword,
       role: "user",
       itemsUploaded: 1,
       claimsSubmitted: 1,
@@ -109,6 +117,46 @@ async function main() {
       serviceCount: 0,
     },
   })
+
+  // Create additional volunteers
+  const volunteerPassword2 = await bcrypt.hash("VolunteerPass123!", 10)
+  
+  const volunteer2 = await prisma.user.upsert({
+    where: { username: "emilyrodriguez" },
+    update: {},
+    create: {
+      name: "Emily Rodriguez",
+      username: "emilyrodriguez",
+      password: volunteerPassword2,
+      role: "volunteer",
+      attendanceCount: 20,
+      serviceCount: 15,
+      vaultPoints: 520,
+      rank: 2,
+      itemsUploaded: 0,
+      claimsSubmitted: 0,
+    },
+  })
+
+  const volunteer3 = await prisma.user.upsert({
+    where: { username: "jenniferwilliams" },
+    update: {},
+    create: {
+      name: "Jennifer Williams",
+      username: "jenniferwilliams",
+      password: volunteerPassword2,
+      role: "volunteer",
+      attendanceCount: 15,
+      serviceCount: 10,
+      vaultPoints: 480,
+      rank: 2,
+      itemsUploaded: 0,
+      claimsSubmitted: 0,
+    },
+  })
+
+  console.log("✓ Regular users created (4 users)")
+  console.log("✓ Additional volunteers created (2 volunteers)")
 
   // Create locations
   const locations = [

@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { isMockMode } from "@/lib/prisma"
-import { mockUsers } from "@/lib/mock-api"
 import { prisma } from "@/lib/db"
 import { comparePassword } from "@/lib/db"
-import { addAuditLog } from "@/lib/audit-logger"
 import { loginSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting - stricter for login
+    // Rate limiting - stricter for login (5 attempts per minute)
     const clientId = getClientIdentifier(request)
     const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 5 })
     
@@ -36,73 +33,70 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = validation.data
 
-    let user: any
-
-    // Use mock data if database is disconnected
-    if (isMockMode || !prisma) {
-      // For mock mode, accept admin/admin123, volunteer/volunteer123, or user/user123
-      const mockUser = mockUsers.find(u => u.username === username)
-      if (!mockUser) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-      }
-      
-      // In mock mode, accept any password for testing
-      user = mockUser
-    } else {
-      try {
-        user = await prisma.user.findUnique({
-          where: { username },
-        })
-
-        if (!user) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-        }
-
-        const isValidPassword = await comparePassword(password, user.password)
-
-        if (!isValidPassword) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-        }
-
-        // Add audit log
-        await prisma.auditLog.create({
-          data: {
-            type: "login",
-            action: "User logged in",
-            details: `User '${user.username}' logged in`,
-            severity: "info",
-            userId: user.id,
-          },
-        })
-      } catch (dbError) {
-        console.error("[v0] Database error during login:", dbError)
-        // Fall back to mock mode if database fails
-        const mockUser = mockUsers.find(u => u.username === username)
-        if (!mockUser) {
-          return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-        }
-        user = mockUser
-      }
+    // Production-only: Use database for authentication
+    if (!prisma) {
+      return NextResponse.json(
+        { error: "Database connection unavailable" },
+        { status: 503 }
+      )
     }
 
-    // Return user data (excluding password)
-    const { password: _, ...userWithoutPassword } = user
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username },
+      })
 
-    return NextResponse.json(
-      {
-        user: userWithoutPassword,
-        message: "Login successful",
-      },
-      {
-        headers: {
-          "X-RateLimit-Limit": "5",
-          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-          "X-RateLimit-Reset": new Date(rateLimitResult.resetTime).toISOString(),
-        },
+      if (!user) {
+        console.log("[v0] Login failed: User not found -", username)
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
-    )
+
+      // Verify password with bcrypt
+      const isValidPassword = await comparePassword(password, user.password)
+
+      if (!isValidPassword) {
+        console.log("[v0] Login failed: Invalid password for user -", username)
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      }
+
+      // Add audit log for successful login
+      await prisma.auditLog.create({
+        data: {
+          type: "login",
+          action: "User logged in",
+          details: `User '${user.username}' (${user.role}) logged in successfully`,
+          severity: "info",
+          userId: user.id,
+        },
+      })
+
+      console.log("[v0] Login successful for user:", username, "role:", user.role)
+
+      // Return user data (excluding password)
+      const { password: _, ...userWithoutPassword } = user
+
+      return NextResponse.json(
+        {
+          user: userWithoutPassword,
+          message: "Login successful",
+        },
+        {
+          headers: {
+            "X-RateLimit-Limit": "5",
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": new Date(rateLimitResult.resetTime).toISOString(),
+          },
+        }
+      )
+    } catch (dbError) {
+      console.error("[v0] Database error during login:", dbError)
+      return NextResponse.json(
+        { error: "Database error during authentication" },
+        { status: 503 }
+      )
+    }
   } catch (error) {
-    console.error("Login error:", error)
+    console.error("[v0] Login error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
