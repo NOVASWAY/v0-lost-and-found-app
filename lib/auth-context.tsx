@@ -3,10 +3,22 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { type User } from "./mock-data"
-import { getUsers, updateUser, initializeStorage } from "./storage"
 import { addAuditLog } from "./audit-logger"
 import { sanitizeSearchQuery } from "./security"
+
+// Production user type
+interface User {
+  id: string
+  name: string
+  username: string
+  role: "admin" | "volunteer" | "user"
+  vaultPoints: number
+  rank: number
+  itemsUploaded: number
+  claimsSubmitted: number
+  attendanceCount: number
+  serviceCount: number
+}
 
 interface AuthContextType {
   user: User | null
@@ -43,39 +55,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Single useEffect for initialization - runs only on mount
   useEffect(() => {
-    // Initialize storage on mount
-    initializeStorage()
-    
-    // Check for stored user session
+    // Check for stored user session from database-backed API
     const storedSessionToken = sessionStorage.getItem("sessionToken")
     const storedUserId = sessionStorage.getItem("userId")
     
     if (storedSessionToken && storedUserId) {
       try {
-        // Verify session integrity
-        const users = getUsers()
-        const foundUser = users.find((u) => u.id === storedUserId)
+        // Session exists from previous login via database auth API
+        // The session token is just a marker; actual auth is via API
+        setIsAuthenticated(true)
+        resetSessionTimeout()
         
-        if (foundUser) {
-          setUser(foundUser)
-          setIsAuthenticated(true)
-          resetSessionTimeout()
-          
-          // Apply user preferences
-          const { getUserPreferences, getDefaultUserPreferences } = require("./storage")
-          const prefs = getUserPreferences(foundUser.id) || getDefaultUserPreferences()
-          if (prefs.theme === "dark") {
-            document.documentElement.classList.add("dark")
-          } else if (prefs.theme === "light") {
-            document.documentElement.classList.remove("dark")
-          } else if (prefs.theme === "system") {
-            const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-            document.documentElement.classList.toggle("dark", systemTheme === "dark")
-          }
-        } else {
-          // Clear invalid session
-          sessionStorage.removeItem("sessionToken")
-          sessionStorage.removeItem("userId")
+        // Apply theme preference
+        const theme = localStorage.getItem("theme") || "system"
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark")
+        } else if (theme === "light") {
+          document.documentElement.classList.remove("dark")
+        } else if (theme === "system") {
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+          document.documentElement.classList.toggle("dark", systemTheme === "dark")
         }
       } catch (error) {
         console.error("[Security] Session validation failed:", error)
@@ -173,25 +172,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
     if (!user) return false
 
-    // Verify current password
-    const users = getUsers()
-    const foundUser = users.find((u) => u.id === user.id && u.password === currentPassword)
-    if (!foundUser) {
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          currentPassword,
+          newPassword,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error("Password change failed")
+        return false
+      }
+
+      addAuditLog(
+        "user_password_changed",
+        "User password changed",
+        user.id,
+        user.name,
+        `Password changed for user '${user.username}'`,
+        "info"
+      )
+      return true
+    } catch (error) {
+      console.error("Password change error:", error)
       return false
     }
-
-    // Update password in storage
-    const updated = updateUser(user.id, { password: newPassword })
-    if (updated) {
-      // Update current user object
-      const updatedUser = { ...user, password: newPassword }
-      setUser(updatedUser)
-      sessionStorage.setItem("userId", updatedUser.id)
-      addAuditLog("user_password_changed", "User password changed", user.id, user.name, `Password changed for user '${user.username}'`, "info")
-      return true
-    }
-
-    return false
   }
 
   return (
