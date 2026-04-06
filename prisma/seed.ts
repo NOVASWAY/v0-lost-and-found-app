@@ -2,13 +2,27 @@ import * as bcrypt from "bcryptjs"
 import "dotenv/config"
 import { prisma } from "../lib/prisma"
 
+function getBootstrapPassword(envVarName: string, fallback: string): string {
+  const fromEnv = process.env[envVarName]
+  if (typeof fromEnv === "string" && fromEnv.length > 0) return fromEnv
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`Missing ${envVarName} for production seeding.`)
+  }
+
+  return fallback
+}
+
 async function main() {
   console.log("Seeding database with production users...")
 
   // Production user accounts with strong passwords
   
   // Create admin user - full system access
-  const adminPassword = await bcrypt.hash("SecureAdmin123!", 10)
+  const adminPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_ADMIN_PASSWORD", "SecureAdmin123!"),
+    10,
+  )
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
     update: {},
@@ -28,7 +42,10 @@ async function main() {
   console.log("✓ Admin user created: admin@vaultchurch.org")
 
   // Create volunteer user - claims approval and release authority
-  const volunteerPassword = await bcrypt.hash("VolunteerPass123!", 10)
+  const volunteerPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_VOLUNTEER_PASSWORD", "VolunteerPass123!"),
+    10,
+  )
   const volunteer = await prisma.user.upsert({
     where: { username: "tomanderson" },
     update: {},
@@ -48,7 +65,10 @@ async function main() {
   console.log("✓ Volunteer user created: tomanderson (Coordinator)")
 
   // Create regular users - can upload items and claim
-  const userPassword = await bcrypt.hash("UserPass123!", 10)
+  const userPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_USER_PASSWORD", "UserPass123!"),
+    10,
+  )
 
   const user1 = await prisma.user.upsert({
     where: { username: "johndoe" },
@@ -119,7 +139,10 @@ async function main() {
   })
 
   // Create additional volunteers
-  const volunteerPassword2 = await bcrypt.hash("VolunteerPass123!", 10)
+  const volunteerPassword2 = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_VOLUNTEER_PASSWORD", "VolunteerPass123!"),
+    10,
+  )
   
   const volunteer2 = await prisma.user.upsert({
     where: { username: "emilyrodriguez" },

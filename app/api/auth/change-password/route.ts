@@ -3,12 +3,18 @@ import { prisma } from "@/lib/db"
 import { comparePassword, hashPassword } from "@/lib/db"
 import { changePasswordSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { requireAuth } from "@/lib/auth-middleware"
 
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     // Rate limiting - stricter for password changes
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 300000, maxRequests: 5 }) // 5 attempts per 5 minutes
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 300000, maxRequests: 5 }) // 5 attempts per 5 minutes
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many password change attempts. Please try again later." }, { status: 429 })
     }
@@ -20,7 +26,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { userId, currentPassword, newPassword } = validation.data
+    const { currentPassword, newPassword } = validation.data
+    const userId = authResult.user.id
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

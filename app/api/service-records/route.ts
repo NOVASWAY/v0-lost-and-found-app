@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
+import { requireAuth } from "@/lib/auth-middleware"
 
 // GET service records for a user
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get("userId")
 
@@ -17,6 +23,11 @@ export async function GET(request: NextRequest) {
     const idValidation = validateRouteId(userId)
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error || "Invalid user ID format" }, { status: 400 })
+    }
+
+    // Regular users can only view their own service records.
+    if (authResult.user.role === "user" && userId !== authResult.user.id) {
+      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
     }
 
     const records = await prisma.serviceRecord.findMany({
@@ -34,6 +45,11 @@ export async function GET(request: NextRequest) {
 // POST create service record
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const body = await request.json()
     const validation = validateAndSanitize(createServiceRecordSchema, body)
 
@@ -41,7 +57,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { userId, serviceDate, attended, served, notes, recordedBy } = validation.data
+    if (authResult.user.role === "user") {
+      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+    }
+
+    const { serviceDate, attended, served, notes } = validation.data
+    const userId = authResult.user.id
+    const recordedBy = authResult.user.username
 
     // Validate userId to prevent path traversal
     const idValidation = validateRouteId(userId)

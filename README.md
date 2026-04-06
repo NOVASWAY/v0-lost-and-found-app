@@ -127,12 +127,11 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-### Default Login Credentials
+### Local Development Login (not for production)
 
-After seeding, you can login with:
-- **Admin**: username: `admin`, password: `admin123`
-- **Volunteer**: username: `volunteer`, password: `volunteer123`
-- **User**: username: `johndoe`, password: `user123`
+After seeding, usernames available depend on `prisma/seed.ts` (e.g., `admin`, `tomanderson`, `johndoe`).
+For production seeding, bootstrap passwords must be provided via environment variables:
+`BOOTSTRAP_ADMIN_PASSWORD`, `BOOTSTRAP_VOLUNTEER_PASSWORD`, and `BOOTSTRAP_USER_PASSWORD`.
 
 ## Project Structure
 

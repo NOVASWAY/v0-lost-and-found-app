@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     const where = search
       ? {
           OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { username: { contains: search, mode: "insensitive" } },
+            { name: { contains: search, mode: "insensitive" as const } },
+            { username: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {}
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }

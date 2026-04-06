@@ -13,12 +13,17 @@ async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
+  const accessToken =
+    typeof window !== "undefined" ? sessionStorage.getItem("accessToken") : null
+  const headers = new Headers(options?.headers as any)
+  headers.set("Content-Type", "application/json")
+  if (accessToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${accessToken}`)
+  }
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
   })
 
   if (!response.ok) {

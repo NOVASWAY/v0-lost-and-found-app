@@ -20,7 +20,7 @@ if (!USE_MOCK_MODE && HAS_DATABASE_URL) {
       globalForPrisma.prisma ||
       new PrismaClient({
         adapter: new PrismaNeon(
-          new Pool({ connectionString })
+          new Pool({ connectionString } as any) as any
         ),
         log:
           process.env.NODE_ENV === "development"
@@ -38,7 +38,13 @@ if (!USE_MOCK_MODE && HAS_DATABASE_URL) {
   }
 }
 
-export const prisma = prismaClient
-
 // Flag to indicate if we're in mock mode
 export const isMockMode = USE_MOCK_MODE || !HAS_DATABASE_URL
+
+if (!isMockMode && !prismaClient) {
+  throw new Error("Prisma client not initialized. Check DATABASE_URL and Neon adapter configuration.")
+}
+
+// `prismaClient` is only nullable when in mock mode / misconfiguration.
+// For production builds we fail fast above so this cast is safe.
+export const prisma = prismaClient as PrismaClient

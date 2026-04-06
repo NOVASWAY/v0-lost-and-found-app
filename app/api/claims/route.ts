@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { requireAdminOrVolunteer } from "@/lib/auth-middleware"
+import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -91,9 +91,17 @@ export async function GET(request: NextRequest) {
 // POST create new claim
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+    if (authResult.user.role === "admin") {
+      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+    }
+
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -105,7 +113,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { itemId, proofImage, claimantId, notes } = validation.data
+    const { itemId, proofImage, notes } = validation.data
+    const claimantId = authResult.user.id
 
     // Validate proof image URL to prevent path traversal
     const urlValidation = validateUrl(proofImage)

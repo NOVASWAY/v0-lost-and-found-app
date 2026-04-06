@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -28,7 +28,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
     
-    const { title, scenario, protocol, priority, userId } = await request.json()
+    const { title, scenario, protocol, priority } = await request.json()
+    const actorId = authResult.user.id
 
     const playbook = await prisma.playbook.findUnique({
       where: { id },
@@ -49,17 +50,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     })
 
     // Add audit log
-    if (userId) {
-      await prisma.auditLog.create({
-        data: {
-          type: "playbook_updated",
-          action: "Playbook updated",
-          details: `Playbook '${playbook.title}' updated`,
-          severity: "info",
-          userId,
-        },
-      })
-    }
+    await prisma.auditLog.create({
+      data: {
+        type: "playbook_updated",
+        action: "Playbook updated",
+        details: `Playbook '${playbook.title}' updated`,
+        severity: "info",
+        userId: actorId,
+      },
+    })
 
     return NextResponse.json({ playbook: updatedPlaybook, message: "Playbook updated successfully" })
   } catch (error) {
@@ -79,7 +78,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -92,9 +91,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
     
-    const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get("userId")
-
     const playbook = await prisma.playbook.findUnique({
       where: { id },
     })
@@ -108,17 +104,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     })
 
     // Add audit log
-    if (userId) {
-      await prisma.auditLog.create({
-        data: {
-          type: "playbook_deleted",
-          action: "Playbook deleted",
-          details: `Playbook '${playbook.title}' deleted`,
-          severity: "warning",
-          userId,
-        },
-      })
-    }
+    await prisma.auditLog.create({
+      data: {
+        type: "playbook_deleted",
+        action: "Playbook deleted",
+        details: `Playbook '${playbook.title}' deleted`,
+        severity: "warning",
+        userId: authResult.user.id,
+      },
+    })
 
     return NextResponse.json({ message: "Playbook deleted successfully" })
   } catch (error) {

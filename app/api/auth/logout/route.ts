@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { requireAuth } from "@/lib/auth-middleware"
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, username } = await request.json()
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
 
-    if (userId && prisma) {
+    const userId = authResult.user.id
+    const username = authResult.user.username
+
+    if (prisma) {
       try {
         // Add audit log for logout
         await prisma.auditLog.create({
@@ -17,7 +24,6 @@ export async function POST(request: NextRequest) {
             userId: userId,
           },
         })
-        console.log("[v0] Logout audit log created for user:", username)
       } catch (error) {
         console.error("[v0] Error creating logout audit log:", error)
         // Continue with logout even if audit log fails

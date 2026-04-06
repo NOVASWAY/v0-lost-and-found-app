@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { validateRouteId } from "@/lib/security"
+import { requireAuth } from "@/lib/auth-middleware"
+import { requireAdmin } from "@/lib/auth-middleware"
+import { updateItemSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET item by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -51,6 +54,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // PATCH update item
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { id } = await params
     
     // Validate ID to prevent path traversal
@@ -59,14 +67,37 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
     
+    const existingItem = await prisma.item.findUnique({
+      where: { id },
+      select: { id: true, uploadedById: true },
+    })
+
+    if (!existingItem) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 })
+    }
+
+    // Non-admin users can only update their own items (and only description).
+    if (authResult.user.role !== "admin" && existingItem.uploadedById !== authResult.user.id) {
+      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+    }
+
     const data = await request.json()
+    const validation = validateAndSanitize(updateItemSchema, data)
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const updateData: any = {}
+    if (validation.data.description !== undefined) {
+      updateData.description = validation.data.description
+    }
+    if (authResult.user.role === "admin" && validation.data.status !== undefined) {
+      updateData.status = validation.data.status
+    }
 
     const item = await prisma.item.update({
       where: { id },
-      data: {
-        ...(data.status && { status: data.status }),
-        ...(data.description && { description: data.description }),
-      },
+      data: updateData,
       include: {
         uploadedBy: {
           select: {
@@ -88,6 +119,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 // DELETE item
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = await requireAdmin(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { id } = await params
     
     // Validate ID to prevent path traversal

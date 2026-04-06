@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
   // Enhanced CSP - Allow audio for background music
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; audio-src 'self' https://assets.mixkit.co; connect-src 'self'; media-src 'self' https://assets.mixkit.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data: https: blob:; font-src 'self' data:; audio-src 'self' https://assets.mixkit.co; connect-src 'self'; media-src 'self' https://assets.mixkit.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
   )
   
   // Permissions Policy - Deny dangerous features

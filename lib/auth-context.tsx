@@ -18,6 +18,9 @@ interface User {
   claimsSubmitted: number
   attendanceCount: number
   serviceCount: number
+  // Optional client-side fields used by some UI components.
+  orders?: Array<{ status: string }>
+  claimedItems?: Array<any>
 }
 
 interface AuthContextType {
@@ -46,8 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionTimeoutRef.current = setTimeout(() => {
       setUser(null)
       setIsAuthenticated(false)
-      sessionStorage.removeItem("sessionToken")
+      sessionStorage.removeItem("accessToken")
       sessionStorage.removeItem("userId")
+      sessionStorage.removeItem("user")
       router.push("/")
       console.log("[Security] Session expired due to inactivity")
     }, SESSION_TIMEOUT)
@@ -56,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Single useEffect for initialization - runs only on mount
   useEffect(() => {
     // Check for stored user session from database-backed API
-    const storedSessionToken = sessionStorage.getItem("sessionToken")
+    const storedSessionToken = sessionStorage.getItem("accessToken")
     const storedUserId = sessionStorage.getItem("userId")
     
     if (storedSessionToken && storedUserId) {
@@ -64,6 +68,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Session exists from previous login via database auth API
         // The session token is just a marker; actual auth is via API
         setIsAuthenticated(true)
+        const storedUserJson = sessionStorage.getItem("user")
+        if (storedUserJson) {
+          setUser(JSON.parse(storedUserJson) as User)
+        }
         resetSessionTimeout()
         
         // Apply theme preference
@@ -78,8 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("[Security] Session validation failed:", error)
-        sessionStorage.removeItem("sessionToken")
+        sessionStorage.removeItem("accessToken")
         sessionStorage.removeItem("userId")
+        sessionStorage.removeItem("user")
       }
     }
 
@@ -122,18 +131,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
       const foundUser = data.user
+      const accessToken: string | undefined = data.accessToken
 
-      // Generate session token (secure random string)
-      const sessionToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("")
+      if (!accessToken) {
+        console.error("[Security] Missing accessToken in login response")
+        return false
+      }
       
       setUser(foundUser)
       setIsAuthenticated(true)
       
-      // Use sessionStorage instead of localStorage for sensitive data
-      sessionStorage.setItem("sessionToken", sessionToken)
+      // Store access token (cleared on inactivity/logout)
+      sessionStorage.setItem("accessToken", accessToken)
       sessionStorage.setItem("userId", foundUser.id)
+      sessionStorage.setItem("user", JSON.stringify(foundUser))
       sessionStorage.removeItem("loginAttempts")
       
       resetSessionTimeout()
@@ -162,8 +173,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null)
     setIsAuthenticated(false)
-    sessionStorage.removeItem("sessionToken")
+    sessionStorage.removeItem("accessToken")
     sessionStorage.removeItem("userId")
+    sessionStorage.removeItem("user")
     sessionStorage.removeItem("loginAttempts")
     if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     router.push("/")
@@ -173,11 +185,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false
 
     try {
+      const accessToken = sessionStorage.getItem("accessToken")
+      if (!accessToken) return false
+
       const response = await fetch("/api/auth/change-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
-          userId: user.id,
           currentPassword,
           newPassword,
         }),

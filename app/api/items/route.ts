@@ -3,13 +3,14 @@ import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
 import { sanitizeSearchQuery, validateUrl } from "@/lib/security"
+import { requireAuth } from "@/lib/auth-middleware"
 
 // GET all items
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -92,9 +93,14 @@ export async function GET(request: NextRequest) {
 // POST create new item
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -114,8 +120,8 @@ export async function POST(request: NextRequest) {
       dateFounded,
       description,
       uniqueMarkings,
-      uploadedById,
     } = validation.data
+    const uploadedById = authResult.user.id
 
     // Validate image URL to prevent path traversal
     const urlValidation = validateUrl(imageUrl)

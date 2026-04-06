@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -42,7 +42,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { name, description, userId } = validation.data
+    const { name, description } = validation.data
+    const actorId = authResult.user.id
 
     const location = await prisma.location.create({
       data: {
@@ -52,17 +53,15 @@ export async function POST(request: NextRequest) {
     })
 
     // Add audit log
-    if (userId) {
-      await prisma.auditLog.create({
-        data: {
-          type: "location_created",
-          action: "Location created",
-          details: `Location '${name}' created`,
-          severity: "info",
-          userId,
-        },
-      })
-    }
+    await prisma.auditLog.create({
+      data: {
+        type: "location_created",
+        action: "Location created",
+        details: `Location '${name}' created`,
+        severity: "info",
+        userId: actorId,
+      },
+    })
 
     return NextResponse.json({ location, message: "Location created successfully" })
   } catch (error: any) {

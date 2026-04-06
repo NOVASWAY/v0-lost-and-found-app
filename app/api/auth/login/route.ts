@@ -3,12 +3,13 @@ import { prisma } from "@/lib/db"
 import { comparePassword } from "@/lib/db"
 import { loginSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { signAccessToken } from "@/lib/jwt"
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting - stricter for login (5 attempts per minute)
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 5 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 5 })
     
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
@@ -74,10 +75,17 @@ export async function POST(request: NextRequest) {
 
       // Return user data (excluding password)
       const { password: _, ...userWithoutPassword } = user
+      const accessToken = signAccessToken({
+        sub: user.id,
+        role: user.role,
+        username: user.username,
+        name: user.name,
+      })
 
       return NextResponse.json(
         {
           user: userWithoutPassword,
+          accessToken,
           message: "Login successful",
         },
         {

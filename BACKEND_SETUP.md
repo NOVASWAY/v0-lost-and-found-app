@@ -95,12 +95,13 @@ All API routes are located in `app/api/`:
 
 A utility API client is available in `lib/api-client.ts` with typed functions for all endpoints.
 
-### 6. Default Users
+### 6. Bootstrap Credentials (production)
 
-After seeding, you can login with:
-- **Admin**: username: `admin`, password: `admin123`
-- **Volunteer**: username: `volunteer`, password: `volunteer123`
-- **User**: username: `johndoe`, password: `user123`
+The seed script creates users using usernames defined in `prisma/seed.ts`.
+Bootstrap passwords must be provided via environment variables:
+- `BOOTSTRAP_ADMIN_PASSWORD`
+- `BOOTSTRAP_VOLUNTEER_PASSWORD`
+- `BOOTSTRAP_USER_PASSWORD`
 
 ### 7. Database Management
 

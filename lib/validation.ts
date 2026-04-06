@@ -26,7 +26,6 @@ export const updateUserSchema = z.object({
 })
 
 export const changePasswordSchema = z.object({
-  userId: z.string().min(1),
   currentPassword: z.string().min(1),
   newPassword: passwordStrengthSchema,
 })
