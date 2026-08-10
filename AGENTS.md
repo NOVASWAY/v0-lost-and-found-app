@@ -27,7 +27,7 @@ After any change, run `pnpm lint`, `npx tsc --noEmit`, and `pnpm test`.
 - `app/` — pages (all client components) + `app/api/*` — the real, DB-backed backend (route handlers)
 - `lib/` — core logic: `db.ts`/`prisma.ts`, `jwt.ts`, `auth-middleware.ts`, `auth-context.tsx`,
   `rate-limit.ts`, `security.ts`, `validation.ts`, `audit-logger.ts`, `api-client.ts`
-- `middleware.ts` — security headers + cookie guard for `/admin` and `/volunteer` pages
+- `proxy.ts` — security headers + cookie guard for `/admin` and `/volunteer` pages (Next.js 16 renamed `middleware.ts` → `proxy.ts`)
 - `prisma/` — schema + `seed.ts` (dev users; passwords from `BOOTSTRAP_*_PASSWORD` env, else dev defaults)
 - `.github/workflows/` — `ci.yml` (lint/typecheck/test/build) and `deploy.yml` (Vercel)
 
