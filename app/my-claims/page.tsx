@@ -8,19 +8,29 @@ import { StatusBadge } from "@/components/status-badge"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getClaims, initializeStorage } from "@/lib/storage"
+import { claimsApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function MyClaimsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [claims, setClaims] = useState(getClaims())
+  const { toast } = useToast()
+  const [claims, setClaims] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setClaims(getClaims())
-  }, [])
+    if (!user) return
+    claimsApi
+      .getAll({ claimantId: user.id })
+      .then((res) => setClaims(res.claims))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load claims"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [user, toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,11 +38,27 @@ export default function MyClaimsPage() {
     }
   }, [isAuthenticated, router])
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return null
   }
 
-  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-8 space-y-2">
+            <div className="h-8 w-40 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-72 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-28 w-full bg-muted animate-pulse rounded-xl" />
+            ))}
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +73,7 @@ export default function MyClaimsPage() {
         </div>
 
         <div className="space-y-4">
-          {userClaims.map((claim) => (
+          {claims.map((claim) => (
             <Card key={claim.id} className="p-4 sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex gap-3 sm:gap-4">
@@ -88,9 +114,9 @@ export default function MyClaimsPage() {
             </Card>
           ))}
 
-          {userClaims.length === 0 && (
+          {claims.length === 0 && (
             <Card className="p-12 text-center">
-              <p className="mb-4 text-muted-foreground">You haven't submitted any claims yet</p>
+              <p className="mb-4 text-muted-foreground">You haven&apos;t submitted any claims yet</p>
               <Link href="/browse">
                 <Button>Browse Items</Button>
               </Link>

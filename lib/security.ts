@@ -1,6 +1,33 @@
 /**
  * Security utilities to prevent path traversal and other injection attacks
  */
+import type { NextRequest } from "next/server"
+
+/**
+ * CSRF protection: verifies that state-changing requests originated from the
+ * same site as the app. Browsers always attach an Origin header to cross-site
+ * POST/PATCH/DELETE requests, so a mismatched origin means the request was
+ * forged (e.g. submitted from an attacker's page). Requests without an Origin
+ * header (curl, server-to-server) are allowed through.
+ */
+export function assertSameOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin")
+  if (!origin) return true
+
+  const host = request.headers.get("host")
+  if (!host) return false
+
+  try {
+    const originUrl = new URL(origin)
+    return (
+      originUrl.host === host &&
+      (originUrl.protocol === "http:" || originUrl.protocol === "https:")
+    )
+  } catch {
+    return false
+  }
+}
+
 
 /**
  * Validates that a string doesn't contain path traversal patterns
@@ -80,8 +107,8 @@ export function sanitizePath(input: string): string {
     .replace(/\/\.\./g, "")
     .replace(/\\\.\./g, "")
 
-  // Remove absolute path indicators
-  sanitized = sanitized.replace(/^\/|^[A-Za-z]:\\/, "")
+  // Remove absolute path indicators (all leading slashes, not just the first)
+  sanitized = sanitized.replace(/^\/+/, "").replace(/^[A-Za-z]:\\/, "")
 
   // Remove file:// protocol
   sanitized = sanitized.replace(/^file:\/\//i, "")

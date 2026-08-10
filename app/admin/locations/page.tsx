@@ -10,17 +10,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { MapPin, Plus, Edit, Trash2, Search } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getLocations, addLocation, updateLocation, deleteLocation, initializeStorage } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
+import { locationsApi, ApiError, type Location } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
-import type { Location } from "@/lib/mock-data"
 
 export default function AdminLocationsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
-  const [locations, setLocations] = useState<Location[]>(getLocations())
+  const [locations, setLocations] = useState<Location[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
@@ -29,9 +28,19 @@ export default function AdminLocationsPage() {
     description: "",
   })
 
+  const loadLocations = () => {
+    locationsApi
+      .getAll()
+      .then((res) => setLocations(res.locations))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load locations"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }
+
   useEffect(() => {
-    initializeStorage()
-    setLocations(getLocations())
+    loadLocations()
   }, [])
 
   useEffect(() => {
@@ -49,7 +58,7 @@ export default function AdminLocationsPage() {
     return loc.name.toLowerCase().includes(searchLower) || (loc.description || "").toLowerCase().includes(searchLower)
   })
 
-  const handleSaveLocation = () => {
+  const handleSaveLocation = async () => {
     if (!newLocation.name?.trim()) {
       toast({
         title: "Error",
@@ -59,68 +68,51 @@ export default function AdminLocationsPage() {
       return
     }
 
-    if (editingLocation) {
-      const updated = updateLocation(editingLocation.id, {
-        name: newLocation.name,
-        description: newLocation.description || "",
-      })
-      if (updated) {
-        addAuditLog(
-          "location_updated",
-          "Location updated",
-          user.id,
-          user.name,
-          `Location '${newLocation.name}' updated`,
-          "info"
-        )
+    try {
+      if (editingLocation) {
+        await locationsApi.update(editingLocation.id, {
+          name: newLocation.name,
+          description: newLocation.description || "",
+          userId: user.id,
+        })
         toast({
           title: "Success",
           description: "Location updated successfully",
         })
-        setLocations(getLocations())
-        setIsDialogOpen(false)
-        setEditingLocation(null)
-        setNewLocation({ name: "", description: "" })
-      }
-    } else {
-      const added = addLocation({
-        id: `loc${Math.random().toString(36).substr(2, 9)}`,
-        name: newLocation.name,
-        description: newLocation.description || "",
-        createdAt: new Date().toISOString(),
-      })
-      if (added) {
-        addAuditLog(
-          "location_created",
-          "Location created",
-          user.id,
-          user.name,
-          `Location '${newLocation.name}' created`,
-          "info"
-        )
+      } else {
+        await locationsApi.create({
+          name: newLocation.name,
+          description: newLocation.description || "",
+          userId: user.id,
+        })
         toast({
           title: "Success",
           description: "Location created successfully",
         })
-        setLocations(getLocations())
-        setIsDialogOpen(false)
-        setNewLocation({ name: "", description: "" })
       }
+      loadLocations()
+      setIsDialogOpen(false)
+      setEditingLocation(null)
+      setNewLocation({ name: "", description: "" })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to save location"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
-  const handleDeleteLocation = (id: string) => {
+  const handleDeleteLocation = async (id: string) => {
     if (!confirm("Are you sure you want to delete this location?")) return
 
-    const location = locations.find((l) => l.id === id)
-    if (location) {
-      deleteLocation(id)
-      addAuditLog("location_deleted", "Location deleted", user.id, user.name, `Location '${location.name}' deleted`, "warning")
+    try {
+      await locationsApi.delete(id, user.id)
       toast({
         title: "Success",
         description: "Location deleted successfully",
       })
-      setLocations(getLocations())
+      loadLocations()
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to delete location"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
@@ -221,9 +213,11 @@ export default function AdminLocationsPage() {
                     {location.description && (
                       <p className="text-sm text-muted-foreground">{location.description}</p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Created: {new Date(location.createdAt).toLocaleDateString()}
-                    </p>
+                    {location.createdAt && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Created: {new Date(location.createdAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

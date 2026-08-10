@@ -13,25 +13,23 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Plus, Edit, Trash2, Search, Calendar, Users, CheckCircle, X, Printer } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getMeetingMinutes, addMeetingMinutes, updateMeetingMinutes, deleteMeetingMinutes, getUsers, initializeStorage } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
+import { meetingMinutesApi, usersApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
 import { sanitizeInput, sanitizeStringArray, sanitizeDate, sanitizeTextContent, sanitizeSearchQuery, escapeHtml } from "@/lib/client-security"
-import type { MeetingMinutes } from "@/lib/mock-data"
 
 export default function AdminMeetingMinutesPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
-  const [minutes, setMinutes] = useState<MeetingMinutes[]>(getMeetingMinutes())
+  const [minutes, setMinutes] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingMinutes, setEditingMinutes] = useState<MeetingMinutes | null>(null)
-  const [users, setUsers] = useState(getUsers())
+  const [editingMinutes, setEditingMinutes] = useState<any | null>(null)
+  const [users, setUsers] = useState<any[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null)
-  const [newMinutes, setNewMinutes] = useState<Partial<MeetingMinutes>>({
+  const [newMinutes, setNewMinutes] = useState<Partial<any>>({
     title: "",
     meetingDate: new Date().toISOString().split("T")[0],
     location: "",
@@ -49,17 +47,16 @@ export default function AdminMeetingMinutesPage() {
   const [editingActionItemIndex, setEditingActionItemIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    initializeStorage()
-    setMinutes(getMeetingMinutes())
-    setUsers(getUsers())
-  }, [])
-
-  // Refresh minutes when dialog closes
-  useEffect(() => {
-    if (!isDialogOpen) {
-      setMinutes(getMeetingMinutes())
-    }
-  }, [isDialogOpen])
+    Promise.all([meetingMinutesApi.getAll(), usersApi.getAll()])
+      .then(([minutesRes, usersRes]) => {
+        setMinutes(minutesRes.minutes)
+        setUsers(usersRes.users)
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load meeting minutes"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "admin") {
@@ -71,12 +68,12 @@ export default function AdminMeetingMinutesPage() {
     return null
   }
 
-  const filteredMinutes = minutes.filter((m) => {
+  const filteredMinutes = minutes.filter((m: any) => {
     const searchLower = searchQuery.toLowerCase()
     return (
       m.title.toLowerCase().includes(searchLower) ||
       m.location?.toLowerCase().includes(searchLower) ||
-      m.attendees.some((a) => a.toLowerCase().includes(searchLower)) ||
+      m.attendees.some((a: any) => a.toLowerCase().includes(searchLower)) ||
       m.discussion.toLowerCase().includes(searchLower)
     )
   })
@@ -95,7 +92,7 @@ export default function AdminMeetingMinutesPage() {
   const handleRemoveAttendee = (attendee: string) => {
     setNewMinutes({
       ...newMinutes,
-      attendees: newMinutes.attendees?.filter((a) => a !== attendee) || [],
+      attendees: newMinutes.attendees?.filter((a: any) => a !== attendee) || [],
     })
   }
 
@@ -195,7 +192,7 @@ export default function AdminMeetingMinutesPage() {
     setEditingActionItemIndex(null)
   }
 
-  const handleUpdateActionItemStatus = (minuteId: string, actionIndex: number, newStatus: "pending" | "in_progress" | "completed") => {
+  const handleUpdateActionItemStatus = async (minuteId: string, actionIndex: number, newStatus: "pending" | "in_progress" | "completed") => {
     const minute = minutes.find((m) => m.id === minuteId)
     if (!minute) return
 
@@ -205,25 +202,17 @@ export default function AdminMeetingMinutesPage() {
       status: newStatus,
     }
 
-    updateMeetingMinutes(minuteId, {
-      actionItems: updatedActionItems,
-    } as Partial<MeetingMinutes>)
-    
-    addAuditLog(
-      "meeting_minutes_updated",
-      "Action item status updated",
-      user.id,
-      user.name,
-      `Action item status updated to ${newStatus}`,
-      "info"
-    )
-    
-    toast({
-      title: "Success",
-      description: "Action item status updated",
-    })
-    
-    setMinutes(getMeetingMinutes())
+    try {
+      await meetingMinutesApi.update(minuteId, { actionItems: updatedActionItems })
+      setMinutes((prev) => prev.map((m: any) => (m.id === minuteId ? { ...m, actionItems: updatedActionItems } : m)))
+      toast({
+        title: "Success",
+        description: "Action item status updated",
+      })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to update action item"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    }
   }
 
   const handleRemoveActionItem = (index: number) => {
@@ -238,7 +227,7 @@ export default function AdminMeetingMinutesPage() {
     }
   }
 
-  const handleSaveMinutes = () => {
+  const handleSaveMinutes = async () => {
     const sanitizedTitle = sanitizeInput(newMinutes.title || "")
     const sanitizedDate = newMinutes.meetingDate ? sanitizeDate(newMinutes.meetingDate) : ""
     const sanitizedLocation = newMinutes.location ? sanitizeInput(newMinutes.location) : undefined
@@ -254,71 +243,51 @@ export default function AdminMeetingMinutesPage() {
       return
     }
 
-    if (editingMinutes) {
-      updateMeetingMinutes(editingMinutes.id, {
-        title: sanitizedTitle,
-        meetingDate: sanitizedDate,
-        location: sanitizedLocation,
-        attendees: sanitizeStringArray(newMinutes.attendees || []),
-        agenda: sanitizeStringArray(newMinutes.agenda || []),
-        discussion: sanitizedDiscussion,
-        actionItems: (newMinutes.actionItems || []).map((ai) => ({
-          item: sanitizeInput(ai.item),
-          assignedTo: sanitizeInput(ai.assignedTo),
-          dueDate: ai.dueDate ? sanitizeDate(ai.dueDate) : undefined,
-          status: ai.status,
-        })),
-        decisions: sanitizeStringArray(newMinutes.decisions || []),
-        nextMeetingDate: sanitizedNextDate,
-        updatedAt: new Date().toISOString(),
-      } as Partial<MeetingMinutes>)
-      addAuditLog("meeting_minutes_updated", "Meeting minutes updated", user.id, user.name, `Meeting minutes '${sanitizedTitle}' updated`, "info")
-      toast({
-        title: "Success",
-        description: "Meeting minutes updated successfully",
-      })
-      setMinutes(getMeetingMinutes())
+    const payload = {
+      title: sanitizedTitle,
+      meetingDate: sanitizedDate,
+      location: sanitizedLocation,
+      attendees: sanitizeStringArray(newMinutes.attendees || []),
+      agenda: sanitizeStringArray(newMinutes.agenda || []),
+      discussion: sanitizedDiscussion,
+      actionItems: (newMinutes.actionItems || []).map((ai: any) => ({
+        item: sanitizeInput(ai.item),
+        assignedTo: sanitizeInput(ai.assignedTo),
+        dueDate: ai.dueDate ? sanitizeDate(ai.dueDate) : undefined,
+        status: ai.status,
+      })),
+      decisions: sanitizeStringArray(newMinutes.decisions || []),
+      nextMeetingDate: sanitizedNextDate,
+    }
+
+    try {
+      if (editingMinutes) {
+        await meetingMinutesApi.update(editingMinutes.id, payload)
+        toast({
+          title: "Success",
+          description: "Meeting minutes updated successfully",
+        })
+      } else {
+        await meetingMinutesApi.create(payload)
+        toast({
+          title: "Success",
+          description: "Meeting minutes created successfully",
+        })
+      }
+      const res = await meetingMinutesApi.getAll()
+      setMinutes(res.minutes)
       setIsDialogOpen(false)
       setTimeout(() => {
         setEditingMinutes(null)
         resetForm()
       }, 100)
-    } else {
-      const meetingMinutes: MeetingMinutes = {
-        id: `mm${Date.now()}`,
-        title: sanitizedTitle,
-        meetingDate: sanitizedDate,
-        location: sanitizedLocation,
-        attendees: sanitizeStringArray(newMinutes.attendees || []),
-        agenda: sanitizeStringArray(newMinutes.agenda || []),
-        discussion: sanitizedDiscussion,
-        actionItems: (newMinutes.actionItems || []).map((ai) => ({
-          item: sanitizeInput(ai.item),
-          assignedTo: sanitizeInput(ai.assignedTo),
-          dueDate: ai.dueDate ? sanitizeDate(ai.dueDate) : undefined,
-          status: ai.status,
-        })),
-        decisions: sanitizeStringArray(newMinutes.decisions || []),
-        nextMeetingDate: sanitizedNextDate,
-        recordedBy: user.name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      addMeetingMinutes(meetingMinutes)
-      addAuditLog("meeting_minutes_created", "Meeting minutes created", user.id, user.name, `Meeting minutes '${meetingMinutes.title}' created`, "info")
-      toast({
-        title: "Success",
-        description: "Meeting minutes created successfully",
-      })
-      setMinutes(getMeetingMinutes())
-      setIsDialogOpen(false)
-      setTimeout(() => {
-        resetForm()
-      }, 100)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to save meeting minutes"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
-  const handleEdit = (minute: MeetingMinutes) => {
+  const handleEdit = (minute: any) => {
     setEditingMinutes(minute)
     setNewMinutes({
       title: minute.title,
@@ -339,20 +308,25 @@ export default function AdminMeetingMinutesPage() {
     setDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!itemToDelete) return
-    deleteMeetingMinutes(itemToDelete.id)
-    addAuditLog("meeting_minutes_deleted", "Meeting minutes deleted", user.id, user.name, `Meeting minutes '${itemToDelete.title}' deleted`, "warning")
-    toast({
-      title: "Success",
-      description: "Meeting minutes deleted successfully",
-    })
-    setMinutes(getMeetingMinutes())
+    try {
+      await meetingMinutesApi.delete(itemToDelete.id)
+      toast({
+        title: "Success",
+        description: "Meeting minutes deleted successfully",
+      })
+      const res = await meetingMinutesApi.getAll()
+      setMinutes(res.minutes)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to delete meeting minutes"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    }
     setDeleteDialogOpen(false)
     setItemToDelete(null)
   }
 
-  const handlePrint = (minute: MeetingMinutes) => {
+  const handlePrint = (minute: any) => {
     // Create a print-friendly HTML document
     const printWindow = window.open("", "_blank")
     if (!printWindow) {
@@ -511,7 +485,7 @@ export default function AdminMeetingMinutesPage() {
     <div class="section-title">Attendees</div>
     <div class="section-content">
       <ul>
-        ${minute.attendees.map(attendee => `<li>${escapeHtml(attendee)}</li>`).join('')}
+        ${minute.attendees.map((attendee: any) => `<li>${escapeHtml(attendee)}</li>`).join('')}
       </ul>
     </div>
   </div>
@@ -522,7 +496,7 @@ export default function AdminMeetingMinutesPage() {
     <div class="section-title">Agenda</div>
     <div class="section-content">
       <ol>
-        ${minute.agenda.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+        ${minute.agenda.map((item: any) => `<li>${escapeHtml(item)}</li>`).join('')}
       </ol>
     </div>
   </div>
@@ -540,7 +514,7 @@ export default function AdminMeetingMinutesPage() {
     <div class="section-title">Decisions</div>
     <div class="section-content">
       <ul>
-        ${minute.decisions.map(decision => `<li>${escapeHtml(decision)}</li>`).join('')}
+        ${minute.decisions.map((decision: any) => `<li>${escapeHtml(decision)}</li>`).join('')}
       </ul>
     </div>
   </div>
@@ -550,7 +524,7 @@ export default function AdminMeetingMinutesPage() {
   <div class="section">
     <div class="section-title">Action Items</div>
     <div class="section-content">
-      ${minute.actionItems.map((actionItem, idx) => `
+      ${minute.actionItems.map((actionItem: any, idx: any) => `
         <div class="action-item">
           <div class="action-item-header">
             ${idx + 1}. ${escapeHtml(actionItem.item)}
@@ -691,7 +665,7 @@ export default function AdminMeetingMinutesPage() {
                           <SelectValue placeholder="Select attendee" />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.map((u) => (
+                          {users.map((u: any) => (
                             <SelectItem key={u.id} value={u.name}>
                               {u.name} ({u.role})
                             </SelectItem>
@@ -703,7 +677,7 @@ export default function AdminMeetingMinutesPage() {
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {newMinutes.attendees?.map((attendee, idx) => (
+                      {newMinutes.attendees?.map((attendee: any, idx: any) => (
                         <Badge key={idx} variant="secondary" className="flex items-center gap-1">
                           {attendee}
                           <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveAttendee(attendee)} />
@@ -725,7 +699,7 @@ export default function AdminMeetingMinutesPage() {
                       </Button>
                     </div>
                     <ul className="list-disc list-inside space-y-1">
-                      {newMinutes.agenda?.map((item, idx) => (
+                      {newMinutes.agenda?.map((item: any, idx: any) => (
                         <li key={idx} className="flex items-center justify-between text-sm">
                           <span>{item}</span>
                           <Button
@@ -767,7 +741,7 @@ export default function AdminMeetingMinutesPage() {
                       </Button>
                     </div>
                     <ul className="list-disc list-inside space-y-1">
-                      {newMinutes.decisions?.map((decision, idx) => (
+                      {newMinutes.decisions?.map((decision: any, idx: any) => (
                         <li key={idx} className="flex items-center justify-between text-sm">
                           <span>{decision}</span>
                           <Button
@@ -799,7 +773,7 @@ export default function AdminMeetingMinutesPage() {
                             <SelectValue placeholder="Assigned to" />
                           </SelectTrigger>
                           <SelectContent>
-                            {users.map((u) => (
+                            {users.map((u: any) => (
                               <SelectItem key={u.id} value={u.name}>
                                 {u.name} ({u.role})
                               </SelectItem>
@@ -828,7 +802,7 @@ export default function AdminMeetingMinutesPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      {newMinutes.actionItems?.map((actionItem, idx) => (
+                      {newMinutes.actionItems?.map((actionItem: any, idx: any) => (
                         <Card key={idx} className="p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
@@ -929,7 +903,7 @@ export default function AdminMeetingMinutesPage() {
           <div className="space-y-4">
             {filteredMinutes
               .sort((a, b) => new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime())
-              .map((minute) => (
+              .map((minute: any) => (
                 <Card key={minute.id} className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -967,7 +941,7 @@ export default function AdminMeetingMinutesPage() {
                     <div className="mb-4">
                       <h4 className="text-sm font-medium mb-2">Agenda:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {minute.agenda.map((item, idx) => (
+                        {minute.agenda.map((item: any, idx: any) => (
                           <li key={idx}>{escapeHtml(item)}</li>
                         ))}
                       </ul>
@@ -983,7 +957,7 @@ export default function AdminMeetingMinutesPage() {
                     <div className="mb-4">
                       <h4 className="text-sm font-medium mb-2">Decisions:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {minute.decisions.map((decision, idx) => (
+                        {minute.decisions.map((decision: any, idx: any) => (
                           <li key={idx}>{escapeHtml(decision)}</li>
                         ))}
                       </ul>
@@ -993,7 +967,7 @@ export default function AdminMeetingMinutesPage() {
                     <div className="mb-4">
                       <h4 className="text-sm font-medium mb-2">Action Items:</h4>
                       <div className="space-y-2">
-                        {minute.actionItems.map((actionItem, idx) => (
+                        {minute.actionItems.map((actionItem: any, idx: any) => (
                           <Card key={idx} className="p-3">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-start gap-2 flex-1">
@@ -1050,7 +1024,7 @@ export default function AdminMeetingMinutesPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Meeting Minutes</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete the meeting minutes "{itemToDelete?.title}"? This action cannot be undone.
+                Are you sure you want to delete the meeting minutes &quot;{itemToDelete?.title}&quot;? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

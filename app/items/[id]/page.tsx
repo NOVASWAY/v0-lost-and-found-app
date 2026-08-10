@@ -9,20 +9,34 @@ import { ClaimModal } from "@/components/claim-modal"
 import { MapPin, Calendar, Tag, Info } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { getItems, initializeStorage } from "@/lib/storage"
+import { itemsApi, ApiError, type Item } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const { id } = use(params)
-  const [items, setItems] = useState(getItems())
+  const [item, setItem] = useState<Item | null>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-  }, [])
+    itemsApi
+      .getById(id)
+      .then((res) => setItem(res.item))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setNotFound(true)
+        } else {
+          const message = err instanceof ApiError ? err.message : "Failed to load item"
+          toast({ title: "Error", description: message, variant: "destructive" })
+        }
+      })
+      .finally(() => setIsLoaded(true))
+  }, [id, toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -34,11 +48,41 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     return null
   }
 
-  const item = items.find((i) => i.id === id)
-
-  if (!item) {
-    return <div>Item not found</div>
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-6 h-10 w-32 bg-muted animate-pulse rounded" />
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="aspect-square rounded-xl bg-muted animate-pulse" />
+            <div className="space-y-4">
+              <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+              <div className="h-40 w-full bg-muted animate-pulse rounded" />
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
+
+  if (notFound || !item) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-6">
+            <BackButton fallbackHref="/browse" />
+          </div>
+          <Card className="p-12 text-center">
+            <p className="mb-4 text-muted-foreground">Item not found</p>
+            <BackButton fallbackHref="/browse" />
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
+  const uploadedByName = item.uploadedBy?.name || item.uploadedBy?.username || "a member"
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,10 +96,10 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           <div className="space-y-4">
             <Card className="overflow-hidden">
               <div className="relative aspect-square bg-muted">
-                <Image src={item.imageUrl || "/placeholder.svg"} alt={item.category} fill className="object-cover" />
+                <Image src={item.imageUrl || "/placeholder.svg"} alt={`${item.category} lost item photo`} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
               </div>
             </Card>
-            <p className="text-sm text-muted-foreground">Uploaded by {item.uploadedBy}</p>
+            <p className="text-sm text-muted-foreground">Uploaded by {uploadedByName}</p>
           </div>
 
           {/* Details Section */}

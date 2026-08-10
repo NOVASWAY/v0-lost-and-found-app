@@ -7,28 +7,42 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { BookOpen, Search } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getPlaybooks, initializeStorage } from "@/lib/storage"
+import { playbooksApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
-import type { Playbook } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function PlaybooksPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [playbooks, setPlaybooks] = useState<Playbook[]>(getPlaybooks())
+  const { toast } = useToast()
+  const [playbooks, setPlaybooks] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
-    initializeStorage()
-    setPlaybooks(getPlaybooks())
-  }, [])
+    playbooksApi
+      .getAll()
+      .then((res) => setPlaybooks(res.playbooks))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load playbooks"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+    // Playbooks contain internal security procedures; staff only.
+    if (isAuthenticated && user?.role !== "admin" && user?.role !== "volunteer") {
+      router.push("/dashboard")
+    }
+  }, [isAuthenticated, user, router])
 
   if (!isAuthenticated) {
+    return null
+  }
+
+  if (user?.role !== "admin" && user?.role !== "volunteer") {
     return null
   }
 

@@ -9,19 +9,26 @@ import { Clock, AlertCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getItems, initializeStorage } from "@/lib/storage"
+import { itemsApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminDonationsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [items, setItems] = useState(getItems())
+  const { toast } = useToast()
+  const [items, setItems] = useState<any[]>([])
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-  }, [])
+    itemsApi
+      .getAll({ limit: 100 })
+      .then((res) => setItems(res.items))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load items"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -133,7 +140,7 @@ export default function AdminDonationsPage() {
                         <h3 className="font-semibold text-card-foreground">{item.category}</h3>
                         <p className="text-sm text-muted-foreground">{item.color}</p>
                         <p className="text-sm text-muted-foreground">Found at {item.location}</p>
-                        <p className="text-xs text-muted-foreground">Uploaded by {item.uploadedBy}</p>
+                        <p className="text-xs text-muted-foreground">Uploaded by {item.uploadedBy?.name || item.uploadedBy?.username || "a member"}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-6">

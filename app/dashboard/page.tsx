@@ -19,32 +19,66 @@ import {
   CheckCircle,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getItems, getClaims, initializeStorage } from "@/lib/storage"
+import { itemsApi, claimsApi, ApiError } from "@/lib/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [items, setItems] = useState(getItems())
-  const [claims, setClaims] = useState(getClaims())
+  const { toast } = useToast()
+  const [userUploads, setUserUploads] = useState<any[]>([])
+  const [userClaims, setUserClaims] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-    setClaims(getClaims())
-  }, [])
+    if (!user) return
+    Promise.all([
+      itemsApi.getAll({ uploadedById: user.id, limit: 100 }),
+      claimsApi.getAll({ claimantId: user.id, limit: 100 }),
+    ])
+      .then(([itemsRes, claimsRes]) => {
+        setUserUploads(itemsRes.items)
+        setUserClaims(claimsRes.claims)
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load dashboard"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [user, toast])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoaded && !isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+  }, [isLoaded, isAuthenticated, router])
 
-  if (!isAuthenticated) {
-    return null
+  if (!isLoaded || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-6 sm:mb-8 space-y-2">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 bg-muted animate-pulse rounded-lg" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-48 bg-muted animate-pulse rounded" />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
+    )
   }
 
-  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
-  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
   const pendingClaims = userClaims.filter((claim) => claim.status === "pending")
   const releasedItems = userClaims.filter((claim) => claim.status === "released")
 
@@ -55,7 +89,7 @@ export default function DashboardPage() {
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Welcome Back, {user?.name || "User"}!</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Here's your Lost & Found activity summary</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Here&apos;s your Lost & Found activity summary</p>
         </div>
 
         {/* Quick Actions */}
@@ -96,7 +130,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">My Uploads</h3>
-                  <p className="text-sm text-muted-foreground">View items you've uploaded</p>
+                  <p className="text-sm text-muted-foreground">View items you&apos;ve uploaded</p>
                 </div>
               </div>
             </Card>

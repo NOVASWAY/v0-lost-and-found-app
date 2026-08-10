@@ -10,17 +10,26 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { BookOpen, Plus, Edit, Trash2, Search } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getPlaybooks, addPlaybook, updatePlaybook, deletePlaybook, initializeStorage } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
+import { playbooksApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
-import type { Playbook } from "@/lib/mock-data"
+
+interface Playbook {
+  id: string
+  title: string
+  scenario: string
+  protocol: string
+  priority: string
+  updatedAt: string
+  createdAt?: string
+}
 
 export default function AdminPlaybooksPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
-  const [playbooks, setPlaybooks] = useState<Playbook[]>(getPlaybooks())
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null)
@@ -31,9 +40,19 @@ export default function AdminPlaybooksPage() {
     priority: "medium",
   })
 
+  const loadPlaybooks = () => {
+    playbooksApi
+      .getAll()
+      .then((res) => setPlaybooks(res.playbooks))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load playbooks"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }
+
   useEffect(() => {
-    initializeStorage()
-    setPlaybooks(getPlaybooks())
+    loadPlaybooks()
   }, [])
 
   useEffect(() => {
@@ -55,7 +74,7 @@ export default function AdminPlaybooksPage() {
     )
   })
 
-  const handleSavePlaybook = () => {
+  const handleSavePlaybook = async () => {
     if (!newPlaybook.title || !newPlaybook.protocol) {
       toast({
         title: "Error",
@@ -65,53 +84,55 @@ export default function AdminPlaybooksPage() {
       return
     }
 
-    if (editingPlaybook) {
-      updatePlaybook(editingPlaybook.id, {
-        ...newPlaybook,
-        updatedAt: new Date().toISOString(),
-      } as Partial<Playbook>)
-      addAuditLog("playbook_updated", "Playbook updated", user.id, user.name, `Playbook '${editingPlaybook.title}' updated`, "info")
-      toast({
-        title: "Success",
-        description: "Playbook updated successfully",
-      })
-      setPlaybooks(getPlaybooks())
+    try {
+      if (editingPlaybook) {
+        await playbooksApi.update(editingPlaybook.id, {
+          title: newPlaybook.title,
+          scenario: newPlaybook.scenario || "",
+          protocol: newPlaybook.protocol,
+          priority: newPlaybook.priority || "medium",
+          userId: user.id,
+        })
+        toast({
+          title: "Success",
+          description: "Playbook updated successfully",
+        })
+      } else {
+        await playbooksApi.create({
+          title: newPlaybook.title,
+          scenario: newPlaybook.scenario || "",
+          protocol: newPlaybook.protocol,
+          priority: newPlaybook.priority || "medium",
+          userId: user.id,
+        })
+        toast({
+          title: "Success",
+          description: "Playbook created successfully",
+        })
+      }
+      loadPlaybooks()
       setIsDialogOpen(false)
       setEditingPlaybook(null)
       setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
-    } else {
-      const playbook: Playbook = {
-        id: `pb${Date.now()}`,
-        title: newPlaybook.title,
-        scenario: newPlaybook.scenario || "",
-        protocol: newPlaybook.protocol,
-        priority: (newPlaybook.priority as any) || "medium",
-        updatedAt: new Date().toISOString(),
-      }
-      addPlaybook(playbook)
-      addAuditLog("playbook_created", "Playbook created", user.id, user.name, `Playbook '${playbook.title}' created`, "info")
-      toast({
-        title: "Success",
-        description: "Playbook created successfully",
-      })
-      setPlaybooks(getPlaybooks())
-      setIsDialogOpen(false)
-      setNewPlaybook({ title: "", scenario: "", protocol: "", priority: "medium" })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to save playbook"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
-  const handleDeletePlaybook = (id: string) => {
+  const handleDeletePlaybook = async (id: string) => {
     if (!confirm("Are you sure you want to delete this playbook?")) return
 
-    const playbook = playbooks.find((pb) => pb.id === id)
-    if (playbook) {
-      deletePlaybook(id)
-      addAuditLog("playbook_deleted", "Playbook deleted", user.id, user.name, `Playbook '${playbook.title}' deleted`, "warning")
+    try {
+      await playbooksApi.delete(id, user.id)
       toast({
         title: "Success",
         description: "Playbook deleted successfully",
       })
-      setPlaybooks(getPlaybooks())
+      loadPlaybooks()
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to delete playbook"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 

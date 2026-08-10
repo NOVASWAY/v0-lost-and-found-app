@@ -2,6 +2,47 @@
 
 const API_BASE = "/api"
 
+export type ItemStatus = "available" | "claimed" | "released" | "donated" | "expired"
+
+export interface Item {
+  id: string
+  imageUrl: string
+  category: string
+  color: string
+  location: string
+  dateFounded: string
+  description: string
+  status: ItemStatus
+  donationDeadline: string | null
+  uniqueMarkings: string | null
+  uploadedBy: { id: string; name?: string; username?: string }
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface Location {
+  id: string
+  name: string
+  description?: string | null
+  createdAt?: string
+}
+
+export interface UserListItem {
+  id: string
+  name: string
+  username: string
+  role: string
+  itemsUploaded?: number
+  claimsSubmitted?: number
+  vaultPoints?: number
+  rank?: number
+  attendanceCount?: number
+  serviceCount?: number
+  joinedAt?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message)
@@ -13,12 +54,15 @@ async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<T> {
+  const headers = new Headers(options?.headers as any)
+  headers.set("Content-Type", "application/json")
+
+  // Auth is carried by the httpOnly `auth_token` cookie (set at login),
+  // so no token is ever stored in or read from client storage.
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
+    credentials: "same-origin",
   })
 
   if (!response.ok) {
@@ -32,7 +76,7 @@ async function fetchApi<T>(
 // Auth API
 export const authApi = {
   login: (username: string, password: string) =>
-    fetchApi<{ user: any; message: string }>("/auth/login", {
+    fetchApi<{ user: UserListItem & { tokenVersion?: number }; message: string }>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
@@ -53,18 +97,18 @@ export const authApi = {
 // Users API
 export const usersApi = {
   getAll: (search?: string) =>
-    fetchApi<{ users: any[] }>(`/users${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+    fetchApi<{ users: UserListItem[] }>(`/users${search ? `?search=${encodeURIComponent(search)}` : ""}`),
 
-  getById: (id: string) => fetchApi<{ user: any }>(`/users/${id}`),
+  getById: (id: string) => fetchApi<{ user: UserListItem }>(`/users/${id}`),
 
   create: (data: { name: string; username: string; password: string; role: string }) =>
-    fetchApi<{ user: any; message: string }>("/users", {
+    fetchApi<{ user: UserListItem; message: string }>("/users", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
   update: (id: string, data: Partial<{ name: string; role: string }>) =>
-    fetchApi<{ user: any; message: string }>(`/users/${id}`, {
+    fetchApi<{ user: UserListItem; message: string }>(`/users/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
@@ -77,35 +121,38 @@ export const usersApi = {
 
 // Items API
 export const itemsApi = {
-  getAll: (params?: { search?: string; status?: string; category?: string; location?: string }) => {
+  getAll: (params?: { search?: string; status?: string; category?: string; location?: string; uploadedById?: string; limit?: number }) => {
     const searchParams = new URLSearchParams()
     if (params?.search) searchParams.set("search", params.search)
     if (params?.status) searchParams.set("status", params.status)
     if (params?.category) searchParams.set("category", params.category)
     if (params?.location) searchParams.set("location", params.location)
+    if (params?.uploadedById) searchParams.set("uploadedById", params.uploadedById)
+    if (params?.limit) searchParams.set("limit", params.limit.toString())
     const query = searchParams.toString()
-    return fetchApi<{ items: any[] }>(`/items${query ? `?${query}` : ""}`)
+    return fetchApi<{ items: Item[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
+      `/items${query ? `?${query}` : ""}`
+    )
   },
 
-  getById: (id: string) => fetchApi<{ item: any }>(`/items/${id}`),
+  getById: (id: string) => fetchApi<{ item: Item }>(`/items/${id}`),
 
   create: (data: {
     imageUrl: string
     category: string
-    color: string
+    color?: string
     location: string
     dateFounded: string
     description?: string
     uniqueMarkings?: string
-    uploadedById: string
   }) =>
-    fetchApi<{ item: any; message: string }>("/items", {
+    fetchApi<{ item: Item; message: string }>("/items", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
   update: (id: string, data: Partial<{ status: string; description: string }>) =>
-    fetchApi<{ item: any; message: string }>(`/items/${id}`, {
+    fetchApi<{ item: Item; message: string }>(`/items/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     }),
@@ -118,10 +165,11 @@ export const itemsApi = {
 
 // Claims API
 export const claimsApi = {
-  getAll: (params?: { status?: string; claimantId?: string }) => {
+  getAll: (params?: { status?: string; claimantId?: string; limit?: number }) => {
     const searchParams = new URLSearchParams()
     if (params?.status) searchParams.set("status", params.status)
     if (params?.claimantId) searchParams.set("claimantId", params.claimantId)
+    if (params?.limit) searchParams.set("limit", params.limit.toString())
     const query = searchParams.toString()
     return fetchApi<{ claims: any[] }>(`/claims${query ? `?${query}` : ""}`)
   },
@@ -148,7 +196,7 @@ export const claimsApi = {
 
 // Locations API
 export const locationsApi = {
-  getAll: () => fetchApi<{ locations: any[] }>("/locations"),
+  getAll: () => fetchApi<{ locations: Location[] }>("/locations"),
 
   create: (data: { name: string; description?: string; userId?: string }) =>
     fetchApi<{ location: any; message: string }>("/locations", {
@@ -232,4 +280,78 @@ export const serviceRecordsApi = {
 export const releaseLogsApi = {
   getAll: (search?: string) =>
     fetchApi<{ logs: any[] }>(`/release-logs${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+}
+
+// Orders API
+export const ordersApi = {
+  getAll: () => fetchApi<{ orders: any[] }>("/orders"),
+
+  markRead: (id: string) =>
+    fetchApi<{ order: any; message: string }>(`/orders/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "read" }),
+    }),
+}
+
+// Missions API
+export const missionsApi = {
+  getAll: () => fetchApi<{ missions: any[] }>("/missions"),
+
+  create: (data: {
+    title: string
+    description?: string
+    instructions: string
+    priority?: string
+    status?: string
+    dueDate?: string | null
+    location?: string | null
+    assignedTo: string
+  }) =>
+    fetchApi<{ mission: any; message: string }>("/missions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: {
+    title?: string
+    description?: string
+    instructions?: string
+    priority?: string
+    status?: string
+    dueDate?: string | null
+    location?: string | null
+    completionNotes?: string
+    assignedTo?: string
+  }) =>
+    fetchApi<{ mission: any; message: string }>(`/missions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/missions/${id}`, {
+      method: "DELETE",
+    }),
+}
+
+// Meeting Minutes API
+export const meetingMinutesApi = {
+  getAll: () => fetchApi<{ minutes: any[] }>("/meeting-minutes"),
+
+  create: (data: Record<string, unknown>) =>
+    fetchApi<{ minutes: any; message: string }>("/meeting-minutes", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    fetchApi<{ minutes: any; message: string }>(`/meeting-minutes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/meeting-minutes/${id}`, {
+      method: "DELETE",
+    }),
 }

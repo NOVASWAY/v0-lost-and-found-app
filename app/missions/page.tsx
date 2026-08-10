@@ -9,27 +9,26 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Activity, Search, Clock, Users, MapPin } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getMissionsByUser, getMissions, initializeStorage, updateMission } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
-import { BackButton } from "@/components/back-button"
-import type { Mission } from "@/lib/mock-data"
+import { missionsApi, ApiError } from "@/lib/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function MissionsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [myMissions, setMyMissions] = useState<Mission[]>(getMissionsByUser(user?.id || ""))
-  const [allMissions, setAllMissions] = useState<Mission[]>(getMissions())
+  const { toast } = useToast()
+  const [missions, setMissions] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [viewMode, setViewMode] = useState<"my" | "all">("my")
 
   useEffect(() => {
-    initializeStorage()
-    setAllMissions(getMissions())
-    if (user?.id) {
-      setMyMissions(getMissionsByUser(user.id))
-    }
-  }, [user])
+    missionsApi
+      .getAll()
+      .then((res) => setMissions(res.missions))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load missions"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -41,21 +40,24 @@ export default function MissionsPage() {
     return null
   }
 
-  const statusColors = {
+  const isStaff = user?.role === "admin" || user?.role === "volunteer"
+
+  const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-600 border-yellow-500/50",
     in_progress: "bg-blue-500/20 text-blue-600 border-blue-500/50",
     completed: "bg-green-500/20 text-green-600 border-green-500/50",
     cancelled: "bg-gray-500/20 text-gray-600 border-gray-500/50",
   }
 
-  const priorityColors = {
+  const priorityColors: Record<string, string> = {
     critical: "bg-destructive",
     high: "bg-amber-600",
     medium: "bg-primary",
     low: "bg-muted",
   }
 
-  const missionsToShow = viewMode === "my" ? myMissions : allMissions
+  // Staff see all missions; regular users only ever get missions assigned to them.
+  const missionsToShow = isStaff ? missions : missions
 
   const filteredMissions = missionsToShow.filter((mission) => {
     const matchesSearch =
@@ -65,23 +67,24 @@ export default function MissionsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleStartMission = (mission: Mission) => {
-    if (!user) return
-    updateMission(mission.id, { status: "in_progress" })
-    addAuditLog("mission_assigned", "Mission started", user.id, user.name, `Mission '${mission.title}' started`, "info")
-    setMyMissions(getMissionsByUser(user.id))
-    setAllMissions(getMissions())
+  const handleStartMission = async (mission: any) => {
+    try {
+      await missionsApi.update(mission.id, { status: "in_progress" })
+      setMissions((prev) => prev.map((m) => (m.id === mission.id ? { ...m, status: "in_progress" } : m)))
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to update mission"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    }
   }
 
-  const handleCompleteMission = (mission: Mission) => {
-    if (!user) return
-    updateMission(mission.id, {
-      status: "completed",
-      completedAt: new Date().toISOString(),
-    })
-    addAuditLog("mission_completed", "Mission completed", user.id, user.name, `Mission '${mission.title}' completed`, "info")
-    setMyMissions(getMissionsByUser(user.id))
-    setAllMissions(getMissions())
+  const handleCompleteMission = async (mission: any) => {
+    try {
+      await missionsApi.update(mission.id, { status: "completed" })
+      setMissions((prev) => prev.map((m) => (m.id === mission.id ? { ...m, status: "completed" } : m)))
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to update mission"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    }
   }
 
   return (
@@ -90,7 +93,7 @@ export default function MissionsPage() {
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Mission Assignments</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            {viewMode === "my" ? "View and manage your assigned missions" : "View all active mission assignments"}
+            View and manage your assigned missions
           </p>
         </div>
 
@@ -118,22 +121,6 @@ export default function MissionsPage() {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === "my" ? "default" : "outline"}
-                onClick={() => setViewMode("my")}
-                className="flex-1 sm:flex-none"
-              >
-                My Missions
-              </Button>
-              <Button
-                variant={viewMode === "all" ? "default" : "outline"}
-                onClick={() => setViewMode("all")}
-                className="flex-1 sm:flex-none"
-              >
-                All Missions
-              </Button>
-            </div>
           </div>
         </Card>
 
@@ -154,10 +141,10 @@ export default function MissionsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mb-3">{mission.description}</p>
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-3">
-                    {viewMode === "all" && (
+                    {isStaff && (
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        Assigned to: {mission.assignedToName}
+                        Assigned to: {mission.assignedToUser?.name || "Unknown"}
                       </span>
                     )}
                     {mission.location && (
@@ -173,7 +160,7 @@ export default function MissionsPage() {
                       </span>
                     )}
                   </div>
-                  {viewMode === "my" && mission.status !== "completed" && mission.status !== "cancelled" && (
+                  {mission.status !== "completed" && mission.status !== "cancelled" && (
                     <div className="flex gap-2 mt-3">
                       {mission.status === "pending" && (
                         <Button size="sm" variant="outline" onClick={() => handleStartMission(mission)}>

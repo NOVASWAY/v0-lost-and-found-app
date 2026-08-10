@@ -11,10 +11,8 @@ import { CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { BackButton } from "@/components/back-button"
-import { type ReleaseLog } from "@/lib/mock-data"
-import { getClaims, getItems, getUsers, addReleaseLog, updateClaim, updateItem, updateUser, initializeStorage } from "@/lib/storage"
+import { claimsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
-import { addAuditLog } from "@/lib/audit-logger"
 
 export default function ReleaseItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isAuthenticated } = useAuth()
@@ -22,15 +20,21 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
   const { toast } = useToast()
   const [notes, setNotes] = useState("")
   const [isReleased, setIsReleased] = useState(false)
-  const [claims, setClaims] = useState(getClaims())
-  const [items, setItems] = useState(getItems())
+  const [claim, setClaim] = useState<any>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { id } = use(params)
 
   useEffect(() => {
-    initializeStorage()
-    setClaims(getClaims())
-    setItems(getItems())
-  }, [])
+    claimsApi
+      .getById(id)
+      .then((res) => setClaim(res.claim))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load claim"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [id, toast])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "volunteer") {
@@ -38,10 +42,21 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
     }
   }, [isAuthenticated, user, router])
 
-  const claim = claims.find((c) => c.id === id)
-
   if (!isAuthenticated || user?.role !== "volunteer") {
     return null
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
+          <Card className="p-6 text-center">
+            <p className="text-muted-foreground">Loading claim...</p>
+            <BackButton fallbackHref="/volunteer/dashboard" />
+          </Card>
+        </main>
+      </div>
+    )
   }
 
   if (!claim) {
@@ -57,132 +72,52 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
     )
   }
 
-  const item = items.find((i) => i.id === claim.itemId)
+  const item = claim.item
 
-  const handleApprove = () => {
+  const handleRelease = async () => {
     if (!user || !item || !claim) return
 
-    // Update claim status to approved
-    updateClaim(claim.id, {
-      status: "approved",
-      releasedBy: `Volunteer: ${user.name}`,
-      releasedAt: new Date().toISOString(),
-      releaseNotes: notes || undefined,
-    })
-
-    // Add audit log
-    addAuditLog("item_claimed", "Claim approved", user.id, user.name, `Claim for ${claim.itemName} approved by ${user.name}`, "info")
-
-    toast({
-      title: "Claim Approved",
-      description: `The claim has been approved. You can now release the item.`,
-    })
-
-    // Refresh data
-    setClaims(getClaims())
-    setItems(getItems())
-  }
-
-  const handleReject = () => {
-    if (!user || !item || !claim) return
-
-    // Update claim status to rejected
-    updateClaim(claim.id, {
-      status: "rejected",
-      releasedBy: `Volunteer: ${user.name}`,
-      releasedAt: new Date().toISOString(),
-      releaseNotes: notes || "Claim rejected",
-    })
-
-    // Update item status back to available
-    updateItem(claim.itemId, { status: "available" })
-
-    // Update user stats (claimant) - remove points
-    const users = getUsers()
-    const claimant = users.find((u) => u.name === claim.claimantName)
-    if (claimant) {
-      const currentClaimedItems = claimant.claimedItems || []
-      const claimItem = currentClaimedItems.find((ci) => ci.itemId === claim.itemId)
-      if (claimItem) {
-        claimItem.claimStatus = "rejected"
-      }
-      updateUser(claimant.id, {
-        claimedItems: currentClaimedItems,
+    setIsSubmitting(true)
+    try {
+      await claimsApi.update(claim.id, {
+        status: "released",
+        releaseNotes: notes || undefined,
       })
+      setClaim({ ...claim, status: "released" })
+      toast({
+        title: "Item Released",
+        description: `The item has been successfully released to ${claim.claimantName}.`,
+      })
+      setIsReleased(true)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to release item"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    // Add audit log
-    addAuditLog("item_claimed", "Claim rejected", user.id, user.name, `Claim for ${claim.itemName} rejected by ${user.name}`, "warning")
-
-    toast({
-      title: "Claim Rejected",
-      description: `The claim has been rejected and the item is now available again.`,
-      variant: "destructive",
-    })
-
-    setIsReleased(true)
   }
 
-  const handleRelease = () => {
+  const handleReject = async () => {
     if (!user || !item || !claim) return
 
-    // Only allow release if claim is approved
-    if (claim.status !== "approved") {
+    setIsSubmitting(true)
+    try {
+      await claimsApi.update(claim.id, {
+        status: "rejected",
+        releaseNotes: notes || "Claim rejected",
+      })
+      setClaim({ ...claim, status: "rejected" })
       toast({
-        title: "Claim Not Approved",
-        description: "Please approve the claim before releasing the item.",
+        title: "Claim Rejected",
+        description: `The claim has been rejected and the item is now available again.`,
         variant: "destructive",
       })
-      return
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to reject claim"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    } finally {
+      setIsSubmitting(false)
     }
-
-    // Update claim status
-    updateClaim(claim.id, {
-      status: "released",
-      releasedBy: `Volunteer: ${user.name}`,
-      releasedAt: new Date().toISOString(),
-      releaseNotes: notes || undefined,
-    })
-
-    // Update item status
-    updateItem(claim.itemId, { status: "released" })
-
-    // Create release log
-    const releaseLog: ReleaseLog = {
-      id: `r${Date.now()}`,
-      itemId: claim.itemId,
-      itemName: claim.itemName,
-      claimantName: claim.claimantName,
-      volunteerName: user.name,
-      timestamp: new Date().toISOString(),
-      notes: notes || "Item released to claimant",
-    }
-    addReleaseLog(releaseLog)
-
-    // Update user stats (claimant) - find by name
-    const users = getUsers()
-    const claimant = users.find((u) => u.name === claim.claimantName)
-    if (claimant) {
-      const currentClaimedItems = claimant.claimedItems || []
-      const claimItem = currentClaimedItems.find((ci) => ci.itemId === claim.itemId)
-      if (claimItem) {
-        claimItem.claimStatus = "released"
-      }
-      updateUser(claimant.id, {
-        vaultPoints: claimant.vaultPoints + 100, // Award points for successful claim
-        claimedItems: currentClaimedItems,
-      })
-    }
-
-    // Add audit log
-    addAuditLog("item_released", "Item released", user.id, user.name, `${claim.itemName} released to ${claim.claimantName}`, "info")
-
-    toast({
-      title: "Item Released",
-      description: `The item has been successfully released to ${claim.claimantName}.`,
-    })
-
-    setIsReleased(true)
   }
 
   if (isReleased) {
@@ -218,7 +153,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
               {claim.id}
             </Badge>
           </div>
-          <p className="text-muted-foreground">Verify the claimant's identity and proof before releasing the item</p>
+          <p className="text-muted-foreground">Verify the claimant&apos;s identity and proof before releasing the item</p>
         </div>
 
         {/* Photo Comparison */}
@@ -228,11 +163,11 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
             <div>
               <Label className="mb-2 block text-sm font-medium">Found Item Photo</Label>
               <div className="relative aspect-square overflow-hidden rounded-lg border border-border">
-                <Image src={claim.itemImage || "/placeholder.svg"} alt="Found item" fill className="object-cover" />
+                <Image src={item?.imageUrl || claim.itemImage || "/placeholder.svg"} alt="Found item" fill className="object-cover" />
               </div>
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium">Claimant's Proof Photo</Label>
+              <Label className="mb-2 block text-sm font-medium">Claimant&apos;s Proof Photo</Label>
               <div className="relative aspect-square overflow-hidden rounded-lg border border-border">
                 <Image src={claim.proofImage || "/placeholder.svg"} alt="Proof photo" fill className="object-cover" />
               </div>
@@ -303,53 +238,29 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
         {/* Release Form */}
         <Card className="mt-6 p-6">
           <h2 className="mb-4 text-xl font-semibold text-card-foreground">
-            {claim.status === "pending" ? "Review Claim" : claim.status === "approved" ? "Release Item" : "Claim Status"}
+            {claim.status === "pending" ? "Review Claim" : "Claim Status"}
           </h2>
           <div className="space-y-4">
             {claim.status === "pending" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="review-notes">Review Notes (Optional)</Label>
+                  <Label htmlFor="review-notes">Release / Review Notes (Optional)</Label>
                   <Textarea
                     id="review-notes"
-                    placeholder="Add any notes about your review..."
+                    placeholder="Add any notes about your review or the release..."
                     rows={4}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
                 </div>
                 <div className="flex gap-3">
-                  <Button onClick={handleApprove} size="lg" className="flex-1 bg-green-600 hover:bg-green-700">
+                  <Button onClick={handleRelease} size="lg" className="flex-1" disabled={isSubmitting}>
                     <CheckCircle className="mr-2 h-5 w-5" />
-                    Approve Claim
+                    Release Item
                   </Button>
-                  <Button onClick={handleReject} size="lg" variant="destructive" className="flex-1">
+                  <Button onClick={handleReject} size="lg" variant="destructive" className="flex-1" disabled={isSubmitting}>
                     Reject Claim
                   </Button>
-                </div>
-              </>
-            )}
-            {claim.status === "approved" && (
-              <>
-                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 mb-4">
-                  <p className="text-sm text-green-600 font-medium">✓ Claim has been approved. You can now release the item.</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="release-notes">Release Notes (Optional)</Label>
-                  <Textarea
-                    id="release-notes"
-                    placeholder="Add any notes about the release..."
-                    rows={4}
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <Button onClick={handleRelease} size="lg" className="flex-1">
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    Release Item to Claimant
-                  </Button>
-                  <BackButton fallbackHref="/volunteer/dashboard" variant="outline" />
                 </div>
               </>
             )}

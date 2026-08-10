@@ -9,18 +9,27 @@ import { Search, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getClaims, initializeStorage } from "@/lib/storage"
+import { claimsApi, ApiError } from "@/lib/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function VolunteerDashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [claims, setClaims] = useState(getClaims())
+  const [claims, setClaims] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setClaims(getClaims())
-  }, [])
+    claimsApi
+      .getAll({ status: "pending", limit: 100 })
+      .then((res) => setClaims(res.claims))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load claims"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "volunteer") {
@@ -111,7 +120,7 @@ export default function VolunteerDashboardPage() {
                         <div className="flex items-center gap-2 sm:gap-3">
                           <div className="relative h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg border border-border">
                             <Image
-                              src={claim.itemImage || "/placeholder.svg"}
+                              src={claim.item?.imageUrl || claim.itemImage || "/placeholder.svg"}
                               alt={claim.itemName}
                               fill
                               className="object-cover"
@@ -152,11 +161,11 @@ export default function VolunteerDashboardPage() {
             </table>
           </div>
 
-          {filteredClaims.length === 0 && (
-            <div className="p-12 text-center">
-              <p className="text-muted-foreground">No pending claims to review</p>
-            </div>
-          )}
+                  {filteredClaims.length === 0 && (
+                    <div className="p-12 text-center">
+                      <p className="text-muted-foreground">{isLoaded ? "No pending claims to review" : "Loading claims..."}</p>
+                    </div>
+                  )}
         </Card>
       </main>
     </div>

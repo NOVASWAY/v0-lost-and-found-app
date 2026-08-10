@@ -22,22 +22,29 @@ import {
   Users,
   Calendar,
 } from "lucide-react"
-import { type User } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
-import { getUsers, initializeStorage } from "@/lib/storage"
+import { usersApi, ApiError, type UserListItem } from "@/lib/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [users] = useState<User[]>(getUsers())
+  const { toast } = useToast()
+  const [users, setUsers] = useState<UserListItem[]>([])
 
   useEffect(() => {
-    initializeStorage()
-  }, [])
+    usersApi
+      .getAll()
+      .then((res) => setUsers(res.users))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load stats"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
-  const activeUsers = users.filter((u) => u.id !== "deactivated").length
-  const totalUploads = users.reduce((sum, u) => sum + u.itemsUploaded, 0)
-  const totalClaims = users.reduce((sum, u) => sum + u.claimsSubmitted, 0)
+  const activeUsers = users.length
+  const totalUploads = users.reduce((sum, u) => sum + (u.itemsUploaded || 0), 0)
+  const totalClaims = users.reduce((sum, u) => sum + (u.claimsSubmitted || 0), 0)
 
   // Protect route - require authentication and admin role
   useEffect(() => {

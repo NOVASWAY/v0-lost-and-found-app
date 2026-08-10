@@ -9,19 +9,28 @@ import { StatusBadge } from "@/components/status-badge"
 import { Search } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getClaims, initializeStorage } from "@/lib/storage"
+import { claimsApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminClaimsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [claims, setClaims] = useState(getClaims())
+  const [claims, setClaims] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setClaims(getClaims())
-  }, [])
+    claimsApi
+      .getAll({ limit: 100 })
+      .then((res) => setClaims(res.claims))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load claims"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -47,6 +56,7 @@ export default function AdminClaimsPage() {
 
   const pendingCount = claims.filter((c) => c.status === "pending").length
   const releasedCount = claims.filter((c) => c.status === "released").length
+  const rejectedCount = claims.filter((c) => c.status === "rejected").length
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,7 +98,7 @@ export default function AdminClaimsPage() {
             <p className="text-xs sm:text-sm text-muted-foreground">Released</p>
           </Card>
           <Card className="p-4 sm:p-6">
-            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">0</p>
+            <p className="text-2xl sm:text-3xl font-bold text-card-foreground">{rejectedCount}</p>
             <p className="text-xs sm:text-sm text-muted-foreground">Rejected</p>
           </Card>
         </div>
@@ -107,7 +117,14 @@ export default function AdminClaimsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredClaims.map((claim) => (
+                {!isLoaded && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
+                      Loading claims...
+                    </td>
+                  </tr>
+                )}
+                {isLoaded && filteredClaims.map((claim) => (
                   <tr key={claim.id} className="border-b border-border last:border-0">
                     <td className="p-3 sm:p-4 font-medium text-sm sm:text-base text-card-foreground">{claim.itemName}</td>
                     <td className="p-3 sm:p-4 text-xs sm:text-sm text-muted-foreground">{claim.claimantName}</td>

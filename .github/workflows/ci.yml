@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Tests run against an ephemeral local SQLite file created by `prisma migrate
+  # deploy`; no real database is ever touched. Set before install so the adapter
+  # resolves on first import.
+  DATABASE_URL: "file:./ci.db"
+
+jobs:
+  quality:
+    name: Lint, typecheck & tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Create the schema for the ephemeral SQLite DB the integration tests use.
+      - name: Prepare test database
+        run: pnpm exec prisma migrate deploy
+
+      # The postgres schema variant is generated from schema.prisma; fail if the
+      # committed file has drifted out of sync.
+      - name: Check postgres schema is in sync
+        run: node scripts/sync-postgres-schema.mjs && git diff --exit-code -- prisma/schema.postgresql.prisma
+
+      # Runs the full suite and enforces the lib/ coverage gate (test:coverage).
+      - name: Test suite + coverage gate
+        run: pnpm test:coverage
+
+  # Blocks PRs that add new high-severity vulnerabilities or unapproved
+  # licenses, while ignoring the pre-existing baseline (lodash advisories have
+  # no patched release). Runs on the PR diff, so it is diff-based by design.
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # Validates the real production path: migrations, seed, and the full suite
+  # against an actual Postgres server, not just SQLite. The runtime adapter is
+  # selected by env in lib/prisma.ts and the schema by env in prisma.config.ts.
+  postgres-smoke:
+    name: Postgres smoke test
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vault
+      DATABASE_PROVIDER: postgresql
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vault
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U postgres
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # postinstall runs `prisma generate`; the postgres env above makes it emit
+      # a postgresql client, matching the pg adapter lib/prisma.ts will use.
+      - name: Apply postgres migrations
+        run: pnpm exec prisma migrate deploy
+
+      - name: Seed bootstrap users
+        run: pnpm db:seed
+
+      - name: Run test suite against postgres
+        run: pnpm test
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build

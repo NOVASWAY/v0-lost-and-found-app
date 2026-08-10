@@ -9,26 +9,24 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Activity, Plus, Edit, Trash2, Search, Users, MapPin, Calendar, Clock } from "lucide-react"
+import { Activity, Plus, Edit, Trash2, Search, Users, MapPin, Clock } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getMissions, getUsers, getLocations, addMission, updateMission, deleteMission, initializeStorage } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
+import { missionsApi, usersApi, locationsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
-import type { Mission } from "@/lib/mock-data"
 
 export default function AdminMissionsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
-  const [missions, setMissions] = useState<Mission[]>(getMissions())
-  const [users, setUsers] = useState(getUsers())
-  const [locations, setLocations] = useState(getLocations())
+  const [missions, setMissions] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingMission, setEditingMission] = useState<Mission | null>(null)
-  const [newMission, setNewMission] = useState<Partial<Mission>>({
+  const [editingMission, setEditingMission] = useState<any | null>(null)
+  const [newMission, setNewMission] = useState<Partial<any>>({
     title: "",
     description: "",
     instructions: "",
@@ -40,11 +38,17 @@ export default function AdminMissionsPage() {
   })
 
   useEffect(() => {
-    initializeStorage()
-    setMissions(getMissions())
-    setUsers(getUsers())
-    setLocations(getLocations())
-  }, [])
+    Promise.all([missionsApi.getAll(), usersApi.getAll(), locationsApi.getAll()])
+      .then(([missionsRes, usersRes, locationsRes]) => {
+        setMissions(missionsRes.missions)
+        setUsers(usersRes.users)
+        setLocations(locationsRes.locations)
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load missions"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated || user?.role !== "admin") {
@@ -64,7 +68,7 @@ export default function AdminMissionsPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleSaveMission = () => {
+  const handleSaveMission = async () => {
     if (!newMission.title || !newMission.instructions || !newMission.assignedTo) {
       toast({
         title: "Error",
@@ -74,76 +78,67 @@ export default function AdminMissionsPage() {
       return
     }
 
-    const assignedUser = users.find((u) => u.id === newMission.assignedTo)
-    if (!assignedUser) {
-      toast({
-        title: "Error",
-        description: "Invalid user selected",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (editingMission) {
-      updateMission(editingMission.id, {
-        ...newMission,
-        assignedToName: assignedUser.name,
-        updatedAt: new Date().toISOString(),
-      } as Partial<Mission>)
-      addAuditLog("mission_assigned", "Mission updated", user.id, user.name, `Mission '${editingMission.title}' updated`, "info")
-      toast({
-        title: "Success",
-        description: "Mission updated successfully",
-      })
-      setMissions(getMissions())
+    try {
+      if (editingMission) {
+        await missionsApi.update(editingMission.id, {
+          title: newMission.title,
+          description: newMission.description || "",
+          instructions: newMission.instructions,
+          priority: newMission.priority as string,
+          status: newMission.status as string,
+          dueDate: newMission.dueDate || null,
+          location: newMission.location || null,
+          assignedTo: newMission.assignedTo,
+        })
+        toast({
+          title: "Success",
+          description: "Mission updated successfully",
+        })
+      } else {
+        await missionsApi.create({
+          title: newMission.title,
+          description: newMission.description || "",
+          instructions: newMission.instructions,
+          priority: newMission.priority as string,
+          status: newMission.status as string,
+          dueDate: newMission.dueDate || null,
+          location: newMission.location || null,
+          assignedTo: newMission.assignedTo,
+        })
+        toast({
+          title: "Success",
+          description: "Mission created successfully",
+        })
+      }
+      const res = await missionsApi.getAll()
+      setMissions(res.missions)
       setIsDialogOpen(false)
       setEditingMission(null)
       setNewMission({ title: "", description: "", instructions: "", priority: "medium", status: "pending", assignedTo: "", dueDate: "", location: "" })
-    } else {
-      const mission: Mission = {
-        id: `m${Date.now()}`,
-        title: newMission.title!,
-        description: newMission.description || "",
-        instructions: newMission.instructions!,
-        assignedTo: newMission.assignedTo!,
-        assignedToName: assignedUser.name,
-        assignedBy: user.id,
-        assignedByName: user.name,
-        priority: (newMission.priority as any) || "medium",
-        status: (newMission.status as any) || "pending",
-        dueDate: newMission.dueDate || undefined,
-        location: newMission.location || undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      addMission(mission)
-      addAuditLog("mission_created", "Mission created", user.id, user.name, `Mission '${mission.title}' created`, "info")
-      toast({
-        title: "Success",
-        description: "Mission created successfully",
-      })
-      setMissions(getMissions())
-      setIsDialogOpen(false)
-      setNewMission({ title: "", description: "", instructions: "", priority: "medium", status: "pending", assignedTo: "", dueDate: "", location: "" })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to save mission"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
-  const handleDeleteMission = (id: string) => {
+  const handleDeleteMission = async (id: string) => {
     if (!confirm("Are you sure you want to delete this mission?")) return
 
-    const mission = missions.find((m) => m.id === id)
-    if (mission) {
-      deleteMission(id)
-      addAuditLog("mission_cancelled", "Mission deleted", user.id, user.name, `Mission '${mission.title}' deleted`, "warning")
+    try {
+      await missionsApi.delete(id)
       toast({
         title: "Success",
         description: "Mission deleted successfully",
       })
-      setMissions(getMissions())
+      const res = await missionsApi.getAll()
+      setMissions(res.missions)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to delete mission"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
-  const openEditDialog = (mission: Mission) => {
+  const openEditDialog = (mission: any) => {
     setEditingMission(mission)
     setNewMission({
       title: mission.title,
@@ -164,14 +159,14 @@ export default function AdminMissionsPage() {
     setIsDialogOpen(true)
   }
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-600 border-yellow-500/50",
     in_progress: "bg-blue-500/20 text-blue-600 border-blue-500/50",
     completed: "bg-green-500/20 text-green-600 border-green-500/50",
     cancelled: "bg-gray-500/20 text-gray-600 border-gray-500/50",
   }
 
-  const priorityColors = {
+  const priorityColors: Record<string, string> = {
     critical: "bg-destructive",
     high: "bg-amber-600",
     medium: "bg-primary",
@@ -361,7 +356,7 @@ export default function AdminMissionsPage() {
                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-3">
                       <span className="flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        {mission.assignedToName}
+                        {mission.assignedToUser?.name || "Unknown"}
                       </span>
                       {mission.location && (
                         <span className="flex items-center gap-1">

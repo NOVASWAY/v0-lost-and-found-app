@@ -6,19 +6,28 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search, FileText } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getReleaseLogs, initializeStorage } from "@/lib/storage"
+import { releaseLogsApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminReleasesPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [releaseLogs, setReleaseLogs] = useState(getReleaseLogs())
+  const [releaseLogs, setReleaseLogs] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setReleaseLogs(getReleaseLogs())
-  }, [])
+    releaseLogsApi
+      .getAll()
+      .then((res) => setReleaseLogs(res.logs))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load release logs"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -117,7 +126,14 @@ export default function AdminReleasesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredReleases.map((release) => (
+                {!isLoaded && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
+                      Loading release logs...
+                    </td>
+                  </tr>
+                )}
+                {isLoaded && filteredReleases.map((release) => (
                   <tr key={release.id} className="border-b border-border last:border-0">
                     <td className="p-4 font-medium text-card-foreground">{release.itemName}</td>
                     <td className="p-4 text-sm text-muted-foreground">{release.claimantName}</td>

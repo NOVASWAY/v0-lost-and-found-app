@@ -10,10 +10,57 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
-import { addAuditLog } from "@/lib/audit-logger"
-import { getItems, getClaims, initializeStorage, getUserPreferences, updateUserPreferences, getDefaultUserPreferences } from "@/lib/storage"
+import { itemsApi, claimsApi, usersApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
-import { type UserPreferences } from "@/lib/mock-data"
+
+interface UserPreferences {
+  userId: string
+  theme: "light" | "dark" | "system"
+  notifications: {
+    push: boolean
+    missionUpdates: boolean
+    claimUpdates: boolean
+  }
+  updatedAt: string
+}
+
+function getDefaultUserPreferences(userId: string): UserPreferences {
+  return {
+    userId,
+    theme: "system",
+    notifications: {
+      push: false,
+      missionUpdates: false,
+      claimUpdates: false,
+    },
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+function getUserPreferences(userId: string): UserPreferences | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.localStorage.getItem(`vault_prefs_${userId}`)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function updateUserPreferences(userId: string, patch: Partial<UserPreferences>): UserPreferences {
+  const current = getUserPreferences(userId) || getDefaultUserPreferences(userId)
+  const updated = {
+    ...current,
+    ...patch,
+    notifications: { ...current.notifications, ...(patch.notifications || {}) },
+    userId,
+    updatedAt: new Date().toISOString(),
+  }
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(`vault_prefs_${userId}`, JSON.stringify(updated))
+  }
+  return updated
+}
 
 export default function ProfilePage() {
   const { user, isAuthenticated, changePassword } = useAuth()
@@ -25,19 +72,29 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isChangingPassword, setIsChangingPassword] = useState(false)
-  const [items, setItems] = useState(getItems())
-  const [claims, setClaims] = useState(getClaims())
+  const [isSaving, setIsSaving] = useState(false)
+  const [userUploads, setUserUploads] = useState<any[]>([])
+  const [userClaims, setUserClaims] = useState<any[]>([])
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-    setClaims(getClaims())
     if (user?.id) {
-      const userPrefs = getUserPreferences(user.id) || getDefaultUserPreferences()
+      const userPrefs = getUserPreferences(user.id) || getDefaultUserPreferences(user.id)
       setPreferences({ ...userPrefs, userId: user.id })
+      Promise.all([
+        itemsApi.getAll({ uploadedById: user.id, limit: 100 }),
+        claimsApi.getAll({ claimantId: user.id, limit: 100 }),
+      ])
+        .then(([itemsRes, claimsRes]) => {
+          setUserUploads(itemsRes.items)
+          setUserClaims(claimsRes.claims)
+        })
+        .catch((err) => {
+          const message = err instanceof ApiError ? err.message : "Failed to load stats"
+          toast({ title: "Error", description: message, variant: "destructive" })
+        })
     }
-  }, [user])
+  }, [user, toast])
 
   // Protect route - require authentication
   useEffect(() => {
@@ -52,16 +109,28 @@ export default function ProfilePage() {
     return null
   }
 
-  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
-  const userClaims = claims.filter((claim) => claim.claimantName === user?.name)
   const releasedClaims = userClaims.filter((claim) => claim.status === "released")
 
-  const handleSave = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been updated successfully.",
-    })
-    setIsEditing(false)
+  const handleSave = async () => {
+    if (!user || !name.trim()) return
+    setIsSaving(true)
+    try {
+      await usersApi.update(user.id, { name: name.trim() })
+      const cachedUser = JSON.parse(sessionStorage.getItem("user") || "null")
+      if (cachedUser) {
+        sessionStorage.setItem("user", JSON.stringify({ ...cachedUser, name: name.trim() }))
+      }
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully.",
+      })
+      setIsEditing(false)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to update profile"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -89,7 +158,6 @@ export default function ProfilePage() {
     const success = await changePassword(currentPassword, newPassword)
 
     if (success) {
-      addAuditLog("user_password_changed", "Password changed", user?.id, user?.name, "User password updated", "info")
       toast({
         title: "Password Changed",
         description: "Your password has been updated successfully.",
@@ -157,7 +225,7 @@ export default function ProfilePage() {
                   </Button>
                 ) : (
                   <>
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</Button>
                     <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
                       Cancel
                     </Button>

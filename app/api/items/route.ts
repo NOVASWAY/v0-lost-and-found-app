@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
-import { sanitizeSearchQuery, validateUrl } from "@/lib/security"
+import { sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { requireAuth } from "@/lib/auth-middleware"
 
 // GET all items
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const category = sanitizeSearchQuery(searchParams.get("category") || "")
     const location = sanitizeSearchQuery(searchParams.get("location") || "")
+    const uploadedById = searchParams.get("uploadedById")
     const page = parseInt(searchParams.get("page") || "1")
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100) // Max 100 per page
     const skip = (page - 1) * limit
@@ -46,25 +48,24 @@ export async function GET(request: NextRequest) {
       where.location = { contains: location, mode: "insensitive" }
     }
 
+    // Optional uploader filter (used by the "my uploads" page).
+    if (uploadedById) {
+      const idValidation = validateRouteId(uploadedById)
+      if (!idValidation.valid) {
+        return NextResponse.json({ error: "Invalid uploader ID format" }, { status: 400 })
+      }
+      where.uploadedById = uploadedById
+    }
+
     const [items, total] = await Promise.all([
       prisma.item.findMany({
         where,
         include: {
+          // Public list endpoint: do not expose uploader identity or claimant PII.
           uploadedBy: {
             select: {
               id: true,
-              name: true,
-              username: true,
             },
-          },
-          claims: {
-            select: {
-              id: true,
-              status: true,
-              claimantName: true,
-              claimedAt: true,
-            },
-            take: 5, // Limit claims per item
           },
         },
         orderBy: { createdAt: "desc" },
@@ -92,9 +93,14 @@ export async function GET(request: NextRequest) {
 // POST create new item
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -114,8 +120,8 @@ export async function POST(request: NextRequest) {
       dateFounded,
       description,
       uniqueMarkings,
-      uploadedById,
     } = validation.data
+    const uploadedById = authResult.user.id
 
     // Validate image URL to prevent path traversal
     const urlValidation = validateUrl(imageUrl)

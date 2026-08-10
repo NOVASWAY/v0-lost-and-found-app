@@ -9,19 +9,29 @@ import { CountdownTimer } from "@/components/countdown-timer"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getItems, initializeStorage } from "@/lib/storage"
+import { itemsApi, ApiError, type Item } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function MyUploadsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [items, setItems] = useState(getItems())
+  const { toast } = useToast()
+  const [items, setItems] = useState<Item[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-  }, [])
+    if (!user) return
+    itemsApi
+      .getAll({ uploadedById: user.id, limit: 100 })
+      .then((res) => setItems(res.items))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load uploads"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [user, toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -29,11 +39,27 @@ export default function MyUploadsPage() {
     }
   }, [isAuthenticated, router])
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return null
   }
 
-  const userUploads = items.filter((item) => item.uploadedBy === user?.name)
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-8 space-y-2">
+            <div className="h-8 w-40 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-64 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-28 w-full bg-muted animate-pulse rounded-xl" />
+            ))}
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,11 +70,11 @@ export default function MyUploadsPage() {
             <BackButton fallbackHref="/dashboard" />
           </div>
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">My Uploads</h1>
-          <p className="text-muted-foreground">Items you've found and uploaded to the system</p>
+          <p className="text-muted-foreground">Items you&apos;ve found and uploaded to the system</p>
         </div>
 
         <div className="space-y-4">
-          {userUploads.map((upload) => {
+          {items.map((upload) => {
             const daysAgo = Math.floor((Date.now() - new Date(upload.dateFounded).getTime()) / (1000 * 60 * 60 * 24))
 
             return (
@@ -89,9 +115,9 @@ export default function MyUploadsPage() {
             )
           })}
 
-          {userUploads.length === 0 && (
+          {items.length === 0 && (
             <Card className="p-12 text-center">
-              <p className="mb-4 text-muted-foreground">You haven't uploaded any items yet</p>
+              <p className="mb-4 text-muted-foreground">You haven&apos;t uploaded any items yet</p>
               <Link href="/upload">
                 <Button>Upload Found Item</Button>
               </Link>

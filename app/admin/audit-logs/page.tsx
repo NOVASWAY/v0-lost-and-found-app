@@ -8,23 +8,31 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Eye, Download } from "lucide-react"
-import { type AuditLog } from "@/lib/mock-data"
 import { useAuth } from "@/lib/auth-context"
-import { getAuditLogs, initializeStorage } from "@/lib/storage"
+import { auditLogsApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AuditLogsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
   const [severityFilter, setSeverityFilter] = useState("all")
-  const [auditLogs, setAuditLogs] = useState(getAuditLogs())
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setAuditLogs(getAuditLogs())
-  }, [])
+    auditLogsApi
+      .getAll({ limit: 200 })
+      .then((res) => setAuditLogs(res.logs))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load audit logs"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }, [toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -44,9 +52,10 @@ export default function AuditLogsPage() {
   }
 
   const filteredLogs = auditLogs.filter((log) => {
+    const userName = log.user?.name || ""
     const matchesSearch =
       log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.details?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesType = typeFilter === "all" || log.type === typeFilter
     const matchesSeverity = severityFilter === "all" || log.severity === severityFilter
@@ -54,7 +63,7 @@ export default function AuditLogsPage() {
     return matchesSearch && matchesType && matchesSeverity
   })
 
-  const getSeverityColor = (severity: AuditLog["severity"]) => {
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "critical":
         return "bg-destructive text-destructive-foreground"
@@ -67,7 +76,7 @@ export default function AuditLogsPage() {
     }
   }
 
-  const getTypeLabel = (type: AuditLog["type"]) => {
+  const getTypeLabel = (type: string) => {
     return type
       .split("_")
       .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -192,7 +201,14 @@ export default function AuditLogsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredLogs.map((log) => (
+                {!isLoaded && (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-sm text-muted-foreground">
+                      Loading audit logs...
+                    </td>
+                  </tr>
+                )}
+                {isLoaded && filteredLogs.map((log) => (
                   <tr key={log.id} className="border-b border-border last:border-0 hover:bg-accent/5 transition-colors">
                     <td className="p-4">
                       <div className="text-sm font-mono text-muted-foreground">
@@ -206,9 +222,9 @@ export default function AuditLogsPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="text-sm text-card-foreground">{log.userName || "System"}</div>
-                      {log.userId && (
-                        <div className="text-xs text-muted-foreground font-mono">{log.userId}</div>
+                      <div className="text-sm text-card-foreground">{log.user?.name || "System"}</div>
+                      {log.user?.id && (
+                        <div className="text-xs text-muted-foreground font-mono">{log.user.id}</div>
                       )}
                     </td>
                     <td className="p-4">

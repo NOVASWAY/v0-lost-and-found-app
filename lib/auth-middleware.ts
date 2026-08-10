@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "./db"
-import { comparePassword } from "./db"
+import { verifyAccessToken } from "./jwt"
+import { assertSameOrigin } from "./security"
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -11,7 +12,7 @@ export interface AuthenticatedRequest extends NextRequest {
   }
 }
 
-// Get user from session/token (simplified - in production use JWT or sessions)
+// Get user from the httpOnly session cookie (auth_token).
 export async function getAuthenticatedUser(request: NextRequest): Promise<{
   id: string
   username: string
@@ -19,28 +20,32 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<{
   role: string
 } | null> {
   try {
-    // For now, we'll use a simple header-based auth
-    // In production, use proper JWT tokens or sessions
-    const authHeader = request.headers.get("authorization")
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return null
-    }
+    const token = request.cookies?.get("auth_token")?.value
 
-    const token = authHeader.substring(7)
-    // In production, verify JWT token here
-    // For now, we'll use a simple approach with user ID
-    
-    // Check if it's a user ID (temporary solution)
+    if (!token) return null
+
+    const payload = verifyAccessToken(token)
+    if (!payload) return null
+
+    // Verify the user still exists and return server-side role.
+    // (We could rely on token.role, but refreshing from DB prevents stale/removed accounts.)
+    if (!prisma) return null
+
     const user = await prisma.user.findUnique({
-      where: { id: token },
+      where: { id: payload.sub },
       select: {
         id: true,
         username: true,
         name: true,
         role: true,
+        tokenVersion: true,
       },
     })
+
+    if (!user) return null
+
+    // Reject tokens issued before the user's last password change (revoked sessions).
+    if (user.tokenVersion !== payload.tokenVersion) return null
 
     return user
   } catch (error) {
@@ -52,6 +57,13 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<{
 export async function requireAuth(
   request: NextRequest
 ): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
+  // CSRF defense-in-depth: reject cross-site requests. Browsers attach an Origin
+  // header to cross-site POST/PATCH/DELETE requests; if it doesn't match this
+  // host the request was forged. (No-Origin requests, e.g. curl, are allowed.)
+  if (!assertSameOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden - Cross-site request rejected" }, { status: 403 })
+  }
+
   const user = await getAuthenticatedUser(request)
 
   if (!user) {

@@ -8,26 +8,28 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MessageSquare, Search, AlertCircle, Clock } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getUsers, initializeStorage, updateUser } from "@/lib/storage"
+import { ordersApi, ApiError } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
-import type { Order } from "@/lib/mock-data"
+import { useToast } from "@/hooks/use-toast"
 
 export default function OrdersPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
-  const [orders, setOrders] = useState<Order[]>([])
+  const { toast } = useToast()
+  const [orders, setOrders] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [priorityFilter, setPriorityFilter] = useState<string>("all")
 
   useEffect(() => {
-    initializeStorage()
-    if (user) {
-      const users = getUsers()
-      const currentUser = users.find((u) => u.id === user.id)
-      setOrders(currentUser?.orders || [])
-    }
-  }, [user])
+    ordersApi
+      .getAll()
+      .then((res) => setOrders(res.orders))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load orders"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+  }, [toast])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -39,14 +41,13 @@ export default function OrdersPage() {
     return null
   }
 
-  const handleMarkAsRead = (orderId: string) => {
-    if (!user) return
-    const users = getUsers()
-    const currentUser = users.find((u) => u.id === user.id)
-    if (currentUser) {
-      const updatedOrders = currentUser.orders?.map((o) => (o.id === orderId ? { ...o, status: "read" as const } : o)) || []
-      updateUser(user.id, { orders: updatedOrders })
-      setOrders(updatedOrders)
+  const handleMarkAsRead = async (orderId: string) => {
+    try {
+      await ordersApi.markRead(orderId)
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "read" } : o)))
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to update order"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 

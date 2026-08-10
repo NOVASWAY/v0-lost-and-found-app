@@ -17,10 +17,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { type Claim } from "@/lib/mock-data"
-import { getItems, getClaims, addClaim, updateItem, updateUser } from "@/lib/storage"
+import { claimsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
-import { addAuditLog } from "@/lib/audit-logger"
 
 interface ClaimModalProps {
   itemId: string
@@ -32,6 +30,7 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
   const { toast } = useToast()
   const [proofImage, setProofImage] = useState<string | null>(null)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [notes, setNotes] = useState("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +44,7 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!proofImage || !user) {
       toast({
         title: "Missing Information",
@@ -55,71 +54,31 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
       return
     }
 
-    // Check if item exists and is available
-    const items = getItems()
-    const item = items.find((i) => i.id === itemId)
-    if (!item) {
+    setIsSubmitting(true)
+    try {
+      await claimsApi.create({
+        itemId,
+        proofImage,
+        claimantId: user.id,
+        notes: notes.trim() || undefined,
+      })
+
       toast({
-        title: "Item Not Found",
-        description: "The item you're trying to claim doesn't exist.",
+        title: "Claim Submitted",
+        description: "Your claim has been submitted and will be reviewed by a volunteer.",
+      })
+
+      setIsSubmitted(true)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to submit claim"
+      toast({
+        title: "Claim Failed",
+        description: message,
         variant: "destructive",
       })
-      return
+    } finally {
+      setIsSubmitting(false)
     }
-
-    if (item.status !== "available") {
-      toast({
-        title: "Item Not Available",
-        description: "This item is no longer available for claiming.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Create new claim
-    const newClaim: Claim = {
-      id: `c${Date.now()}`,
-      itemId: itemId,
-      itemName: itemName,
-      itemImage: item.imageUrl,
-      proofImage: proofImage,
-      claimantName: user.name,
-      claimantEmail: user.username + "@vault.church", // Using username as email base
-      status: "pending",
-      claimedAt: new Date().toISOString(),
-    }
-
-    // Add to storage
-    addClaim(newClaim)
-
-    // Update item status
-    updateItem(itemId, { status: "claimed" })
-
-    // Update user stats
-    const currentClaimedItems = user.claimedItems || []
-    updateUser(user.id, {
-      claimsSubmitted: user.claimsSubmitted + 1,
-      vaultPoints: user.vaultPoints + 25, // Award points for claiming
-      claimedItems: [
-        ...currentClaimedItems,
-        {
-          itemId: itemId,
-          itemName: itemName,
-          claimStatus: "pending",
-          claimedAt: newClaim.claimedAt,
-        },
-      ],
-    })
-
-    // Add audit log
-    addAuditLog("item_claimed", "Item claimed", user.id, user.name, `Claim submitted for ${itemName}`, "info")
-
-    toast({
-      title: "Claim Submitted",
-      description: "Your claim has been submitted and will be reviewed by a volunteer.",
-    })
-
-    setIsSubmitted(true)
   }
 
   return (
@@ -186,8 +145,8 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
                 />
               </div>
 
-              <Button onClick={handleSubmit} disabled={!proofImage} className="w-full">
-                Submit Claim
+              <Button onClick={handleSubmit} disabled={!proofImage || isSubmitting} className="w-full">
+                {isSubmitting ? "Submitting..." : "Submit Claim"}
               </Button>
             </div>
           </>

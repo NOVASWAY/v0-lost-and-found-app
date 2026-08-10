@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model User {
@@ -22,6 +22,7 @@ model User {
   rank            Int      @default(0)
   attendanceCount Int      @default(0)
   serviceCount    Int      @default(0)
+  tokenVersion    Int      @default(0) // Bumped on password change to revoke existing sessions
   
   // Relations
   uploadedItems   Item[]
@@ -30,6 +31,8 @@ model User {
   orders          Order[]
   auditLogs       AuditLog[]
   releaseLogs     ReleaseLog[]
+  missionsAssigned Mission[] @relation("MissionAssignedTo")
+  missionsCreated   Mission[] @relation("MissionAssignedBy")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,6 +164,48 @@ model Order {
   // Relations
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model Mission {
+  id              String   @id @default(cuid())
+  title           String
+  description     String   @default("")
+  instructions    String   @default("")
+  priority        String   @default("medium") // low, medium, high, critical
+  status          String   @default("pending") // pending, in_progress, completed, cancelled
+  dueDate         String? // date-only "YYYY-MM-DD" from the UI date input
+  location        String?
+  completedAt     DateTime?
+  completionNotes String?
+
+  // Relations
+  assignedTo       String
+  assignedToUser   User     @relation("MissionAssignedTo", fields: [assignedTo], references: [id])
+  assignedBy       String
+  assignedByUser   User     @relation("MissionAssignedBy", fields: [assignedBy], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assignedTo])
+  @@index([status])
+}
+
+model MeetingMinutes {
+  id             String   @id @default(cuid())
+  title          String
+  meetingDate    String // date-only "YYYY-MM-DD"
+  location       String?
+  attendees      Json // string[]
+  agenda         Json // string[]
+  discussion     String   @default("")
+  actionItems    Json // { item, assignedTo, dueDate?, status }[]
+  decisions      Json // string[]
+  nextMeetingDate String?
+  recordedBy     String   @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {

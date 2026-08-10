@@ -11,20 +11,41 @@ import { Search } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { getItems, initializeStorage } from "@/lib/storage"
+import { itemsApi, usersApi, ApiError, type Item } from "@/lib/api-client"
 import { BackButton } from "@/components/back-button"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AdminItemsPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [items, setItems] = useState(getItems())
+  const [items, setItems] = useState<Item[]>([])
+  const [nameMap, setNameMap] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    initializeStorage()
-    setItems(getItems())
-  }, [])
+    if (!isAuthenticated || user?.role !== "admin") return
+
+    setIsLoading(true)
+    // Items are fetched via the public list (uploader ids only); user names come
+    // from the admin-only users endpoint so identity is never exposed publicly.
+    Promise.all([itemsApi.getAll({ limit: 100 }), usersApi.getAll()])
+      .then(([itemsRes, usersRes]) => {
+        setItems(itemsRes.items)
+        const map: Record<string, string> = {}
+        for (const u of usersRes.users) map[u.id] = u.name || u.username
+        setNameMap(map)
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load items"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }, [isAuthenticated, user?.role, toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
@@ -44,9 +65,10 @@ export default function AdminItemsPage() {
   }
 
   const filteredItems = items.filter((item) => {
+    const uploaderName = nameMap[item.uploadedBy.id]?.toLowerCase() ?? ""
     const matchesSearch =
       item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase())
+      uploaderName.includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || item.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -132,41 +154,54 @@ export default function AdminItemsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="border-b border-border last:border-0">
-                    <td className="p-4">
-                      <div className="relative h-12 w-12 overflow-hidden rounded border border-border">
-                        <Image
-                          src={item.imageUrl || "/placeholder.svg"}
-                          alt={item.category}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-card-foreground">{item.category}</p>
-                      <p className="text-sm text-muted-foreground">{item.color}</p>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{item.location}</td>
-                    <td className="p-4 text-sm text-muted-foreground">
-                      {new Date(item.dateFounded).toLocaleDateString()}
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{item.uploadedBy}</td>
-                    <td className="p-4">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="p-4">
-                      <Link href={`/items/${item.id}`}>
-                        <Button size="sm" variant="ghost">
-                          View
-                        </Button>
-                      </Link>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">
+                      Loading items...
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredItems.map((item) => (
+                    <tr key={item.id} className="border-b border-border last:border-0">
+                      <td className="p-4">
+                        <div className="relative h-12 w-12 overflow-hidden rounded border border-border">
+                          <Image
+                            src={item.imageUrl || "/placeholder.svg"}
+                            alt={item.category}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-medium text-card-foreground">{item.category}</p>
+                        <p className="text-sm text-muted-foreground">{item.color}</p>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{item.location}</td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {new Date(item.dateFounded).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{nameMap[item.uploadedBy.id] ?? "—"}</td>
+                      <td className="p-4">
+                        <StatusBadge status={item.status} />
+                      </td>
+                      <td className="p-4">
+                        <Link href={`/items/${item.id}`}>
+                          <Button size="sm" variant="ghost">
+                            View
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+            {!isLoading && filteredItems.length === 0 && (
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">No items found matching your search criteria</p>
+              </div>
+            )}
           </div>
         </Card>
       </main>

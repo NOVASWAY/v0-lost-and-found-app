@@ -36,7 +36,7 @@ Open: http://localhost:3000
 ### Admin Account (Full System Access)
 \`\`\`
 Username: admin
-Password: admin123
+Password: <bootstrap-password>
 Role: Administrator
 Access: Admin Dashboard, User Management, Settings
 \`\`\`
@@ -44,7 +44,7 @@ Access: Admin Dashboard, User Management, Settings
 ### Volunteer Account (Release Management)
 \`\`\`
 Username: volunteer
-Password: volunteer123
+Password: <bootstrap-password>
 Role: Volunteer
 Access: Volunteer Dashboard, Release Processing, Service Tracking
 \`\`\`
@@ -52,7 +52,7 @@ Access: Volunteer Dashboard, Release Processing, Service Tracking
 ### Regular User Accounts
 \`\`\`
 Username: johndoe
-Password: user123
+Password: <bootstrap-password>
 Role: User
 Access: Item Upload, View Items, Submit Claims
 
@@ -75,7 +75,7 @@ Access: Item Upload, View Items, Submit Claims
 \`\`\`
 1. Navigate to http://localhost:3000/login
 2. Enter username (e.g., "johndoe")
-3. Enter password (e.g., "user123")
+3. Enter password (e.g., "<bootstrap-password>")
 4. Click "Unlock the Vault"
 5. Redirected to dashboard
 \`\`\`
@@ -106,7 +106,7 @@ Access: Item Upload, View Items, Submit Claims
 
 ### 4. Approve Release (Volunteer)
 \`\`\`
-1. Login as volunteer (volunteer/volunteer123)
+1. Login as volunteer (volunteer/<bootstrap-password>)
 2. Go to "Volunteer Dashboard"
 3. View pending releases
 4. Click "Approve Release"
@@ -117,7 +117,7 @@ Access: Item Upload, View Items, Submit Claims
 
 ### 5. Admin Dashboard (Admin)
 \`\`\`
-1. Login as admin (admin/admin123)
+1. Login as admin (admin/<bootstrap-password>)
 2. Go to "Admin Dashboard"
 3. View all users, items, claims
 4. Manage system settings
@@ -256,7 +256,7 @@ curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
-    "password": "admin123"
+    "password": "<bootstrap-password>"
   }'
 
 # Response: {"user": {...}, "message": "Login successful"}

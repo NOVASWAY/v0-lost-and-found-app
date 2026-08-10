@@ -26,7 +26,6 @@ export const updateUserSchema = z.object({
 })
 
 export const changePasswordSchema = z.object({
-  userId: z.string().min(1),
   currentPassword: z.string().min(1),
   newPassword: passwordStrengthSchema,
 })
@@ -35,12 +34,20 @@ export const changePasswordSchema = z.object({
 export const createItemSchema = z.object({
   imageUrl: z
     .string()
-    .url()
     .max(5000)
     .refine(
       (url) => {
-        // Additional validation for path traversal
-        return !url.includes("..") && !url.startsWith("file://") && !/^\/|^[A-Za-z]:\\/.test(url)
+        if (url.startsWith("data:")) {
+          // Base64-encoded client-side images (png/jpeg/gif/webp).
+          return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(url)
+        }
+        // Otherwise must be an http(s) URL without path traversal.
+        return (
+          /^https?:\/\//i.test(url) &&
+          !url.includes("..") &&
+          !url.startsWith("file://") &&
+          !/^\/|^[A-Za-z]:\\/.test(url)
+        )
       },
       { message: "Invalid image URL format" }
     ),
@@ -60,9 +67,6 @@ export const createItemSchema = z.object({
   uniqueMarkings: z.string().max(500).trim().refine((val) => !val || !val.includes(".."), {
     message: "Unique markings contains invalid characters",
   }).optional(),
-  uploadedById: z.string().min(1).refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
-    message: "Invalid user ID format",
-  }),
 })
 
 export const updateItemSchema = z.object({
@@ -80,11 +84,18 @@ export const createClaimSchema = z.object({
     }),
   proofImage: z
     .string()
-    .url()
     .max(5000)
     .refine(
       (url) => {
-        return !url.includes("..") && !url.startsWith("file://") && !/^\/|^[A-Za-z]:\\/.test(url)
+        if (url.startsWith("data:")) {
+          return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(url)
+        }
+        return (
+          /^https?:\/\//i.test(url) &&
+          !url.includes("..") &&
+          !url.startsWith("file://") &&
+          !/^\/|^[A-Za-z]:\\/.test(url)
+        )
       },
       { message: "Invalid proof image URL format" }
     ),
@@ -104,6 +115,72 @@ export const updateClaimSchema = z.object({
   releaseNotes: z.string().max(500).trim().optional(),
   releasedBy: z.string().max(100).trim().optional(),
   volunteerId: z.string().min(1).optional(),
+})
+
+// Order validation schemas
+export const updateOrderSchema = z.object({
+  status: z.enum(["read"]),
+})
+
+// Mission validation schemas
+const missionPriority = z.enum(["low", "medium", "high", "critical"])
+const missionStatus = z.enum(["pending", "in_progress", "completed", "cancelled"])
+
+export const createMissionSchema = z.object({
+  title: z.string().min(1).max(200).trim(),
+  description: z.string().max(1000).trim().default(""),
+  instructions: z.string().max(5000).trim().default(""),
+  priority: missionPriority.default("medium"),
+  status: missionStatus.default("pending"),
+  dueDate: z.string().max(20).trim().optional().nullable(),
+  location: z.string().max(200).trim().optional().nullable(),
+  assignedTo: z.string().min(1),
+})
+
+export const updateMissionSchema = z.object({
+  title: z.string().min(1).max(200).trim().optional(),
+  description: z.string().max(1000).trim().optional(),
+  instructions: z.string().max(5000).trim().optional(),
+  priority: missionPriority.optional(),
+  status: missionStatus.optional(),
+  dueDate: z.string().max(20).trim().optional().nullable(),
+  location: z.string().max(200).trim().optional().nullable(),
+  completionNotes: z.string().max(1000).trim().optional(),
+  assignedTo: z.string().min(1).optional(),
+})
+
+// Meeting minutes validation schemas
+const actionItemSchema = z.object({
+  item: z.string().min(1).max(500).trim(),
+  assignedTo: z.string().min(1).max(200).trim(),
+  dueDate: z.string().max(20).trim().optional().nullable(),
+  status: z.enum(["pending", "in_progress", "completed"]).default("pending"),
+})
+
+const stringArraySchema = z.array(z.string().min(1).max(500).trim()).max(200)
+
+export const createMeetingMinutesSchema = z.object({
+  title: z.string().min(1).max(200).trim(),
+  meetingDate: z.string().min(1).max(20).trim(),
+  location: z.string().max(200).trim().optional().nullable(),
+  attendees: stringArraySchema.default([]),
+  agenda: stringArraySchema.default([]),
+  discussion: z.string().max(10000).trim().default(""),
+  actionItems: z.array(actionItemSchema).max(200).default([]),
+  decisions: stringArraySchema.default([]),
+  nextMeetingDate: z.string().max(20).trim().optional().nullable(),
+})
+
+export const updateMeetingMinutesSchema = z.object({
+  title: z.string().min(1).max(200).trim().optional(),
+  meetingDate: z.string().min(1).max(20).trim().optional(),
+  location: z.string().max(200).trim().optional().nullable(),
+  attendees: stringArraySchema.optional(),
+  agenda: stringArraySchema.optional(),
+  discussion: z.string().max(10000).trim().optional(),
+  actionItems: z.array(actionItemSchema).max(200).optional(),
+  decisions: stringArraySchema.optional(),
+  nextMeetingDate: z.string().max(20).trim().optional().nullable(),
 })
 
 // Location validation schemas

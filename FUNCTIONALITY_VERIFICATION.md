@@ -367,7 +367,7 @@
 \`\`\`
 1. Navigate to login page ✅
 2. Enter valid username (johndoe) ✅
-3. Enter valid password (user123) ✅
+3. Enter valid password (<bootstrap-password>) ✅
 4. Click login ✅
 5. Verify bcryptjs.compare succeeds ✅
 6. Verify session token created ✅

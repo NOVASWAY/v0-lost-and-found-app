@@ -313,9 +313,9 @@ export async function POST(request: NextRequest) {
 
 ### Default Test Credentials
 \`\`\`
-Admin:     admin / admin123
-Volunteer: volunteer / volunteer123
-User 1:    johndoe / user123
+Admin:     admin / <bootstrap-password>
+Volunteer: volunteer / <bootstrap-password>
+User 1:    johndoe / <bootstrap-password>
 User 2:    sarahjohnson / password123
 User 3:    michaelchen / password123
 \`\`\`

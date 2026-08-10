@@ -26,6 +26,9 @@ Create `.env.local` file:
 # Database URL (production)
 DATABASE_URL="file:./vault-production.db"
 
+# JWT signing secret (required)
+JWT_SECRET="set-a-long-random-secret"
+
 # Enable audit logging
 AUDIT_LOGGING="true"
 
@@ -39,6 +42,11 @@ SESSION_TIMEOUT="1800000"
 
 # Security headers
 ENABLE_SECURITY_HEADERS="true"
+
+# Bootstrap passwords for `npm run db:seed` (production only)
+BOOTSTRAP_ADMIN_PASSWORD="set-a-strong-admin-password"
+BOOTSTRAP_VOLUNTEER_PASSWORD="set-a-strong-volunteer-password"
+BOOTSTRAP_USER_PASSWORD="set-a-strong-user-password"
 \`\`\`
 
 ### 3. Build & Verify
@@ -53,22 +61,18 @@ npm run build
 npm run start
 \`\`\`
 
-## Default Credentials
+## Bootstrap Credentials (production)
 
-### Admin Account
-- **Username:** admin
-- **Password:** admin123
-- **Access:** Full system access, user management, settings
+The database seed creates users using the usernames defined in `prisma/seed.ts`.
+Bootstrap passwords must be provided via environment variables:
+- `BOOTSTRAP_ADMIN_PASSWORD`
+- `BOOTSTRAP_VOLUNTEER_PASSWORD`
+- `BOOTSTRAP_USER_PASSWORD`
 
-### Volunteer Account
-- **Username:** volunteer
-- **Password:** volunteer123
-- **Access:** Item management, release logs, volunteer dashboard
-
-### Regular Users
-- **johndoe / user123** - Regular user account
-- **sarahjohnson / password123** - Regular user account
-- **michaelchen / password123** - Regular user account
+Example usernames created by the seed:
+- Admin: `admin`
+- Volunteers: `tomanderson`, `emilyrodriguez`, `jenniferwilliams`
+- Users: `johndoe`, `sarahjohnson`, `michaelchen`, `davidpark`
 
 ## Features & Functionality
 

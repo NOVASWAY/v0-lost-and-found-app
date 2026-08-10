@@ -21,6 +21,7 @@ import {
   BookOpen,
   MessageSquare,
   MapPin,
+  MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -79,8 +80,10 @@ export function MobileBottomNav() {
     navItems = userNavItems.filter((item) => !item.roles || item.roles.includes("user"))
   }
 
-  // Limit to 5 items max for mobile
-  const displayItems = navItems.slice(0, 5)
+  // Limit to 5 items max for mobile, show overflow indicator if truncated
+  const MAX_ITEMS = 5
+  const hasMore = navItems.length > MAX_ITEMS
+  const displayItems = navItems.slice(0, MAX_ITEMS - (hasMore ? 1 : 0))
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-xl md:hidden">
@@ -112,6 +115,18 @@ export function MobileBottomNav() {
             </Link>
           )
         })}
+        {hasMore && (
+          <Link
+            href={user.role === "admin" ? "/admin" : "/dashboard"}
+            aria-label="More navigation items"
+            className="flex flex-col items-center justify-center gap-1 flex-1 h-full min-w-0 px-2 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <MoreHorizontal className="h-5 w-5 shrink-0" />
+            <span className="text-[10px] font-medium truncate w-full text-center">
+              More
+            </span>
+          </Link>
+        )}
       </div>
     </nav>
   )

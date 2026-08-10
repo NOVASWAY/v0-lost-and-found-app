@@ -2,13 +2,27 @@ import * as bcrypt from "bcryptjs"
 import "dotenv/config"
 import { prisma } from "../lib/prisma"
 
+function getBootstrapPassword(envVarName: string, fallback: string): string {
+  const fromEnv = process.env[envVarName]
+  if (typeof fromEnv === "string" && fromEnv.length > 0) return fromEnv
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`Missing ${envVarName} for production seeding.`)
+  }
+
+  return fallback
+}
+
 async function main() {
   console.log("Seeding database with production users...")
 
   // Production user accounts with strong passwords
   
   // Create admin user - full system access
-  const adminPassword = await bcrypt.hash("SecureAdmin123!", 10)
+  const adminPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_ADMIN_PASSWORD", "SecureAdmin123!"),
+    10,
+  )
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
     update: { password: adminPassword },
@@ -28,7 +42,10 @@ async function main() {
   console.log("✓ Admin user created: admin@vaultchurch.org")
 
   // Create volunteer user - claims approval and release authority
-  const volunteerPassword = await bcrypt.hash("VolunteerPass123!", 10)
+  const volunteerPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_VOLUNTEER_PASSWORD", "VolunteerPass123!"),
+    10,
+  )
   const volunteer = await prisma.user.upsert({
     where: { username: "tomanderson" },
     update: { password: volunteerPassword },
@@ -48,7 +65,10 @@ async function main() {
   console.log("✓ Volunteer user created: tomanderson (Coordinator)")
 
   // Create regular users - can upload items and claim
-  const userPassword = await bcrypt.hash("UserPass123!", 10)
+  const userPassword = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_USER_PASSWORD", "UserPass123!"),
+    10,
+  )
 
   const user1 = await prisma.user.upsert({
     where: { username: "johndoe" },
@@ -119,7 +139,10 @@ async function main() {
   })
 
   // Create additional volunteers
-  const volunteerPassword2 = await bcrypt.hash("VolunteerPass123!", 10)
+  const volunteerPassword2 = await bcrypt.hash(
+    getBootstrapPassword("BOOTSTRAP_VOLUNTEER_PASSWORD", "VolunteerPass123!"),
+    10,
+  )
   
   const volunteer2 = await prisma.user.upsert({
     where: { username: "emilyrodriguez" },
@@ -158,6 +181,101 @@ async function main() {
   console.log("✓ Regular users created (4 users)")
   console.log("✓ Additional volunteers created (2 volunteers)")
 
+  // Create orders (security directives) for a few users
+  const seededUserIds = [user1.id, user2.id]
+  const existingOrders = await prisma.order.count({ where: { userId: { in: seededUserIds } } })
+
+  if (existingOrders === 0) {
+    const orders = [
+      {
+        userId: user1.id,
+        title: "Security Protocol Update",
+        message: "Please ensure all found items are photographed from at least three angles before logging them.",
+        status: "unread",
+        priority: "high",
+      },
+      {
+        userId: user1.id,
+        title: "Vault Access Reminder",
+        message: "Reminder: all vault access must be logged with the duty officer before entering the storage area.",
+        status: "read",
+        priority: "medium",
+      },
+      {
+        userId: user2.id,
+        title: "Weekend Coverage Notice",
+        message: "Additional coverage requested for the Sunday morning service. Coordinate with the volunteer team.",
+        status: "unread",
+        priority: "medium",
+      },
+    ]
+
+    await prisma.order.createMany({ data: orders })
+    console.log("✓ Orders created (3 security directives)")
+  } else {
+    console.log("✓ Orders already present, skipping")
+  }
+
+  // Create missions assigned to volunteers and users
+  const existingMissions = await prisma.mission.count()
+  if (existingMissions === 0) {
+    await prisma.mission.createMany({
+      data: [
+        {
+          title: "Count lost & found inventory",
+          description: "Perform a full inventory count of the lost & found storage room.",
+          instructions: "Use the vault checklist and log any discrepancies with the duty officer.",
+          priority: "high",
+          status: "in_progress",
+          dueDate: "2026-08-15",
+          location: "Vault storage room",
+          assignedTo: volunteer.id,
+          assignedBy: admin.id,
+        },
+        {
+          title: "Audit volunteer release log",
+          description: "Cross-check the item release log against approved claims.",
+          instructions: "Reconcile the last 30 days of releases and report any unmatched entries.",
+          priority: "medium",
+          status: "pending",
+          dueDate: "2026-08-20",
+          location: "Volunteer office",
+          assignedTo: user1.id,
+          assignedBy: admin.id,
+        },
+      ],
+    })
+    console.log("✓ Missions created (2)")
+  } else {
+    console.log("✓ Missions already present, skipping")
+  }
+
+  // Create meeting minutes
+  const existingMinutes = await prisma.meetingMinutes.count()
+  if (existingMinutes === 0) {
+    await prisma.meetingMinutes.createMany({
+      data: [
+        {
+          title: "Volunteer Safety Briefing",
+          meetingDate: "2026-08-02",
+          location: "Main sanctuary",
+          attendees: ["Tom Anderson", "Emily Rodriguez", "John Doe"],
+          agenda: ["Review vault access rules", "Update incident response contacts"],
+          discussion: "Reminder that all found items must be logged with a photo within 24 hours.",
+          actionItems: [
+            { item: "Post updated contact list", assignedTo: "Tom Anderson", dueDate: "2026-08-09", status: "pending" },
+          ],
+          decisions: ["Adopt the two-person rule for vault access."],
+          nextMeetingDate: "2026-09-06",
+          recordedBy: "System Administrator",
+        },
+      ],
+    })
+    console.log("✓ Meeting minutes created (1)")
+  } else {
+    console.log("✓ Meeting minutes already present, skipping")
+  }
+
   // Create locations
   const locations = [
     { name: "Main Sanctuary - Pew 12", description: "Main worship area" },
@@ -193,10 +311,10 @@ async function main() {
   ]
 
   for (const pb of playbooks) {
-    await prisma.playbook.createMany({
-      data: pb,
-      skipDuplicates: true,
-    })
+    const existing = await prisma.playbook.findFirst({ where: { title: pb.title } })
+    if (!existing) {
+      await prisma.playbook.create({ data: pb })
+    }
   }
 
   console.log("Database seeded successfully!")

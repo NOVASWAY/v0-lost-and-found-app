@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-middleware"
+import { requireAdmin, requireAdminOrVolunteer } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createPlaybookSchema, validateAndSanitize } from "@/lib/validation"
 
-// GET all playbooks
-export async function GET() {
+// GET all playbooks (authenticated only - contains internal security procedures)
+export async function GET(request: NextRequest) {
   try {
+    const authResult = await requireAdminOrVolunteer(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const playbooks = await prisma.playbook.findMany({
       orderBy: { updatedAt: "desc" },
     })
@@ -29,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Rate limiting
     const clientId = getClientIdentifier(request)
-    const rateLimitResult = rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
@@ -41,7 +46,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { title, scenario, protocol, priority, userId } = validation.data
+    const { title, scenario, protocol, priority } = validation.data
+    const actorId = authResult.user.id
 
     const playbook = await prisma.playbook.create({
       data: {
@@ -53,17 +59,15 @@ export async function POST(request: NextRequest) {
     })
 
     // Add audit log
-    if (userId) {
-      await prisma.auditLog.create({
-        data: {
-          type: "playbook_created",
-          action: "Playbook created",
-          details: `Playbook '${title}' created`,
-          severity: "info",
-          userId,
-        },
-      })
-    }
+    await prisma.auditLog.create({
+      data: {
+        type: "playbook_created",
+        action: "Playbook created",
+        details: `Playbook '${title}' created`,
+        severity: "info",
+        userId: actorId,
+      },
+    })
 
     return NextResponse.json({ playbook, message: "Playbook created successfully" })
   } catch (error) {

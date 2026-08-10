@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { validateRouteId } from "@/lib/security"
+import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
+import { updateUserSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET user by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = await requireAdmin(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { id } = await params
     
     // Validate ID to prevent path traversal
@@ -45,6 +52,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // DELETE user (admin only)
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = await requireAdmin(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { id } = await params
     
     // Validate ID to prevent path traversal
@@ -85,6 +97,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 // PATCH update user
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // Admins may edit any user (including role); regular users may only edit
+    // their own name — role changes stay admin-only.
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const { id } = await params
     
     // Validate ID to prevent path traversal
@@ -92,14 +111,26 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
+
+    const isAdmin = authResult.user.role === "admin"
+    if (authResult.user.id !== id && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+    }
     
     const data = await request.json()
+    const validation = validateAndSanitize(updateUserSchema, data)
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { name, role } = validation.data
 
     const user = await prisma.user.update({
       where: { id },
       data: {
-        ...(data.name && { name: data.name }),
-        ...(data.role && { role: data.role }),
+        ...(name && { name }),
+        // Role changes are admin-only; a non-admin self-edit ignores role.
+        ...(isAdmin && role && { role }),
       },
       select: {
         id: true,

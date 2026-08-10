@@ -5,14 +5,14 @@
 ### Admin Account
 \`\`\`
 Username: admin
-Password: admin123
+Password: <bootstrap-password>
 Role: Admin (Full system access)
 \`\`\`
 
 ### Volunteer Account
 \`\`\`
 Username: volunteer
-Password: volunteer123
+Password: <bootstrap-password>
 Role: Volunteer (Claims processing, item release, service logging)
 \`\`\`
 
@@ -20,17 +20,17 @@ Role: Volunteer (Claims processing, item release, service logging)
 \`\`\`
 User 1:
 Username: john
-Password: user123
+Password: <bootstrap-password>
 Role: User
 
 User 2:
 Username: sarah
-Password: user123
+Password: <bootstrap-password>
 Role: User
 
 User 3:
 Username: michael
-Password: user123
+Password: <bootstrap-password>
 Role: User
 \`\`\`
 
@@ -156,7 +156,7 @@ Role: User
 #### Step 1: Volunteer Login
 1. Go to `/login`
 2. Username: `volunteer`
-3. Password: `volunteer123`
+3. Password: `<bootstrap-password>`
 4. Click Login
 5. **Expected**: Redirected to dashboard with volunteer options
 
@@ -224,7 +224,7 @@ Role: User
 #### Step 1: Admin Login
 1. Go to `/login`
 2. Username: `admin`
-3. Password: `admin123`
+3. Password: `<bootstrap-password>`
 4. Click Login
 5. **Expected**: Dashboard with admin stats
 

@@ -9,23 +9,22 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Search, UserPlus, Upload, FileCheck, Users, Calendar, MessageSquare, ShieldAlert, Edit, Trash2 } from "lucide-react"
+import { Search, UserPlus, Upload, FileCheck, Users, Calendar, ShieldAlert, Trash2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { getUsers, addUser, updateUser, deleteUser, initializeStorage, addServiceRecord } from "@/lib/storage"
-import { addAuditLog } from "@/lib/audit-logger"
+import { usersApi, serviceRecordsApi, ApiError, type UserListItem } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
-import type { User, Order } from "@/lib/mock-data"
 
 export default function AdminUsersPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [users, setUsers] = useState<User[]>(getUsers())
+  const [users, setUsers] = useState<UserListItem[]>([])
+  const [isLoaded, setIsLoaded] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false)
   const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0])
   const [markAttended, setMarkAttended] = useState(true)
@@ -38,9 +37,19 @@ export default function AdminUsersPage() {
     role: "user" as "user" | "volunteer" | "admin",
   })
 
+  const loadUsers = () => {
+    usersApi
+      .getAll()
+      .then((res) => setUsers(res.users))
+      .catch((err) => {
+        const message = err instanceof ApiError ? err.message : "Failed to load users"
+        toast({ title: "Error", description: message, variant: "destructive" })
+      })
+      .finally(() => setIsLoaded(true))
+  }
+
   useEffect(() => {
-    initializeStorage()
-    setUsers(getUsers())
+    loadUsers()
   }, [])
 
   useEffect(() => {
@@ -62,129 +71,72 @@ export default function AdminUsersPage() {
     )
   })
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    const id = `u${Math.random().toString(36).substr(2, 9)}`
-    const newUserData: User = {
-      id,
-      name: newUser.name,
-      username: newUser.username,
-      password: newUser.password,
-      role: newUser.role,
-      itemsUploaded: 0,
-      claimsSubmitted: 0,
-      joinedAt: new Date().toISOString().split("T")[0],
-      vaultPoints: 0,
-      rank: users.length + 1,
-      attendanceCount: 0,
-      serviceCount: 0,
-      orders: [],
+    try {
+      await usersApi.create({
+        name: newUser.name,
+        username: newUser.username,
+        password: newUser.password,
+        role: newUser.role,
+      })
+      loadUsers()
+      toast({
+        title: "Success",
+        description: "User created successfully",
+      })
+      setNewUser({ name: "", username: "", password: "", role: "user" })
+      setCreateDialogOpen(false)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to create user"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
-    addUser(newUserData)
-    setUsers(getUsers())
-    addAuditLog("user_created", "User account created", newUserData.id, newUserData.name, `User '${newUserData.username}' created with role '${newUserData.role}'`, "info")
-    toast({
-      title: "Success",
-      description: "User created successfully",
-    })
-    setNewUser({ name: "", username: "", password: "", role: "user" })
-    setCreateDialogOpen(false)
   }
 
-  const handleMarkAttendance = () => {
+  const handleMarkAttendance = async () => {
+    if (!selectedUser || !user) return
+
+    try {
+      await serviceRecordsApi.create({
+        userId: selectedUser.id,
+        serviceDate,
+        attended: markAttended,
+        served: markServed,
+        notes: serviceNotes || undefined,
+        recordedBy: user.name,
+      })
+      loadUsers()
+      setAttendanceDialogOpen(false)
+      setSelectedUser(null)
+      setServiceDate(new Date().toISOString().split("T")[0])
+      setMarkAttended(true)
+      setMarkServed(false)
+      setServiceNotes("")
+      toast({
+        title: "Success",
+        description: "Attendance/service recorded successfully",
+      })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to record attendance"
+      toast({ title: "Error", description: message, variant: "destructive" })
+    }
+  }
+
+  const handleDeactivateUser = async () => {
     if (!selectedUser) return
 
-    const pointsToAdd = (markAttended ? 10 : 0) + (markServed ? 25 : 0)
-    const serviceRecordId = `sr${Date.now()}`
-    const currentServiceRecords = selectedUser.serviceRecords || []
-    
-    updateUser(selectedUser.id, {
-      attendanceCount: markAttended ? selectedUser.attendanceCount + 1 : selectedUser.attendanceCount,
-      serviceCount: markServed ? selectedUser.serviceCount + 1 : selectedUser.serviceCount,
-      vaultPoints: selectedUser.vaultPoints + pointsToAdd,
-      serviceRecords: [
-        ...currentServiceRecords,
-        {
-          id: serviceRecordId,
-          serviceDate,
-          attended: markAttended,
-          served: markServed,
-          notes: serviceNotes || undefined,
-          recordedBy: user?.name || "Admin",
-          recordedAt: new Date().toISOString(),
-        },
-      ],
-    })
-
-    addServiceRecord({
-      id: serviceRecordId,
-      serviceDate,
-      attended: markAttended,
-      served: markServed,
-      notes: serviceNotes || undefined,
-      recordedBy: user?.name || "Admin",
-      recordedAt: new Date().toISOString(),
-      userId: selectedUser.id,
-    } as any)
-
-    if (markAttended) {
-      addAuditLog("attendance_marked", "Attendance marked", selectedUser.id, selectedUser.name, `Marked attendance for service on ${serviceDate}`, "info")
-    }
-    if (markServed) {
-      addAuditLog("service_marked", "Service marked", selectedUser.id, selectedUser.name, `Marked service participation for ${serviceDate}`, "info")
-    }
-
-    setUsers(getUsers())
-    setAttendanceDialogOpen(false)
-    setSelectedUser(null)
-    setServiceDate(new Date().toISOString().split("T")[0])
-    setMarkAttended(true)
-    setMarkServed(false)
-    setServiceNotes("")
-    toast({
-      title: "Success",
-      description: "Attendance/service recorded successfully",
-    })
-  }
-
-  const handleDeactivateUser = () => {
-    if (selectedUser) {
-      addAuditLog("user_deleted", "User account deactivated", selectedUser.id, selectedUser.name, `User '${selectedUser.username}' deactivated`, "warning")
-      deleteUser(selectedUser.id)
-      setUsers(getUsers())
+    try {
+      await usersApi.delete(selectedUser.id)
+      loadUsers()
       setDeactivateDialogOpen(false)
       setSelectedUser(null)
       toast({
         title: "Success",
         description: "User deactivated successfully",
       })
-    }
-  }
-
-  const handleSendOrder = (userId: string) => {
-    const title = prompt("Enter Order Title:")
-    const message = prompt("Enter Order Message:")
-    if (!title || !message) return
-
-    const newOrder: Order = {
-      id: `o${Math.random().toString(36).substr(2, 9)}`,
-      title,
-      message,
-      status: "unread",
-      priority: "medium",
-      createdAt: new Date().toISOString(),
-    }
-
-    const targetUser = users.find((u) => u.id === userId)
-    if (targetUser) {
-      updateUser(userId, {
-        orders: [...(targetUser.orders || []), newOrder],
-      })
-      setUsers(getUsers())
-      toast({
-        title: "Success",
-        description: "Order sent successfully",
-      })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Failed to deactivate user"
+      toast({ title: "Error", description: message, variant: "destructive" })
     }
   }
 
@@ -294,7 +246,14 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredUsers.map((u) => (
+                {!isLoaded && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-sm text-muted-foreground">
+                      Loading personnel...
+                    </td>
+                  </tr>
+                )}
+                {isLoaded && filteredUsers.map((u) => (
                   <tr key={u.id} className="hover:bg-accent/10 transition-colors group">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -365,14 +324,6 @@ export default function AdminUsersPage() {
                           title="Mark Attendance/Service"
                         >
                           <Calendar className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-primary hover:bg-primary/10 p-2 h-auto"
-                          onClick={() => handleSendOrder(u.id)}
-                        >
-                          <MessageSquare className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"

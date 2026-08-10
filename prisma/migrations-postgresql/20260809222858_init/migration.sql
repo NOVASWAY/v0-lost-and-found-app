@@ -1,8 +1,11 @@
--- CreateTable User
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
+-- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "username" TEXT NOT NULL UNIQUE,
+    "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'user',
     "itemsUploaded" INTEGER NOT NULL DEFAULT 0,
@@ -12,13 +15,16 @@ CREATE TABLE "User" (
     "rank" INTEGER NOT NULL DEFAULT 0,
     "attendanceCount" INTEGER NOT NULL DEFAULT 0,
     "serviceCount" INTEGER NOT NULL DEFAULT 0,
+    "tokenVersion" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable Item
+-- CreateTable
 CREATE TABLE "Item" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "imageUrl" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "color" TEXT NOT NULL,
@@ -31,12 +37,13 @@ CREATE TABLE "Item" (
     "uploadedById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    CONSTRAINT "Item_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable Claim
+-- CreateTable
 CREATE TABLE "Claim" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "itemId" TEXT NOT NULL,
     "itemName" TEXT NOT NULL,
     "itemImage" TEXT NOT NULL,
@@ -51,49 +58,53 @@ CREATE TABLE "Claim" (
     "claimedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    CONSTRAINT "Claim_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Claim_claimantId_fkey" FOREIGN KEY ("claimantId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "Claim_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable ReleaseLog
+-- CreateTable
 CREATE TABLE "ReleaseLog" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "itemId" TEXT NOT NULL,
     "itemName" TEXT NOT NULL,
     "claimantName" TEXT NOT NULL,
     "volunteerName" TEXT NOT NULL,
     "notes" TEXT NOT NULL DEFAULT '',
-    "claimId" TEXT NOT NULL UNIQUE,
+    "claimId" TEXT NOT NULL,
     "volunteerId" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "ReleaseLog_claimId_fkey" FOREIGN KEY ("claimId") REFERENCES "Claim" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "ReleaseLog_volunteerId_fkey" FOREIGN KEY ("volunteerId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "ReleaseLog_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable Location
+-- CreateTable
 CREATE TABLE "Location" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "name" TEXT NOT NULL UNIQUE,
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
     "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Location_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable Playbook
+-- CreateTable
 CREATE TABLE "Playbook" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "scenario" TEXT NOT NULL,
     "protocol" TEXT NOT NULL,
     "priority" TEXT NOT NULL DEFAULT 'medium',
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Playbook_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable ServiceRecord
+-- CreateTable
 CREATE TABLE "ServiceRecord" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "serviceDate" TIMESTAMP(3) NOT NULL,
     "attended" BOOLEAN NOT NULL DEFAULT false,
     "served" BOOLEAN NOT NULL DEFAULT false,
@@ -102,24 +113,26 @@ CREATE TABLE "ServiceRecord" (
     "userId" TEXT NOT NULL,
     "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "ServiceRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "ServiceRecord_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable Order
+-- CreateTable
 CREATE TABLE "Order" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "message" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'unread',
     "priority" TEXT NOT NULL DEFAULT 'medium',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "userId" TEXT NOT NULL,
-    CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable AuditLog
+-- CreateTable
 CREATE TABLE "AuditLog" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "action" TEXT NOT NULL,
     "details" TEXT,
@@ -128,7 +141,8 @@ CREATE TABLE "AuditLog" (
     "userId" TEXT,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -171,6 +185,12 @@ CREATE INDEX "Claim_claimantId_idx" ON "Claim"("claimantId");
 CREATE INDEX "Claim_claimedAt_idx" ON "Claim"("claimedAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "ReleaseLog_claimId_key" ON "ReleaseLog"("claimId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Location_name_key" ON "Location"("name");
+
+-- CreateIndex
 CREATE INDEX "ServiceRecord_userId_idx" ON "ServiceRecord"("userId");
 
 -- CreateIndex
@@ -187,3 +207,28 @@ CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");
 
 -- CreateIndex
 CREATE INDEX "AuditLog_timestamp_idx" ON "AuditLog"("timestamp");
+
+-- AddForeignKey
+ALTER TABLE "Item" ADD CONSTRAINT "Item_uploadedById_fkey" FOREIGN KEY ("uploadedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Claim" ADD CONSTRAINT "Claim_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Claim" ADD CONSTRAINT "Claim_claimantId_fkey" FOREIGN KEY ("claimantId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReleaseLog" ADD CONSTRAINT "ReleaseLog_claimId_fkey" FOREIGN KEY ("claimId") REFERENCES "Claim"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ReleaseLog" ADD CONSTRAINT "ReleaseLog_volunteerId_fkey" FOREIGN KEY ("volunteerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ServiceRecord" ADD CONSTRAINT "ServiceRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

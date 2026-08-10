@@ -9,7 +9,7 @@ All test accounts are pre-configured and ready to use. Simply navigate to `/logi
 ## Admin Account
 \`\`\`
 Username: admin
-Password: admin123
+Password: <bootstrap-password>
 Role: Administrator (Full system access)
 \`\`\`
 
@@ -26,7 +26,7 @@ Role: Administrator (Full system access)
 ## Volunteer Account
 \`\`\`
 Username: volunteer
-Password: volunteer123
+Password: <bootstrap-password>
 Role: Volunteer (Staff)
 \`\`\`
 
@@ -45,21 +45,21 @@ Role: Volunteer (Staff)
 ### User 1
 \`\`\`
 Username: john
-Password: user123
+Password: <bootstrap-password>
 Role: User
 \`\`\`
 
 ### User 2
 \`\`\`
 Username: sarah
-Password: user123
+Password: <bootstrap-password>
 Role: User
 \`\`\`
 
 ### User 3
 \`\`\`
 Username: michael
-Password: user123
+Password: <bootstrap-password>
 Role: User
 \`\`\`
 
@@ -77,9 +77,9 @@ Role: User
 
 ## Testing Quick Start
 
-1. **For Admin Testing:** Login with `admin` / `admin123`
-2. **For Volunteer Testing:** Login with `volunteer` / `volunteer123`
-3. **For User Testing:** Login with `john` / `user123` (or `sarah`, `michael`)
+1. **For Admin Testing:** Login with `admin` / `<bootstrap-password>`
+2. **For Volunteer Testing:** Login with `volunteer` / `<bootstrap-password>`
+3. **For User Testing:** Login with `john` / `<bootstrap-password>` (or `sarah`, `michael`)
 
 All accounts have full functionality enabled. No special setup or configuration needed.
 
