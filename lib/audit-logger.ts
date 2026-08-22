@@ -25,6 +25,7 @@ export type AuditLogType =
   | "meeting_minutes_created"
   | "meeting_minutes_updated"
   | "meeting_minutes_deleted"
+  | "donation_expired"
 
 interface AuditLog {
   id: string

@@ -50,7 +50,7 @@ model Item {
   location        String
   dateFounded     DateTime
   description     String   @default("")
-  status          String   @default("available") // available, claimed, released, donated
+  status          String   @default("available") // available, claimed, released, donated, expired
   donationDeadline DateTime?
   uniqueMarkings  String?
   

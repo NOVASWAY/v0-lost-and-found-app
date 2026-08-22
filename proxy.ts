@@ -5,7 +5,19 @@ import { verifyAccessToken } from "@/lib/jwt"
 import { prisma } from "@/lib/db"
 
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next()
+  const isDev = process.env.NODE_ENV !== "production"
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
+
+  const cspHeader = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'nonce-${nonce}'; img-src 'self' data: https: blob:; font-src 'self' data:; audio-src 'self' https:; connect-src 'self'; frame-ancestors 'none'`
+
+  // Forward the nonce + CSP via request headers so Next.js can inject the nonce
+  // into inline scripts during server rendering. Also set on the response so the
+  // browser enforces the policy.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-nonce", nonce)
+  requestHeaders.set("Content-Security-Policy", cspHeader)
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } })
 
   // Security Headers
   response.headers.set("X-DNS-Prefetch-Control", "off")
@@ -14,17 +26,7 @@ export async function proxy(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff")
   response.headers.set("Referrer-Policy", "no-referrer")
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none")
-
-  // Strict CSP using a per-request nonce + 'strict-dynamic'. Next.js reads the
-  // nonce from the CSP header and applies it to its own inline scripts/styles
-  // automatically. 'unsafe-eval' is only needed in dev (React debug eval).
-  const isDev = process.env.NODE_ENV !== "production"
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
-  response.headers.set(
-    "Content-Security-Policy",
-    `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'nonce-${nonce}'; img-src 'self' data: https: blob:; font-src 'self' data:; audio-src 'self' https:; connect-src 'self'; frame-ancestors 'none'`
-  )
-  response.headers.set("x-nonce", nonce)
+  response.headers.set("Content-Security-Policy", cspHeader)
 
   // Permissions Policy - Deny dangerous features
   response.headers.set(
@@ -33,7 +35,6 @@ export async function proxy(request: NextRequest) {
   )
 
   // Additional security headers
-  response.headers.set("Cross-Origin-Embedder-Policy", "require-corp")
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin")
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin")
 

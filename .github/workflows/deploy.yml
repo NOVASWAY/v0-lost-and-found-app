@@ -75,5 +75,10 @@ jobs:
 #   BOOTSTRAP_VOLUNTEER_PASSWORD – production volunteer password
 #   BOOTSTRAP_USER_PASSWORD  – production regular-user password
 #
-# Also set in Vercel project environment (not here):
-#   DATABASE_URL, JWT_SECRET, NODE_ENV=production
+# Also set in Vercel project environment (Settings → Environment Variables):
+#   DATABASE_URL             – production Postgres URL (must match PROD_DATABASE_URL)
+#   JWT_SECRET               – production JWT signing secret (openssl rand -hex 32)
+#   BLOB_READ_WRITE_TOKEN    – Vercel Blob store token (required for item/claim uploads)
+#   NEXT_PUBLIC_SITE_URL     – public site URL (required for CSRF, sitemap, robots)
+#   CRON_SECRET              – secret for cron job authentication (openssl rand -hex 32)
+#   NODE_ENV=production

@@ -3,15 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.3.0",
-"pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "better-sqlite3",
-      "esbuild",
-      "prisma",
-      "unrs-resolver"
-    ]
-  },
   "scripts": {
     "build": "prisma generate && next build --webpack",
     "db:generate": "prisma generate",

@@ -226,7 +226,7 @@ describe("endpoint role authorization (real DB)", () => {
   })
 
   it("GET /api/missions returns only the caller's missions for a regular user", async () => {
-    const mine = await prisma.mission.create({
+    await prisma.mission.create({
       data: { title: "Mine", description: "", instructions: "", assignedTo: users.user.id, assignedBy: users.admin.id },
     })
     await prisma.mission.create({

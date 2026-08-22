@@ -48,7 +48,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<{
     if (user.tokenVersion !== payload.tokenVersion) return null
 
     return user
-  } catch (error) {
+  } catch {
     return null
   }
 }

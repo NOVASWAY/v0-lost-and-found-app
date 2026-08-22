@@ -2,25 +2,11 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Shield, Lock, Eye, BookOpen } from "lucide-react"
+import { Shield } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { ItemCard } from "@/components/item-card"
-import { itemsApi } from "@/lib/api-client"
-import { type Item } from "@/lib/api-client"
 import Image from "next/image"
-import { useEffect, useState } from "react"
 
 export default function HomePage() {
-  const [recentItems, setRecentItems] = useState<Item[]>([])
-
-  useEffect(() => {
-    itemsApi
-      .getAll({ status: "available", limit: 4 })
-      .then((res) => setRecentItems(res.items))
-      .catch(() => setRecentItems([]))
-  }, [])
-
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Animated background gradient */}
