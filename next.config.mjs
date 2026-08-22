@@ -1,3 +1,5 @@
+import withPWA from "@ducanh2912/next-pwa";
+
 /** @type {import('next').NextConfig} */
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "off" },
@@ -30,4 +32,11 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+const pwaConfig = withPWA({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+});
+
+export default pwaConfig(nextConfig);

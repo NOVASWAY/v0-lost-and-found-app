@@ -36,6 +36,12 @@ export const metadata: Metadata = {
     icon: "/vault-church-logo.jpeg",
     apple: "/vault-church-logo.jpeg",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Vault",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -73,6 +79,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: "#e60023",
 }
 
 export default function RootLayout({
