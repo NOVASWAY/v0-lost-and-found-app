@@ -1,5 +1,5 @@
 {
-  "buildCommand": "DATABASE_PROVIDER=postgresql sh -c 'prisma migrate resolve --applied 20260809222858_init; prisma migrate resolve --applied 20260809222859_add_mission_meeting_minutes; prisma migrate deploy' && prisma generate && next build --webpack",
+  "buildCommand": "DATABASE_PROVIDER=postgresql prisma db push --force-reset --accept-data-loss && prisma generate && next build --webpack",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "crons": [
