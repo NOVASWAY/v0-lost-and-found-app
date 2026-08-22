@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { headers } from "next/headers"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -84,16 +85,19 @@ export const viewport: Viewport = {
   themeColor: "#e60023",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
