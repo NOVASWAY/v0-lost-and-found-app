@@ -43,11 +43,33 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
         run: pnpm exec prisma migrate deploy
 
+      - name: Check bootstrap secrets
+        if: ${{ secrets.PROD_DATABASE_URL }}
+        id: check-secrets
+        env:
+          HAS_ADMIN: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD && 'true' || 'false' }}
+          HAS_VOLUNTEER: ${{ secrets.BOOTSTRAP_VOLUNTEER_PASSWORD && 'true' || 'false' }}
+          HAS_USER: ${{ secrets.BOOTSTRAP_USER_PASSWORD && 'true' || 'false' }}
+        run: |
+          MISSING=""
+          if [ "$HAS_ADMIN" != "true" ]; then MISSING="$MISSING BOOTSTRAP_ADMIN_PASSWORD"; fi
+          if [ "$HAS_VOLUNTEER" != "true" ]; then MISSING="$MISSING BOOTSTRAP_VOLUNTEER_PASSWORD"; fi
+          if [ "$HAS_USER" != "true" ]; then MISSING="$MISSING BOOTSTRAP_USER_PASSWORD"; fi
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing bootstrap secrets:$MISSING"
+            echo "::error::Login will fail — no users exist in the production database."
+            echo "::error::Set these in GitHub → Settings → Secrets and variables → Actions"
+            echo "missing=$MISSING" >> "$GITHUB_OUTPUT"
+          else
+            echo "All bootstrap secrets present."
+            echo "missing=" >> "$GITHUB_OUTPUT"
+          fi
+
       # Creates/refreshes the bootstrap users (admin, volunteers, users). Seed is
       # idempotent (upserts) and HARD-FAILS in production if any BOOTSTRAP_*_PASSWORD
       # is missing, so insecure default passwords can never be written to prod.
       - name: Seed production bootstrap users
-        if: ${{ secrets.PROD_DATABASE_URL && secrets.BOOTSTRAP_ADMIN_PASSWORD && secrets.BOOTSTRAP_VOLUNTEER_PASSWORD && secrets.BOOTSTRAP_USER_PASSWORD }}
+        if: ${{ secrets.PROD_DATABASE_URL && steps.check-secrets.outputs.missing == '' }}
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
@@ -71,12 +93,13 @@ jobs:
 #   VERCEL_ORG_ID            – your Vercel team id (run `vercel teams ls`)
 #   VERCEL_PROJECT_ID        – project id (run `vercel project ls` inside the project)
 #   PROD_DATABASE_URL        – production Postgres URL (required for migrations/seed)
-#   BOOTSTRAP_ADMIN_PASSWORD – production admin password
-#   BOOTSTRAP_VOLUNTEER_PASSWORD – production volunteer password
-#   BOOTSTRAP_USER_PASSWORD  – production regular-user password
+#   BOOTSTRAP_ADMIN_PASSWORD – production admin password (REQUIRED or login fails)
+#   BOOTSTRAP_VOLUNTEER_PASSWORD – production volunteer password (REQUIRED or login fails)
+#   BOOTSTRAP_USER_PASSWORD  – production regular-user password (REQUIRED or login fails)
 #
 # Also set in Vercel project environment (Settings → Environment Variables):
 #   DATABASE_URL             – production Postgres URL (must match PROD_DATABASE_URL)
+#   DATABASE_PROVIDER=postgresql – force Postgres schema at build time
 #   JWT_SECRET               – production JWT signing secret (openssl rand -hex 32)
 #   BLOB_READ_WRITE_TOKEN    – Vercel Blob store token (required for item/claim uploads)
 #   NEXT_PUBLIC_SITE_URL     – public site URL (required for CSRF, sitemap, robots)
