@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:security": "vitest run tests/security-noauth-regression.test.ts",
     "test:coverage": "vitest run --coverage",
-    "vercel-build": "DATABASE_PROVIDER=postgresql prisma db push && prisma generate && DATABASE_PROVIDER=postgresql tsx prisma/seed.ts && next build --webpack"
+    "vercel-build": "DATABASE_PROVIDER=postgresql prisma db push --accept-data-loss && prisma generate && DATABASE_PROVIDER=postgresql tsx prisma/seed.ts && next build --webpack"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
