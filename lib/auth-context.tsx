@@ -36,9 +36,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Session security: clear session after 30 minutes of inactivity
 const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutes
 
+function readCachedUser(): User | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = sessionStorage.getItem("user")
+    return raw ? (JSON.parse(raw) as User) : null
+  } catch {
+    sessionStorage.removeItem("user")
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(() => readCachedUser())
+  const [isAuthenticated, setIsAuthenticated] = useState(() => readCachedUser() !== null)
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 
