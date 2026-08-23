@@ -1,5 +1,5 @@
 {
-  "buildCommand": "DATABASE_PROVIDER=postgresql prisma db push --force-reset --accept-data-loss && prisma generate && next build --webpack",
+  "buildCommand": "DATABASE_PROVIDER=postgresql prisma db push --skip-generate && prisma generate && DATABASE_PROVIDER=postgresql tsx prisma/seed.ts && next build --webpack",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "crons": [
