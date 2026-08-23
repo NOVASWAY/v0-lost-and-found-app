@@ -94,20 +94,38 @@ export default function LoginPage() {
     else router.push("/dashboard")
   }, [router])
 
-  // Plays the sequence once when login succeeds, then navigates.
+  // Plays the unlock animation once when login succeeds.
   useEffect(() => {
     if (phase !== "running") return
+    const t = setTimeout(() => {
+      setIsUnlocking(true)
+      setPhase("unlocking")
+    }, UNLOCK_DELAY)
+    return () => clearTimeout(t)
+  }, [phase])
 
-    const timers: ReturnType<typeof setTimeout>[] = []
-    timers.push(
-      setTimeout(() => {
-        setIsUnlocking(true)
-        setPhase("unlocking")
-      }, UNLOCK_DELAY)
-    )
-    timers.push(setTimeout(() => navigateByRole(), NAVIGATE_DELAY))
-    return () => timers.forEach(clearTimeout)
+  // Navigate after NAVIGATE_DELAY. The timer must survive the phase change
+  // from "running" → "unlocking" which would cancel it via effect cleanup.
+  // We guard with navigateTimerRef so only one timer runs at a time, and
+  // only clean up on unmount.
+  const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (phase === "running" && !navigateTimerRef.current) {
+      navigateTimerRef.current = setTimeout(() => {
+        navigateTimerRef.current = null
+        navigateByRole()
+      }, NAVIGATE_DELAY)
+    }
   }, [phase, navigateByRole])
+  useEffect(() => {
+    const ref = navigateTimerRef
+    return () => {
+      if (ref.current) {
+        clearTimeout(ref.current)
+        ref.current = null
+      }
+    }
+  }, [])
 
   const triggerError = () => {
     setShake(true)
