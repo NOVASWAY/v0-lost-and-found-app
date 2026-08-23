@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production"
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
 
-  const cspHeader = `default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
+  const cspHeader = `default-src 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
 
   // Forward the nonce + CSP via request headers so Next.js can inject the nonce
   // into inline scripts during server rendering. Also set on the response so the
