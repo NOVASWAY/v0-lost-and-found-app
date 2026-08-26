@@ -5,6 +5,7 @@ vi.mock("../../lib/db", () => ({
   prisma: { user: { findUnique: vi.fn() } },
   hashPassword: vi.fn(),
   comparePassword: vi.fn(),
+  withDbRetry: (fn: () => Promise<unknown>) => fn(),
 }))
 
 import { prisma } from "../../lib/db"

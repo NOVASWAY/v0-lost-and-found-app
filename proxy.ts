@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import crypto from "crypto"
 import { verifyAccessToken } from "@/lib/jwt"
-import { prisma } from "@/lib/db"
+import { prisma, withDbRetry } from "@/lib/db"
 
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production"
@@ -57,10 +57,12 @@ export async function proxy(request: NextRequest) {
     let currentRole: string | null = null
     if (payload && prisma) {
       try {
-        const user = await prisma.user.findUnique({
-          where: { id: payload.sub },
-          select: { role: true, tokenVersion: true },
-        })
+        const user = await withDbRetry(() =>
+          prisma.user.findUnique({
+            where: { id: payload.sub },
+            select: { role: true, tokenVersion: true },
+          })
+        )
         if (user && user.tokenVersion === payload.tokenVersion) {
           currentRole = user.role
         }

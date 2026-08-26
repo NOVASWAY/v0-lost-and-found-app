@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "./db"
+import { prisma, withDbRetry } from "./db"
 import { verifyAccessToken } from "./jwt"
 import { assertSameOrigin } from "./security"
 
@@ -31,16 +31,18 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<{
     // (We could rely on token.role, but refreshing from DB prevents stale/removed accounts.)
     if (!prisma) return null
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        role: true,
-        tokenVersion: true,
-      },
-    })
+    const user = await withDbRetry(() =>
+      prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          role: true,
+          tokenVersion: true,
+        },
+      })
+    )
 
     if (!user) return null
 

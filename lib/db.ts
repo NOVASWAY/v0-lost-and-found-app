@@ -1,6 +1,6 @@
 import { prisma } from "./prisma"
 
-export { prisma }
+export { prisma, withDbRetry } from "./prisma"
 
 // Helper functions for common database operations
 export async function hashPassword(password: string): Promise<string> {
