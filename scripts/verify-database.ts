@@ -32,13 +32,13 @@ async function verifyDatabase() {
     // Verify users exist
     console.log("3️⃣  Verifying seed users...")
     const admin = await prisma.user.findUnique({
-      where: { username: "admin@vaultchurch.org" },
+      where: { username: "admin" },
     })
     const volunteer = await prisma.user.findUnique({
-      where: { username: "volunteer@vaultchurch.org" },
+      where: { username: "tomanderson" },
     })
     const user = await prisma.user.findUnique({
-      where: { username: "john.doe@vaultchurch.org" },
+      where: { username: "johndoe" },
     })
 
     if (admin && volunteer && user) {

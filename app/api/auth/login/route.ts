@@ -103,7 +103,6 @@ export async function POST(request: NextRequest) {
       const isValidPassword = await comparePassword(password, passwordHash)
 
       if (!user || !isValidPassword) {
-        console.log("[v0] Login failed for user:", username)
         await recordFailure(user ? "Invalid password" : "Unknown username")
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
@@ -121,8 +120,6 @@ export async function POST(request: NextRequest) {
           userId: user.id,
         },
       })
-
-      console.log("[v0] Login successful for user:", username, "role:", user.role)
 
       // Return user data (excluding password)
       const { password: _, ...userWithoutPassword } = user
@@ -160,14 +157,14 @@ export async function POST(request: NextRequest) {
 
       return response
     } catch (dbError) {
-      console.error("[v0] Database error during login:", dbError)
+      console.error("Database error during login:", dbError)
       return NextResponse.json(
         { error: "Database error during authentication" },
         { status: 503 }
       )
     }
   } catch (error) {
-    console.error("[v0] Login error:", error)
+    console.error("Login error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

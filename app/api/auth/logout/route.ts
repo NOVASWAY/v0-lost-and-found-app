@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
           },
         })
       } catch (error) {
-        console.error("[v0] Error creating logout audit log:", error)
+        console.error("Error creating logout audit log:", error)
         // Continue with logout even if audit log fails
       }
     }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     })
     return response
   } catch (error) {
-    console.error("[v0] Logout error:", error)
+    console.error("Logout error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
