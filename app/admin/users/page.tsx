@@ -108,7 +108,6 @@ export default function AdminUsersPage() {
         attended: markAttended,
         served: markServed,
         notes: serviceNotes || undefined,
-        recordedBy: user.name,
       })
       loadUsers()
       setAttendanceDialogOpen(false)

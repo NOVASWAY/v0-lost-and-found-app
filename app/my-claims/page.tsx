@@ -33,16 +33,12 @@ export default function MyClaimsPage() {
   }, [user, toast])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoaded && !isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+  }, [isLoaded, isAuthenticated, router])
 
-  if (!isAuthenticated || !user) {
-    return null
-  }
-
-  if (!isLoaded) {
+  if (!isLoaded || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-background">
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">

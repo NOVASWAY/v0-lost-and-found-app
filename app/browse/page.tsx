@@ -116,11 +116,17 @@ export default function BrowsePage() {
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="wallet">Wallet</SelectItem>
                 <SelectItem value="keys">Keys</SelectItem>
-                <SelectItem value="watch">Watch</SelectItem>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="clothing">Clothing</SelectItem>
+                <SelectItem value="jewelry">Jewelry</SelectItem>
+                <SelectItem value="backpack">Bag/Backpack</SelectItem>
                 <SelectItem value="water bottle">Water Bottle</SelectItem>
                 <SelectItem value="umbrella">Umbrella</SelectItem>
                 <SelectItem value="eyeglasses">Eyeglasses</SelectItem>
-                <SelectItem value="backpack">Backpack</SelectItem>
+                <SelectItem value="watch">Watch</SelectItem>
+                <SelectItem value="electronics">Electronics</SelectItem>
+                <SelectItem value="book">Book</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
 

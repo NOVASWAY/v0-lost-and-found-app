@@ -23,7 +23,7 @@ export default function AdminItemsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [items, setItems] = useState<Item[]>([])
   const [nameMap, setNameMap] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDelete = async (itemId: string) => {
@@ -42,9 +42,11 @@ export default function AdminItemsPage() {
   }
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== "admin") return
+    if (!isAuthenticated || user?.role !== "admin") {
+      setIsLoaded(true)
+      return
+    }
 
-    setIsLoading(true)
     // Items are fetched via the public list (uploader ids only); user names come
     // from the admin-only users endpoint so identity is never exposed publicly.
     Promise.all([itemsApi.getAll({ limit: 100 }), usersApi.getAll()])
@@ -59,25 +61,39 @@ export default function AdminItemsPage() {
         toast({ title: "Error", description: message, variant: "destructive" })
       })
       .finally(() => {
-        setIsLoading(false)
+        setIsLoaded(true)
       })
   }, [isAuthenticated, user?.role, toast])
 
   // Protect route - require authentication and admin role
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoaded && !isAuthenticated) {
       router.push("/login")
       return
     }
-    if (user?.role !== "admin") {
+    if (isLoaded && user?.role !== "admin") {
       router.push("/dashboard")
       return
     }
-  }, [isAuthenticated, user, router])
+  }, [isLoaded, isAuthenticated, user, router])
 
-  // Show nothing while checking authentication
-  if (!isAuthenticated || user?.role !== "admin") {
-    return null
+  // Show loading while checking auth or fetching data
+  if (!isLoaded || !isAuthenticated || user?.role !== "admin") {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-6 sm:mb-8 space-y-2">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 w-full bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </main>
+      </div>
+    )
   }
 
   const filteredItems = items.filter((item) => {
@@ -171,7 +187,7 @@ export default function AdminItemsPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
+                {!isLoaded ? (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">
                       Loading items...
@@ -231,7 +247,7 @@ export default function AdminItemsPage() {
                 )}
               </tbody>
             </table>
-            {!isLoading && filteredItems.length === 0 && (
+            {isLoaded && filteredItems.length === 0 && (
               <div className="py-12 text-center">
                 <p className="text-muted-foreground">No items found matching your search criteria</p>
               </div>

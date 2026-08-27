@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { requireAdmin } from "@/lib/auth-middleware"
+import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createLocationSchema, validateAndSanitize } from "@/lib/validation"
 
-// GET all locations
-export async function GET() {
+// GET all locations (authenticated users only)
+export async function GET(request: NextRequest) {
   try {
-    // Rate limiting
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
     const locations = await prisma.location.findMany({
       orderBy: { name: "asc" },
     })

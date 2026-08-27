@@ -168,7 +168,6 @@ export async function POST(request: NextRequest) {
     })
 
     // Add audit log
-    const user = await prisma.user.findUnique({ where: { id: uploadedById } })
     await prisma.auditLog.create({
       data: {
         type: "item_uploaded",

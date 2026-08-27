@@ -198,7 +198,7 @@ export const claimsApi = {
 
   getById: (id: string) => fetchApi<{ claim: any }>(`/claims/${id}`),
 
-  create: (data: { itemId: string; proofImage: string; claimantId: string; notes?: string }) =>
+  create: (data: { itemId: string; proofImage: string; notes?: string }) =>
     fetchApi<{ claim: any; message: string }>("/claims", {
       method: "POST",
       body: JSON.stringify(data),
@@ -290,7 +290,6 @@ export const serviceRecordsApi = {
     attended: boolean
     served: boolean
     notes?: string
-    recordedBy?: string
   }) =>
     fetchApi<{ record: any; message: string }>("/service-records", {
       method: "POST",

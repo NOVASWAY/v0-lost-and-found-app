@@ -1,13 +1,17 @@
 export default function Loading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="relative h-10 w-10">
-          <div className="absolute inset-0 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <div className="absolute inset-1 animate-spin rounded-full border-2 border-primary/40 border-b-transparent" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+        <div className="mb-6 sm:mb-8 space-y-2">
+          <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+          <div className="h-4 w-80 bg-muted animate-pulse rounded" />
         </div>
-        <p className="text-sm font-medium text-muted-foreground">Loading...</p>
-      </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-48 w-full bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </main>
     </div>
   )
 }

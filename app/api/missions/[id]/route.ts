@@ -90,12 +90,25 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    // Add audit log
+    // Add audit log with specific type based on the change
+    let auditType = "mission_updated"
+    let auditAction = "Mission updated"
+    if (status === "completed" && mission.status !== "completed") {
+      auditType = "mission_completed"
+      auditAction = "Mission completed"
+    } else if (status === "cancelled" && mission.status !== "cancelled") {
+      auditType = "mission_cancelled"
+      auditAction = "Mission cancelled"
+    } else if (assignedTo && assignedTo !== mission.assignedTo) {
+      auditType = "mission_assigned"
+      auditAction = "Mission reassigned"
+    }
+
     await prisma.auditLog.create({
       data: {
-        type: "mission_updated",
-        action: "Mission updated",
-        details: `Mission '${updatedMission.title}' updated`,
+        type: auditType,
+        action: auditAction,
+        details: `Mission '${updatedMission.title}' ${auditAction.toLowerCase()}`,
         severity: "info",
         userId: authResult.user.id,
       },

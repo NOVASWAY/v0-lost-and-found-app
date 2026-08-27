@@ -5,8 +5,20 @@ import { Button } from "@/components/ui/button"
 import { Shield } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
+import { useState, useEffect } from "react"
+import { ItemCard } from "@/components/item-card"
+import { itemsApi, type Item } from "@/lib/api-client"
 
 export default function HomePage() {
+  const [recentItems, setRecentItems] = useState<Item[]>([])
+
+  useEffect(() => {
+    itemsApi
+      .getAll({ limit: 8 })
+      .then((res) => setRecentItems(res.items))
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Animated background gradient */}
@@ -69,6 +81,38 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Recent Items Feed */}
+      {recentItems.length > 0 && (
+        <section className="container mx-auto px-4 py-16">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Recently Found Items</h2>
+            <p className="text-muted-foreground mt-2">Browse items that have been turned in</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {recentItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                id={item.id}
+                imageUrl={item.imageUrl}
+                category={item.category}
+                color={item.color}
+                dateFound={new Date(item.dateFounded)}
+                location={item.location}
+                status={item.status}
+                donationDeadline={item.donationDeadline ? new Date(item.donationDeadline) : undefined}
+              />
+            ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/browse">
+              <Button variant="outline" size="lg" className="font-semibold">
+                View All Items
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border/50 bg-card/50 glass-effect py-12">

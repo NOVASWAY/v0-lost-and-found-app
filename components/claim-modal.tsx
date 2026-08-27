@@ -83,7 +83,6 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
       await claimsApi.create({
         itemId,
         proofImage: proofUrl,
-        claimantId: user.id,
         notes: notes.trim() || undefined,
       })
 

@@ -69,8 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
     }
 
-    const { serviceDate, attended, served, notes } = validation.data
-    const userId = authResult.user.id
+    const { userId, serviceDate, attended, served, notes } = validation.data
     const recordedBy = authResult.user.username
 
     // Validate userId to prevent path traversal

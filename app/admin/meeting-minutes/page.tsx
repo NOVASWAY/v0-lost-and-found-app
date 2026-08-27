@@ -827,8 +827,8 @@ export default function AdminMeetingMinutesPage() {
                         <Card key={idx} className="p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
-                              <p className="font-medium text-sm">{escapeHtml(actionItem.item)}</p>
-                              <p className="text-xs text-muted-foreground">Assigned to: {escapeHtml(actionItem.assignedTo)}</p>
+                              <p className="font-medium text-sm">{actionItem.item}</p>
+                              <p className="text-xs text-muted-foreground">Assigned to: {actionItem.assignedTo}</p>
                               {actionItem.dueDate && (
                                 <p className="text-xs text-muted-foreground">Due: {new Date(actionItem.dueDate).toLocaleDateString()}</p>
                               )}
@@ -937,7 +937,7 @@ export default function AdminMeetingMinutesPage() {
                         {minute.location && (
                           <div className="flex items-center gap-1">
                             <FileText className="h-4 w-4" />
-                            {escapeHtml(minute.location)}
+                            {minute.location}
                           </div>
                         )}
                         <div className="flex items-center gap-1">
@@ -963,7 +963,7 @@ export default function AdminMeetingMinutesPage() {
                       <h4 className="text-sm font-medium mb-2">Agenda:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {minute.agenda.map((item: any, idx: any) => (
-                          <li key={idx}>{escapeHtml(item)}</li>
+                          <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     </div>
@@ -979,7 +979,7 @@ export default function AdminMeetingMinutesPage() {
                       <h4 className="text-sm font-medium mb-2">Decisions:</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {minute.decisions.map((decision: any, idx: any) => (
-                          <li key={idx}>{escapeHtml(decision)}</li>
+                          <li key={idx}>{decision}</li>
                         ))}
                       </ul>
                     </div>
@@ -995,10 +995,10 @@ export default function AdminMeetingMinutesPage() {
                                 <CheckCircle className={`h-4 w-4 mt-0.5 ${actionItem.status === "completed" ? "text-green-500" : "text-muted-foreground"}`} />
                                 <div className="flex-1">
                                   <p className={`text-sm ${actionItem.status === "completed" ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
-                                    {escapeHtml(actionItem.item)}
+                                    {actionItem.item}
                                   </p>
                                   <p className="text-xs text-muted-foreground mt-1">
-                                    Assigned to: {escapeHtml(actionItem.assignedTo)}
+                                    Assigned to: {actionItem.assignedTo}
                                     {actionItem.dueDate && ` • Due: ${new Date(actionItem.dueDate).toLocaleDateString()}`}
                                   </p>
                                 </div>
@@ -1032,7 +1032,7 @@ export default function AdminMeetingMinutesPage() {
                     </div>
                   )}
                   <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                    Recorded by {escapeHtml(minute.recordedBy)} on {new Date(minute.createdAt).toLocaleDateString()}
+                    Recorded by {minute.recordedBy} on {new Date(minute.createdAt).toLocaleDateString()}
                   </div>
                 </Card>
               ))}

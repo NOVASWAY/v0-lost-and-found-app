@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Validate type and severity to prevent injection
     const validSeverities = ["info", "warning", "error", "critical"]
-    const validTypes = ["user_created", "user_deleted", "user_password_changed", "item_uploaded", "item_claimed", "item_released", "item_donated", "attendance_marked", "service_marked", "location_created", "location_updated", "location_deleted", "playbook_created", "playbook_updated", "playbook_deleted", "mission_created", "mission_assigned", "mission_completed", "mission_cancelled", "system_settings_updated", "login", "logout", "order_sent"]
+    const validTypes = ["user_created", "user_deleted", "user_password_changed", "item_uploaded", "item_claimed", "item_released", "item_donated", "attendance_marked", "service_marked", "location_created", "location_updated", "location_deleted", "playbook_created", "playbook_updated", "playbook_deleted", "mission_created", "mission_assigned", "mission_completed", "mission_cancelled", "mission_deleted", "meeting_minutes_created", "meeting_minutes_updated", "meeting_minutes_deleted", "donation_expired", "system_settings_updated", "login", "logout", "order_sent"]
     if (type && validTypes.includes(type)) {
       where.type = type
     }

@@ -99,12 +99,6 @@ export const createClaimSchema = z.object({
       },
       { message: "Invalid proof image URL format" }
     ),
-  claimantId: z
-    .string()
-    .min(1)
-    .refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
-      message: "Invalid claimant ID format",
-    }),
   notes: z.string().max(500).trim().refine((val) => !val || !val.includes(".."), {
   message: "Notes contains invalid characters",
   }).optional(),
@@ -225,7 +219,6 @@ export const createServiceRecordSchema = z.object({
   attended: z.boolean().optional(),
   served: z.boolean().optional(),
   notes: z.string().max(500).trim().optional(),
-  recordedBy: z.string().max(100).trim().optional(),
 })
 
 // Sanitization helper
