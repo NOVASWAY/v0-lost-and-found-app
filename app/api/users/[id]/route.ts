@@ -65,7 +65,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const { id } = await params
-    
+
     // Validate ID to prevent path traversal
     const idValidation = validateRouteId(id)
     if (!idValidation.valid) {
@@ -79,19 +79,42 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    // Add audit log before deletion
-    await prisma.auditLog.create({
-      data: {
-        type: "user_deleted",
-        action: "User account deactivated",
-        details: `User '${user.username}' deactivated`,
-        severity: "warning",
-        userId: user.id,
-      },
-    })
+    // Prevent admins from deleting themselves
+    if (id === authResult.user.id) {
+      return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 })
+    }
 
-    await prisma.user.delete({
-      where: { id },
+    // Check for dependent records that block deletion
+    const [itemsCount, claimsCount, missionsAssignedCount, missionsCreatedCount, ordersCount, releasesCount] =
+      await Promise.all([
+        prisma.item.count({ where: { uploadedById: id } }),
+        prisma.claim.count({ where: { claimantId: id } }),
+        prisma.mission.count({ where: { assignedTo: id } }),
+        prisma.mission.count({ where: { assignedBy: id } }),
+        prisma.order.count({ where: { userId: id } }),
+        prisma.releaseLog.count({ where: { volunteerId: id } }),
+      ])
+
+    const blockers: string[] = []
+    if (itemsCount > 0) blockers.push(`${itemsCount} uploaded item${itemsCount !== 1 ? "s" : ""}`)
+    if (claimsCount > 0) blockers.push(`${claimsCount} submitted claim${claimsCount !== 1 ? "s" : ""}`)
+    if (missionsAssignedCount > 0) blockers.push(`${missionsAssignedCount} assigned mission${missionsAssignedCount !== 1 ? "s" : ""}`)
+    if (missionsCreatedCount > 0) blockers.push(`${missionsCreatedCount} created mission${missionsCreatedCount !== 1 ? "s" : ""}`)
+    if (ordersCount > 0) blockers.push(`${ordersCount} order${ordersCount !== 1 ? "s" : ""}`)
+    if (releasesCount > 0) blockers.push(`${releasesCount} release log${releasesCount !== 1 ? "s" : ""}`)
+
+    if (blockers.length > 0) {
+      return NextResponse.json(
+        { error: `Cannot delete user: ${blockers.join(", ")}. Please reassign or remove these records first.` },
+        { status: 400 },
+      )
+    }
+
+    // Delete audit logs and service records (safe to clean up), then the user
+    await prisma.$transaction(async (tx) => {
+      await tx.auditLog.deleteMany({ where: { userId: id } })
+      await tx.serviceRecord.deleteMany({ where: { userId: id } })
+      await tx.user.delete({ where: { id } })
     })
 
     return NextResponse.json({ message: "User deleted successfully" })

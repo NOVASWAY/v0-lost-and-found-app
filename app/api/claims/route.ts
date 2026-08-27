@@ -5,6 +5,12 @@ import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
+class ClaimError extends Error {
+  constructor(message: string, public status: number) {
+    super(message)
+  }
+}
+
 // GET all claims
 export async function GET(request: NextRequest) {
   try {
@@ -127,80 +133,62 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: urlValidation.error || "Invalid proof image URL" }, { status: 400 })
     }
 
-    // Check if item exists and is available
-    const item = await prisma.item.findUnique({
-      where: { id: itemId },
-    })
+    // Atomic transaction: check item status + create claim + update stats.
+    // The Claim model has @@unique([itemId, claimantId]) so duplicate claims
+    // are rejected at the DB level even if two concurrent requests pass the
+    // status check.
+    const claim = await prisma.$transaction(async (tx) => {
+      const item = await tx.item.findUnique({ where: { id: itemId } })
+      if (!item) throw new ClaimError("Item not found", 404)
+      if (item.status !== "available") throw new ClaimError("Item is not available for claiming", 400)
+      if (item.uploadedById === claimantId) throw new ClaimError("You cannot claim an item you uploaded", 400)
 
-    if (!item) {
-      return NextResponse.json({ error: "Item not found" }, { status: 404 })
-    }
+      const claimant = await tx.user.findUnique({ where: { id: claimantId } })
+      if (!claimant) throw new ClaimError("Claimant not found", 404)
 
-    if (item.status !== "available") {
-      return NextResponse.json({ error: "Item is not available for claiming" }, { status: 400 })
-    }
-
-    // Prevent the uploader from claiming their own item.
-    if (item.uploadedById === claimantId) {
-      return NextResponse.json({ error: "You cannot claim an item you uploaded" }, { status: 400 })
-    }
-
-    // Get claimant info
-    const claimant = await prisma.user.findUnique({
-      where: { id: claimantId },
-    })
-
-    if (!claimant) {
-      return NextResponse.json({ error: "Claimant not found" }, { status: 404 })
-    }
-
-    // Create claim
-    const claim = await prisma.claim.create({
-      data: {
-        itemId,
-        itemName: item.category,
-        itemImage: item.imageUrl,
-        proofImage,
-        claimantName: claimant.name,
-        claimantEmail: `${claimant.username}@vault.church`,
-        claimantId,
-        status: "pending",
-      },
-      include: {
-        item: true,
-        claimant: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          },
+      const created = await tx.claim.create({
+        data: {
+          itemId,
+          itemName: item.category,
+          itemImage: item.imageUrl,
+          proofImage,
+          claimantName: claimant.name,
+          claimantEmail: `${claimant.username}@vault.church`,
+          claimantId,
+          status: "pending",
         },
-      },
-    })
+        include: {
+          item: true,
+          claimant: { select: { id: true, name: true, username: true } },
+        },
+      })
 
-    // Update user stats (item stays "available" until a staff member approves
-    // the claim, so an unapproved claim can't lock the item for other users)
-    await prisma.user.update({
-      where: { id: claimantId },
-      data: {
-        claimsSubmitted: { increment: 1 },
-        vaultPoints: { increment: 25 },
-      },
-    })
+      await tx.user.update({
+        where: { id: claimantId },
+        data: { claimsSubmitted: { increment: 1 }, vaultPoints: { increment: 25 } },
+      })
 
-    // Add audit log
-    await prisma.auditLog.create({
-      data: {
-        type: "item_claimed",
-        action: "Item claimed",
-        details: `Claim submitted for ${item.category}`,
-        severity: "info",
-        userId: claimantId,
-      },
+      await tx.auditLog.create({
+        data: {
+          type: "item_claimed",
+          action: "Item claimed",
+          details: `Claim submitted for ${item.category}`,
+          severity: "info",
+          userId: claimantId,
+        },
+      })
+
+      return created
     })
 
     return NextResponse.json({ claim, message: "Claim created successfully" })
   } catch (error) {
+    if (error instanceof ClaimError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "You have already submitted a claim for this item" }, { status: 409 })
+    }
     console.error("Create claim error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

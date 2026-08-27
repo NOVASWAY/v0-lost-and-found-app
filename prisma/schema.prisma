@@ -92,6 +92,7 @@ model Claim {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  @@unique([itemId, claimantId])
   @@index([status])
   @@index([itemId])
   @@index([claimantId])
