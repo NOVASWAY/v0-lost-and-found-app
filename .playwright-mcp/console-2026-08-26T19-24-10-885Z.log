@@ -1,0 +1,17 @@
+[    1012ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at r1 (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:37060)
+    at ih (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:88488)
+    at sy (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:129317)
+    at https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:124196
+    at so (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:124297)
+    at sG (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:150884)
+    at MessagePort.C (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/8928-687c081b3f2e58a7.js:1:50593)
+[  127756ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at r1 (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:37060)
+    at ih (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:88488)
+    at sy (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:129317)
+    at https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:124196
+    at so (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:124297)
+    at sG (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/4bd1b696-ef441a59c2fc9271.js:1:150884)
+    at MessagePort.C (https://v0-lost-and-found-app-sepia-eight.vercel.app/_next/static/chunks/8928-687c081b3f2e58a7.js:1:50593)
+[  128504ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://gplf7lwgep6rjiig.public.blob.vercel-storage.com/items/1787772348528-76arvkyu3ao.png:0

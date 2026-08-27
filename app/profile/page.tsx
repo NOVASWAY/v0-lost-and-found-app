@@ -78,6 +78,10 @@ export default function ProfilePage() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
 
   useEffect(() => {
+    if (user?.name) setName(user.name)
+  }, [user?.name])
+
+  useEffect(() => {
     if (user?.id) {
       const userPrefs = getUserPreferences(user.id) || getDefaultUserPreferences(user.id)
       setPreferences({ ...userPrefs, userId: user.id })

@@ -1,0 +1,13 @@
+- generic [active] [ref=f12e1]:
+  - main [ref=f12e4]:
+    - generic [ref=f12e5]:
+      - button "Back" [ref=f12e7]
+      - generic [ref=f12e9]:
+        - heading "Operational Playbooks" [level=1] [ref=f12e10]
+        - button "New Protocol" [ref=f12e11]
+      - paragraph [ref=f12e12]: Standard operating procedures for security scenarios
+    - textbox "Search playbooks..." [ref=f12e18]
+    - paragraph [ref=f12e24]: No playbooks found
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f12e25]

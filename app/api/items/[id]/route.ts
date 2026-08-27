@@ -154,6 +154,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
+    const existingItem = await prisma.item.findUnique({ where: { id } })
+    if (!existingItem) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 })
+    }
+
     await prisma.item.delete({
       where: { id },
     })

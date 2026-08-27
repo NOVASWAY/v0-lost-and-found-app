@@ -1,0 +1,69 @@
+- generic [active] [ref=f32e1]:
+  - banner [ref=f32e2]:
+    - generic [ref=f32e3]:
+      - link "Vault Church THE VAULT Security Operations" [ref=f32e4] [cursor=pointer]:
+        - /url: /
+        - img "Vault Church" [ref=f32e6]
+        - generic [ref=f32e7]:
+          - generic [ref=f32e8]: THE VAULT
+          - generic [ref=f32e9]: Security Operations
+      - navigation [ref=f32e10]:
+        - link "Dashboard" [ref=f32e11] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Browse Items" [ref=f32e12] [cursor=pointer]:
+          - /url: /browse
+        - link "Upload Item" [ref=f32e13] [cursor=pointer]:
+          - /url: /upload
+        - link "My Claims" [ref=f32e14] [cursor=pointer]:
+          - /url: /my-claims
+        - link "My Uploads" [ref=f32e15] [cursor=pointer]:
+          - /url: /my-uploads
+      - button "Toggle theme" [ref=f32e17]
+  - generic [ref=f32e19]:
+    - button "Toggle theme" [ref=f32e124]
+    - generic [ref=f32e24]: SECURITY OPERATIONS // CLEARANCE REQUIRED
+    - generic [ref=f32e36]:
+      - generic [ref=f32e67]:
+        - generic [ref=f32e68]: "0"
+        - generic [ref=f32e69]: "5"
+        - generic [ref=f32e70]: "10"
+        - generic [ref=f32e71]: "15"
+        - generic [ref=f32e72]: "20"
+        - generic [ref=f32e73]: "25"
+        - generic [ref=f32e74]: "30"
+        - generic [ref=f32e75]: "35"
+        - generic [ref=f32e76]: "40"
+        - generic [ref=f32e77]: "45"
+        - generic [ref=f32e78]: "50"
+        - generic [ref=f32e79]: "55"
+        - generic [ref=f32e80]: "60"
+        - generic [ref=f32e81]: "65"
+        - generic [ref=f32e82]: "70"
+        - generic [ref=f32e83]: "75"
+        - generic [ref=f32e84]: "80"
+        - generic [ref=f32e85]: "85"
+        - generic [ref=f32e86]: "90"
+        - generic [ref=f32e87]: "95"
+      - generic [ref=f32e105]:
+        - heading "THE VAULT" [level=1] [ref=f32e106]
+        - paragraph [ref=f32e107]: SECURITY OPERATIONS
+      - generic [ref=f32e108]:
+        - generic [ref=f32e109]:
+          - generic [ref=f32e110]:
+            - generic [ref=f32e111]: Username
+            - textbox "Username" [ref=f32e112]:
+              - /placeholder: Enter your username
+          - generic [ref=f32e113]:
+            - generic [ref=f32e114]: Password
+            - textbox "Password" [ref=f32e115]:
+              - /placeholder: ••••••••
+          - button "Sign In" [ref=f32e116]
+        - generic [ref=f32e117]:
+          - generic [ref=f32e118]: status
+          - generic [ref=f32e119]: IDLE — AWAITING INPUT
+        - generic [ref=f32e120]: Contact an administrator to create an account
+      - link "Back to home" [ref=f32e122] [cursor=pointer]:
+        - /url: /
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f32e123]

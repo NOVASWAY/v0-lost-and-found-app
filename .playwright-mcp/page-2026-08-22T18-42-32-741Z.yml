@@ -1,0 +1,92 @@
+- generic [active] [ref=f45e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=f45e3]:
+    - generic [ref=f45e4]:
+      - generic [ref=f45e5]:
+        - generic [ref=f45e6]:
+          - generic [ref=f45e7]:
+            - generic [ref=f45e10]:
+              - link "njauwangari6-gmailcom's projects Hobby" [ref=f45e11] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects
+                - generic [ref=f45e13]:
+                  - generic [ref=f45e14]: njauwangari6-gmailcom's projects
+                  - generic [ref=f45e15]: Hobby
+              - button [ref=f45e17] [cursor=pointer]
+            - button "Find F" [ref=f45e22]:
+              - generic [ref=f45e24]:
+                - generic [ref=f45e28]: Find
+                - generic [ref=f45e29]: F
+          - navigation [ref=f45e33]:
+            - generic [ref=f45e37]:
+              - link "Overview" [ref=f45e38] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+              - link "Deployments" [ref=f45e43] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+              - link "Logs" [ref=f45e49] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+              - link "Analytics" [ref=f45e55] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/analytics
+              - link "Speed Insights" [ref=f45e61] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+              - link "Observability" [ref=f45e67] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability
+              - link "Firewall" [ref=f45e76] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall
+              - link "CDN" [ref=f45e86] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/cdn
+              - separator [ref=f45e95]
+              - link "Environment Variables" [ref=f45e96] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environment-variables
+              - link "Domains" [ref=f45e102] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/domains
+              - link "Connect Beta" [ref=f45e108] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/connect
+                - generic [ref=f45e112]:
+                  - generic [ref=f45e113]: Connect
+                  - generic [ref=f45e114]: Beta
+              - link "Integrations" [ref=f45e116] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/integrations
+              - link "Storage" [ref=f45e122] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores
+              - link "Flags" [ref=f45e128] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/flags
+              - link "Agent" [ref=f45e137] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/agent
+              - link "AI Gateway" [ref=f45e146] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/ai-gateway
+              - link "Sandboxes" [ref=f45e155] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/sandboxes
+              - link "Workflows" [ref=f45e164] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/workflows
+              - link "Images Beta" [ref=f45e170] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/images
+                - generic [ref=f45e174]:
+                  - generic [ref=f45e175]: Images
+                  - generic [ref=f45e176]: Beta
+              - separator [ref=f45e178]
+              - link "Usage" [ref=f45e179] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/usage
+              - link "Support" [ref=f45e185] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/support
+              - link "Settings" [ref=f45e191] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings
+          - generic [ref=f45e204]:
+            - button "Avatar for njauwangari6-9400 njauwangari6-9400" [ref=f45e205] [cursor=pointer]:
+              - img "Avatar for njauwangari6-9400" [ref=f45e206]:
+                - img "Avatar for njauwangari6-9400" [ref=f45e207]
+              - generic [ref=f45e208]: njauwangari6-9400
+            - button "notifications" [ref=f45e215] [cursor=pointer]
+        - button [ref=f45e219] [cursor=pointer]
+      - generic [ref=f45e224]:
+        - generic [ref=f45e227]:
+          - link "v0-lost-and-found-app" [ref=f45e228] [cursor=pointer]:
+            - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+          - button [ref=f45e232] [cursor=pointer]
+          - link "Back to team view" [ref=f45e238] [cursor=pointer]:
+            - /url: /njauwangari6-gmailcoms-projects/~/settings/environment-variables
+        - navigation "Breadcrumb" [ref=f45e242]:
+          - generic [ref=f45e243]: Environment Variables
+        - button "Vercel Agent is available on Pro" [ref=f45e248] [cursor=pointer]:
+          - generic [ref=f45e261]: Agent
+  - alert [ref=f45e265]

@@ -1,0 +1,185 @@
+- generic [ref=f22e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=f22e3]:
+    - generic [ref=f22e4]:
+      - generic [ref=f22e5]:
+        - generic [ref=f22e6]:
+          - generic [ref=f22e7]:
+            - generic [ref=f22e10]:
+              - link "njauwangari6-gmailcom's projects Hobby" [ref=f22e11] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects
+                - generic [ref=f22e13]:
+                  - generic [ref=f22e14]: njauwangari6-gmailcom's projects
+                  - generic [ref=f22e15]: Hobby
+              - button [ref=f22e17] [cursor=pointer]
+            - button "Find F" [ref=f22e22]:
+              - generic [ref=f22e24]:
+                - generic [ref=f22e28]: Find
+                - generic [ref=f22e29]: F
+          - navigation [ref=f22e33]:
+            - generic [ref=f22e37]:
+              - link "Overview" [ref=f22e38] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+              - link "Deployments" [ref=f22e43] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+              - link "Logs" [ref=f22e49] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+              - link "Analytics" [ref=f22e55] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/analytics
+              - link "Speed Insights" [ref=f22e61] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+              - link "Observability" [ref=f22e67] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability
+              - link "Firewall" [ref=f22e76] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall
+              - link "CDN" [ref=f22e86] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/cdn
+              - separator [ref=f22e95]
+              - link "Environment Variables" [ref=f22e96] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environment-variables
+              - link "Domains" [ref=f22e102] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/domains
+              - link "Connect" [ref=f22e108] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/connect
+              - link "Integrations" [ref=f22e114] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/integrations
+              - link "Storage" [ref=f22e120] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores
+              - link "Flags" [ref=f22e126] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/flags
+              - link "Agent" [ref=f22e135] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/agent
+              - link "AI Gateway" [ref=f22e144] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/ai-gateway
+              - link "Sandboxes" [ref=f22e153] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/sandboxes
+              - link "Workflows" [ref=f22e162] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/workflows
+              - link "Images" [ref=f22e168] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/images
+              - separator [ref=f22e174]
+              - link "Usage" [ref=f22e175] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/usage
+              - link "Support" [ref=f22e181] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/support
+              - link "Settings" [ref=f22e187] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings
+          - generic [ref=f22e198]:
+            - generic [ref=f22e315]:
+              - generic [ref=f22e316]:
+                - generic [ref=f22e317]:
+                  - generic [ref=f22e318]: Free Tokens
+                  - generic [ref=f22e319]: Free
+                - button "Dismiss" [ref=f22e322] [cursor=pointer]
+              - generic [ref=f22e326]:
+                - generic [ref=f22e327]: Use GLM 5.2 in Vercel's new coding harness, , free through Aug 27.
+                - generic [ref=f22e333]:
+                  - link "Get" [ref=f22e335] [cursor=pointer]:
+                    - /url: https://fx.sh
+                  - generic [ref=f22e344]:
+                    - button "Previous" [ref=f22e345] [cursor=pointer]
+                    - button "Next" [ref=f22e349] [cursor=pointer]
+            - generic [ref=f22e200]:
+              - button "Avatar for njauwangari6-9400 njauwangari6-9400" [ref=f22e201] [cursor=pointer]:
+                - img "Avatar for njauwangari6-9400" [ref=f22e202]:
+                  - img "Avatar for njauwangari6-9400" [ref=f22e203]
+                - generic [ref=f22e204]: njauwangari6-9400
+              - button "83 unseen notifications" [ref=f22e354] [cursor=pointer]
+        - button [ref=f22e214] [cursor=pointer]
+      - generic [ref=f22e218]:
+        - generic [ref=f22e219]:
+          - generic [ref=f22e222]:
+            - link "v0-lost-and-found-app" [ref=f22e223] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+            - button [ref=f22e227] [cursor=pointer]
+            - link "Back to team view" [ref=f22e233] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/~/stores
+          - navigation "Breadcrumb" [ref=f22e237]:
+            - generic [ref=f22e238]: Storage
+          - button "Vercel Agent is available on Pro" [ref=f22e243] [cursor=pointer]:
+            - generic [ref=f22e256]: Agent
+        - generic [ref=f22e262]:
+          - generic [ref=f22e263]:
+            - generic [ref=f22e264]:
+              - searchbox "Search" [ref=f22e265]
+              - generic [ref=f22e271]:
+                - generic [ref=f22e272]: Press slash to focus search
+                - generic [ref=f22e273]: /
+            - combobox [ref=f22e275]:
+              - generic [ref=f22e276]:
+                - searchbox [ref=f22e277]: All
+                - button "Open menu" [ref=f22e278] [cursor=pointer]
+            - button "Connect Database" [ref=f22e281] [cursor=pointer]
+            - button "Create Database" [ref=f22e283] [cursor=pointer]
+          - generic [ref=f22e290]:
+            - link "neon-violet-kite Neon - Free Created Mar 12" [ref=f22e291] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+              - generic [ref=f22e293]:
+                - generic [ref=f22e299]:
+                  - generic [ref=f22e300]: neon-violet-kite
+                  - generic [ref=f22e301]: Neon - Free
+                - generic "Created at 2026-03-12T07:30:22.560Z" [ref=f22e305]: Created Mar 12
+            - generic [ref=f22e306]:
+              - paragraph [ref=f22e307]: All Environments
+              - button "Menu" [ref=f22e308] [cursor=pointer]
+  - alert [ref=f22e314]
+  - dialog [active] [ref=f22e360]:
+    - generic [ref=f22e361]:
+      - generic [ref=f22e362]:
+        - heading "Browse Storage" [level=2] [ref=f22e363]
+        - paragraph [ref=f22e364]: Create databases and stores that you can connect to your projects.
+        - button "Close" [ref=f22e366] [cursor=pointer]
+      - generic [ref=f22e372]:
+        - generic [ref=f22e373]:
+          - generic [ref=f22e380] [cursor=pointer]:
+            - paragraph [ref=f22e382]: Global Config
+            - paragraph [ref=f22e383]: Ultra-low latency reads
+          - generic [ref=f22e390] [cursor=pointer]:
+            - paragraph [ref=f22e392]: Blob
+            - paragraph [ref=f22e393]: Fast object storage
+        - generic [ref=f22e394]:
+          - generic [ref=f22e395]:
+            - paragraph [ref=f22e396]: Marketplace Database Providers
+            - link [ref=f22e397] [cursor=pointer]:
+              - /url: /docs/integrations/install-an-integration/product-integration
+              - paragraph [ref=f22e398]: Learn more
+          - generic [ref=f22e401]:
+            - generic [ref=f22e406] [cursor=pointer]:
+              - paragraph [ref=f22e408]: Neon
+              - paragraph [ref=f22e409]: Serverless Postgres
+            - generic [ref=f22e414] [cursor=pointer]:
+              - paragraph [ref=f22e416]: Supabase
+              - paragraph [ref=f22e417]: Postgres backend
+            - button "expander" [ref=f22e421] [cursor=pointer]:
+              - generic [ref=f22e426]:
+                - paragraph [ref=f22e428]: AWS
+                - paragraph [ref=f22e429]: Serverless, reliable, secure AWS Services.
+            - button "expander" [ref=f22e435] [cursor=pointer]:
+              - generic [ref=f22e440]:
+                - paragraph [ref=f22e442]: Upstash
+                - paragraph [ref=f22e443]: Serverless DB (Redis, Vector, Queue, Search)
+            - generic [ref=f22e450] [cursor=pointer]:
+              - paragraph [ref=f22e452]: Redis
+              - paragraph [ref=f22e453]: Official Redis for Vercel
+            - generic [ref=f22e458] [cursor=pointer]:
+              - paragraph [ref=f22e460]: Nile
+              - paragraph [ref=f22e461]: Postgres re-engineered for B2B
+            - generic [ref=f22e466] [cursor=pointer]:
+              - paragraph [ref=f22e468]: MotherDuck
+              - paragraph [ref=f22e469]: Analytics Database
+            - generic [ref=f22e474] [cursor=pointer]:
+              - paragraph [ref=f22e476]: Convex
+              - paragraph [ref=f22e477]: Reactive database
+            - generic [ref=f22e482] [cursor=pointer]:
+              - paragraph [ref=f22e484]: Prisma Postgres
+              - paragraph [ref=f22e485]: Instant Serverless Postgres
+            - generic [ref=f22e490] [cursor=pointer]:
+              - paragraph [ref=f22e492]: Turso
+              - paragraph [ref=f22e493]: Serverless SQLite
+            - generic [ref=f22e498] [cursor=pointer]:
+              - paragraph [ref=f22e500]: MongoDB Atlas
+              - paragraph [ref=f22e501]: Database for Developers
+      - generic [ref=f22e502]:
+        - button "Cancel" [ref=f22e503] [cursor=pointer]
+        - button "Continue" [ref=f22e505] [cursor=pointer]

@@ -1,0 +1,47 @@
+- generic:
+  - generic:
+    - generic:
+      - main:
+        - generic:
+          - generic:
+            - heading [level=1]: Upload Found Item
+            - paragraph: Help someone recover their lost item by uploading a photo and details
+          - generic:
+            - generic:
+              - generic:
+                - generic: Item Photo *
+                - generic:
+                  - generic:
+                    - button: Change Photo
+                    - generic: Photo uploaded
+              - generic:
+                - generic: Category *
+                - combobox:
+                  - generic: Wallet
+                - combobox
+              - generic:
+                - generic: Primary Color
+                - textbox:
+                  - /placeholder: e.g., Black, Blue, Red
+              - generic:
+                - generic: Location Found *
+                - combobox [expanded]:
+                  - generic: Select location
+                - combobox
+              - generic:
+                - generic: Date Found *
+                - textbox: 2026-08-26
+              - generic:
+                - generic: Description / Unique Markings
+                - textbox:
+                  - /placeholder: Any unique features, brands, or identifying marks...
+              - button: Submit Found Item
+  - list
+  - alert
+  - listbox [ref=f1e97]:
+    - option "Children's Ministry Room" [active] [ref=f1e98]
+    - option "Entrance Lobby" [ref=f1e101]
+    - option "Fellowship Hall" [ref=f1e104]
+    - option "Main Sanctuary - Pew 12" [ref=f1e107]
+    - option "Parking Lot B" [ref=f1e110]
+    - option "Youth Room" [ref=f1e113]

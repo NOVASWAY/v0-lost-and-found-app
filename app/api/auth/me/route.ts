@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
         serviceCount: true,
         createdAt: true,
         updatedAt: true,
+        orders: {
+          select: { status: true },
+        },
       },
     })
 

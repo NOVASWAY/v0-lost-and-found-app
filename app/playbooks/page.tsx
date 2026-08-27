@@ -17,6 +17,7 @@ export default function PlaybooksPage() {
   const { toast } = useToast()
   const [playbooks, setPlaybooks] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     playbooksApi
@@ -26,20 +27,35 @@ export default function PlaybooksPage() {
         const message = err instanceof ApiError ? err.message : "Failed to load playbooks"
         toast({ title: "Error", description: message, variant: "destructive" })
       })
+      .finally(() => setIsLoaded(true))
   }, [toast])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isLoaded && !isAuthenticated) {
       router.push("/login")
     }
     // Playbooks contain internal security procedures; staff only.
-    if (isAuthenticated && user?.role !== "admin" && user?.role !== "volunteer") {
+    if (isLoaded && isAuthenticated && user?.role !== "admin" && user?.role !== "volunteer") {
       router.push("/dashboard")
     }
-  }, [isAuthenticated, user, router])
+  }, [isLoaded, isAuthenticated, user, router])
 
-  if (!isAuthenticated) {
-    return null
+  if (!isLoaded || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
+          <div className="mb-6 sm:mb-8 space-y-2">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 w-full bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        </main>
+      </div>
+    )
   }
 
   if (user?.role !== "admin" && user?.role !== "volunteer") {

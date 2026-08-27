@@ -1,0 +1,50 @@
+- generic [active] [ref=f22e1]:
+  - generic [ref=f22e3]:
+    - banner [ref=f22e5]:
+      - generic [ref=f22e6]:
+        - generic [ref=f22e7]:
+          - img "Vault Church" [ref=f22e9]
+          - generic [ref=f22e10]: Vault Church
+        - navigation [ref=f22e11]:
+          - button "Toggle theme" [ref=f22e12]
+          - link [ref=f22e13] [cursor=pointer]:
+            - /url: /login
+            - button "Login" [ref=f22e14]
+    - generic [ref=f22e16]:
+      - img "Vault Church" [ref=f22e20]
+      - generic [ref=f22e21]:
+        - heading "Vault Church Security System" [level=1] [ref=f22e22]:
+          - text: Vault Church
+          - generic [ref=f22e23]: Security System
+        - paragraph [ref=f22e24]:
+          - text: Enterprise-grade asset management, access control, and protocol enforcement for community safety.
+          - generic [ref=f22e25]: Shielded in Silence. Fortified for Eternity.
+      - generic [ref=f22e26]:
+        - link [ref=f22e27] [cursor=pointer]:
+          - /url: /login
+          - button "Access System" [ref=f22e28]
+        - link [ref=f22e29] [cursor=pointer]:
+          - /url: /browse
+          - button "Browse Assets" [ref=f22e30]
+    - contentinfo [ref=f22e31]:
+      - generic [ref=f22e32]:
+        - generic [ref=f22e33]:
+          - generic [ref=f22e34]:
+            - heading "The Vault" [level=3] [ref=f22e35]
+            - paragraph [ref=f22e36]: Enterprise security operations for community safety.
+          - generic [ref=f22e37]:
+            - heading "Quick Links" [level=3] [ref=f22e38]
+            - list [ref=f22e39]:
+              - listitem [ref=f22e40]:
+                - link "Login" [ref=f22e41] [cursor=pointer]:
+                  - /url: /login
+              - listitem [ref=f22e42]:
+                - link "Browse" [ref=f22e43] [cursor=pointer]:
+                  - /url: /browse
+          - generic [ref=f22e44]:
+            - heading "Contact" [level=3] [ref=f22e45]
+            - paragraph [ref=f22e46]: security@vaultchurch.org
+        - paragraph [ref=f22e48]: © 2026 Vault Church. Shielded in Silence. Fortified for Eternity.
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f22e49]

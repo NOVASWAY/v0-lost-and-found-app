@@ -1,0 +1,468 @@
+- generic [active] [ref=f34e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=f34e3]:
+    - generic [ref=f34e4]:
+      - generic [ref=f34e5]:
+        - generic [ref=f34e6]:
+          - generic [ref=f34e7]:
+            - generic [ref=f34e10]:
+              - link "njauwangari6-gmailcom's projects Hobby" [ref=f34e11] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects
+                - generic [ref=f34e13]:
+                  - generic [ref=f34e14]: njauwangari6-gmailcom's projects
+                  - generic [ref=f34e15]: Hobby
+              - button [ref=f34e17] [cursor=pointer]
+            - button "Find F" [ref=f34e22]:
+              - generic [ref=f34e24]:
+                - generic [ref=f34e28]: Find
+                - generic [ref=f34e29]: F
+          - navigation [ref=f34e33]:
+            - generic [ref=f34e242]:
+              - link "Overview" [ref=f34e243] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+              - link "Deployments" [ref=f34e248] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+              - link "Logs" [ref=f34e254] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+              - link "Analytics" [ref=f34e260] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/analytics
+              - link "Speed Insights" [ref=f34e266] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+              - link "Observability" [ref=f34e272] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability
+              - link "Firewall" [ref=f34e281] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall
+              - link "CDN" [ref=f34e291] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/cdn
+              - separator [ref=f34e300]
+              - link "Environment Variables" [ref=f34e301] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environment-variables
+              - link "Domains" [ref=f34e307] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/domains
+              - link "Connect" [ref=f34e313] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/connect
+              - link "Integrations" [ref=f34e319] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/integrations
+              - link "Storage" [ref=f34e325] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores
+              - link "Flags" [ref=f34e331] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/flags
+              - link "Agent" [ref=f34e340] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/agent
+              - link "AI Gateway" [ref=f34e349] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/ai-gateway
+              - link "Sandboxes" [ref=f34e358] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/sandboxes
+              - link "Workflows" [ref=f34e367] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/workflows
+              - link "Images" [ref=f34e373] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/images
+              - separator [ref=f34e379]
+              - link "Usage" [ref=f34e380] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/usage
+              - link "Support" [ref=f34e386] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/support
+              - link "Settings" [ref=f34e392] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings
+          - generic [ref=f34e192]:
+            - generic [ref=f34e401]:
+              - generic [ref=f34e402]:
+                - generic [ref=f34e403]:
+                  - generic [ref=f34e404]: Free Tokens
+                  - generic [ref=f34e405]: Free
+                - button "Dismiss" [ref=f34e408] [cursor=pointer]
+              - generic [ref=f34e412]:
+                - generic [ref=f34e413]: Use GLM 5.2 in Vercel's new coding harness, , free through Aug 27.
+                - generic [ref=f34e419]:
+                  - link "Get" [ref=f34e421] [cursor=pointer]:
+                    - /url: https://fx.sh
+                  - generic [ref=f34e430]:
+                    - button "Previous" [ref=f34e431] [cursor=pointer]
+                    - button "Next" [ref=f34e435] [cursor=pointer]
+            - generic [ref=f34e194]:
+              - button "Avatar for njauwangari6-9400 njauwangari6-9400" [ref=f34e195] [cursor=pointer]:
+                - img "Avatar for njauwangari6-9400" [ref=f34e196]:
+                  - img "Avatar for njauwangari6-9400" [ref=f34e197]
+                - generic [ref=f34e198]: njauwangari6-9400
+              - button "83 unseen notifications" [ref=f34e440] [cursor=pointer]
+        - button [ref=f34e208] [cursor=pointer]
+      - generic [ref=f34e212]:
+        - generic [ref=f34e213]:
+          - generic [ref=f34e216]:
+            - link "v0-lost-and-found-app" [ref=f34e217] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+            - button [ref=f34e221] [cursor=pointer]
+            - link "Back to team view" [ref=f34e227] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/~/settings/environment-variables
+          - navigation "Breadcrumb" [ref=f34e231]:
+            - generic [ref=f34e232]: Environment Variables
+          - button "Vercel Agent is available on Pro" [ref=f34e448] [cursor=pointer]:
+            - generic [ref=f34e461]: Agent
+        - generic [ref=f34e466]:
+          - generic [ref=f34e468]:
+            - generic [ref=f34e469]:
+              - heading "Environment Variables" [level=2] [ref=f34e470]
+              - paragraph [ref=f34e471]:
+                - text: Store API keys, tokens, and config securely.
+                - link "Learn more about environment variables" [ref=f34e472] [cursor=pointer]:
+                  - /url: /docs/environment-variables
+                - text: ·
+                - link "Separate Production Secret Values" [ref=f34e475] [cursor=pointer]:
+                  - /url: /njauwangari6-gmailcoms-projects/~/settings/security#disjunctive-production-secret-policy
+            - generic [ref=f34e476]:
+              - button "Link Shared Variable" [ref=f34e478] [cursor=pointer]
+              - button "Add Environment Variable" [ref=f34e480] [cursor=pointer]
+          - tablist [ref=f34e482]:
+            - tab "Project" [selected] [ref=f34e483] [cursor=pointer]
+            - tab "Shared" [ref=f34e484] [cursor=pointer]
+          - generic [ref=f34e485]:
+            - searchbox "Search" [ref=f34e488]
+            - combobox "Filter variables by type" [ref=f34e495] [cursor=pointer]:
+              - option "All Types" [selected]
+              - option "Secret"
+              - option "Config"
+            - combobox [ref=f34e497]:
+              - generic [ref=f34e499]:
+                - searchbox [ref=f34e500]: All Environments
+                - button "Open menu" [ref=f34e501] [cursor=pointer]
+            - combobox [ref=f34e505]:
+              - generic [ref=f34e506]:
+                - searchbox "All Editors" [ref=f34e507]
+                - button "Open menu" [ref=f34e508] [cursor=pointer]
+            - generic [ref=f34e511]:
+              - combobox "Filter variables by status" [ref=f34e514] [cursor=pointer]:
+                - option "All Variables" [selected]
+                - option "Needs Attention"
+              - combobox [ref=f34e517] [cursor=pointer]:
+                - option "Sort by" [disabled]
+                - option "Last Updated" [selected]
+                - option "Name"
+                - option "Type"
+          - generic [ref=f34e518]:
+            - generic [ref=f34e523]:
+              - generic [ref=f34e525]:
+                - generic [ref=f34e526]:
+                  - img "Config environment variable" [ref=f34e529]
+                  - button "BLOB_WEBHOOK_PUBLIC_KEY" [ref=f34e539] [cursor=pointer]
+                - generic [ref=f34e543]: Production and Preview
+                - generic [ref=f34e549]:
+                  - generic [ref=f34e551]:
+                    - generic [ref=f34e553] [cursor=pointer]:
+                      - generic [ref=f34e554]: Added
+                      - text: 12m ago
+                    - generic [ref=f34e556] [cursor=pointer]
+                  - button "Menu" [ref=f34e561] [cursor=pointer]
+              - generic [ref=f34e569]:
+                - generic [ref=f34e570]:
+                  - img "Config environment variable" [ref=f34e573]
+                  - generic [ref=f34e581]:
+                    - button "BLOB_STORE_ID" [ref=f34e583] [cursor=pointer]
+                    - link [ref=f34e588] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores/blob/store_gPlf7lWgEP6rJIig
+                - generic [ref=f34e593]: Production and Preview
+                - generic [ref=f34e599]:
+                  - generic [ref=f34e601]:
+                    - generic [ref=f34e603] [cursor=pointer]:
+                      - generic [ref=f34e604]: Added
+                      - text: 12m ago
+                    - generic [ref=f34e606] [cursor=pointer]
+                  - button "Menu" [ref=f34e611] [cursor=pointer]
+              - generic [ref=f34e619]:
+                - generic [ref=f34e620]:
+                  - img "Secret environment variable" [ref=f34e623]
+                  - generic [ref=f34e631]:
+                    - button "BLOB_READ_WRITE_TOKEN" [ref=f34e633] [cursor=pointer]
+                    - link [ref=f34e638] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores/blob/store_gPlf7lWgEP6rJIig
+                - generic [ref=f34e643]: Production and Preview
+                - generic [ref=f34e649]:
+                  - generic [ref=f34e651]:
+                    - generic [ref=f34e653] [cursor=pointer]:
+                      - generic [ref=f34e654]: Added
+                      - text: 12m ago
+                    - generic [ref=f34e656] [cursor=pointer]
+                  - button "Menu" [ref=f34e661] [cursor=pointer]
+              - generic [ref=f34e669]:
+                - generic [ref=f34e670]:
+                  - img "Secret environment variable" [ref=f34e673]
+                  - button "BOOTSTRAP_USER_PASSWORD" [ref=f34e683] [cursor=pointer]
+                - generic [ref=f34e687]: Production
+                - generic [ref=f34e693]:
+                  - generic [ref=f34e695]:
+                    - generic [ref=f34e697] [cursor=pointer]:
+                      - generic [ref=f34e698]: Added
+                      - text: 2d ago
+                    - generic [ref=f34e700] [cursor=pointer]
+                  - button "Menu" [ref=f34e705] [cursor=pointer]
+              - generic [ref=f34e713]:
+                - generic [ref=f34e714]:
+                  - img "Secret environment variable" [ref=f34e717]
+                  - button "BOOTSTRAP_VOLUNTEER_PASSWORD" [ref=f34e727] [cursor=pointer]
+                - generic [ref=f34e731]: Production
+                - generic [ref=f34e737]:
+                  - generic [ref=f34e739]:
+                    - generic [ref=f34e741] [cursor=pointer]:
+                      - generic [ref=f34e742]: Added
+                      - text: 2d ago
+                    - generic [ref=f34e744] [cursor=pointer]
+                  - button "Menu" [ref=f34e749] [cursor=pointer]
+              - generic [ref=f34e757]:
+                - generic [ref=f34e758]:
+                  - img "Secret environment variable" [ref=f34e761]
+                  - button "BOOTSTRAP_ADMIN_PASSWORD" [ref=f34e771] [cursor=pointer]
+                - generic [ref=f34e775]: Production
+                - generic [ref=f34e781]:
+                  - generic [ref=f34e783]:
+                    - generic [ref=f34e785] [cursor=pointer]:
+                      - generic [ref=f34e786]: Added
+                      - text: 2d ago
+                    - generic [ref=f34e788] [cursor=pointer]
+                  - button "Menu" [ref=f34e793] [cursor=pointer]
+              - generic [ref=f34e801]:
+                - generic [ref=f34e802]:
+                  - img "Secret environment variable" [ref=f34e805]
+                  - button "CRON_SECRET" [ref=f34e815] [cursor=pointer]
+                - generic [ref=f34e819]: Production and Preview
+                - generic [ref=f34e825]:
+                  - generic [ref=f34e827]:
+                    - generic [ref=f34e829] [cursor=pointer]:
+                      - generic [ref=f34e830]: Added
+                      - text: 3d ago
+                    - generic [ref=f34e832] [cursor=pointer]
+                  - button "Menu" [ref=f34e837] [cursor=pointer]
+              - generic [ref=f34e845]:
+                - generic [ref=f34e846]:
+                  - img "Secret environment variable" [ref=f34e849]
+                  - button "NEXT_PUBLIC_SITE_URL" [ref=f34e859] [cursor=pointer]
+                - generic [ref=f34e863]: Production and Preview
+                - generic [ref=f34e869]:
+                  - generic [ref=f34e871]:
+                    - generic [ref=f34e873] [cursor=pointer]:
+                      - generic [ref=f34e874]: Added
+                      - text: 3d ago
+                    - generic [ref=f34e876] [cursor=pointer]
+                  - button "Menu" [ref=f34e881] [cursor=pointer]
+              - generic [ref=f34e889]:
+                - generic [ref=f34e890]:
+                  - img "Secret environment variable" [ref=f34e893]
+                  - button "DATABASE_PROVIDER" [ref=f34e903] [cursor=pointer]
+                - generic [ref=f34e907]: Production and Preview
+                - generic [ref=f34e913]:
+                  - generic [ref=f34e915]:
+                    - generic [ref=f34e917] [cursor=pointer]:
+                      - generic [ref=f34e918]: Added
+                      - text: 3d ago
+                    - generic [ref=f34e920] [cursor=pointer]
+                  - button "Menu" [ref=f34e925] [cursor=pointer]
+              - generic [ref=f34e933]:
+                - generic [ref=f34e934]:
+                  - img "Secret environment variable" [ref=f34e937]
+                  - button "NODE_ENV" [ref=f34e947] [cursor=pointer]
+                - generic [ref=f34e951]: Production and Preview
+                - generic [ref=f34e957]:
+                  - generic [ref=f34e959]:
+                    - generic [ref=f34e961] [cursor=pointer]:
+                      - generic [ref=f34e962]: Added
+                      - text: 3d ago
+                    - generic [ref=f34e964] [cursor=pointer]
+                  - button "Menu" [ref=f34e969] [cursor=pointer]
+              - generic [ref=f34e977]:
+                - generic [ref=f34e978]:
+                  - img "Secret environment variable" [ref=f34e981]
+                  - button "JWT_SECRET" [ref=f34e991] [cursor=pointer]
+                - generic [ref=f34e995]: Production and Preview
+                - generic [ref=f34e1001]:
+                  - generic [ref=f34e1003]:
+                    - generic [ref=f34e1005] [cursor=pointer]:
+                      - generic [ref=f34e1006]: Added
+                      - text: 3d ago
+                    - generic [ref=f34e1008] [cursor=pointer]
+                  - button "Menu" [ref=f34e1013] [cursor=pointer]
+              - generic [ref=f34e1021]:
+                - generic [ref=f34e1022]:
+                  - img "Config environment variable" [ref=f34e1025]
+                  - generic [ref=f34e1033]:
+                    - button "NEON_PROJECT_ID" [ref=f34e1035] [cursor=pointer]
+                    - link [ref=f34e1041] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                      - img "Neon" [ref=f34e1042]:
+                        - img "Neon" [ref=f34e1043]
+                - generic [ref=f34e1044]: All Environments
+                - generic [ref=f34e1050]:
+                  - generic [ref=f34e1052]:
+                    - generic [ref=f34e1054] [cursor=pointer]:
+                      - generic [ref=f34e1055]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1057] [cursor=pointer]
+                  - button "Menu" [ref=f34e1062] [cursor=pointer]
+              - generic [ref=f34e1070]:
+                - generic [ref=f34e1071]:
+                  - img "Config environment variable" [ref=f34e1074]
+                  - generic [ref=f34e1081]:
+                    - generic [ref=f34e1082]:
+                      - button "PGPASSWORD" [ref=f34e1084] [cursor=pointer]
+                      - link [ref=f34e1090] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                        - img "Neon" [ref=f34e1091]:
+                          - img "Neon" [ref=f34e1092]
+                    - generic "PGPASSWORD looks like a secret; consider rotating and saving as Secret" [ref=f34e1096]: Needs Attention
+                - generic [ref=f34e1098]: All Environments
+                - generic [ref=f34e1104]:
+                  - generic [ref=f34e1106]:
+                    - generic [ref=f34e1108] [cursor=pointer]:
+                      - generic [ref=f34e1109]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1111] [cursor=pointer]
+                  - button "Menu" [ref=f34e1116] [cursor=pointer]
+              - generic [ref=f34e1124]:
+                - generic [ref=f34e1125]:
+                  - img "Config environment variable" [ref=f34e1128]
+                  - generic [ref=f34e1136]:
+                    - button "POSTGRES_DATABASE" [ref=f34e1138] [cursor=pointer]
+                    - link [ref=f34e1144] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                      - img "Neon" [ref=f34e1145]:
+                        - img "Neon" [ref=f34e1146]
+                - generic [ref=f34e1147]: All Environments
+                - generic [ref=f34e1153]:
+                  - generic [ref=f34e1155]:
+                    - generic [ref=f34e1157] [cursor=pointer]:
+                      - generic [ref=f34e1158]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1160] [cursor=pointer]
+                  - button "Menu" [ref=f34e1165] [cursor=pointer]
+              - generic [ref=f34e1173]:
+                - generic [ref=f34e1174]:
+                  - img "Config environment variable" [ref=f34e1177]
+                  - generic [ref=f34e1185]:
+                    - button "PGHOST_UNPOOLED" [ref=f34e1187] [cursor=pointer]
+                    - link [ref=f34e1193] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                      - img "Neon" [ref=f34e1194]:
+                        - img "Neon" [ref=f34e1195]
+                - generic [ref=f34e1196]: All Environments
+                - generic [ref=f34e1202]:
+                  - generic [ref=f34e1204]:
+                    - generic [ref=f34e1206] [cursor=pointer]:
+                      - generic [ref=f34e1207]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1209] [cursor=pointer]
+                  - button "Menu" [ref=f34e1214] [cursor=pointer]
+              - generic [ref=f34e1222]:
+                - generic [ref=f34e1223]:
+                  - img "Config environment variable" [ref=f34e1226]
+                  - generic [ref=f34e1234]:
+                    - button "POSTGRES_HOST" [ref=f34e1236] [cursor=pointer]
+                    - link [ref=f34e1242] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                      - img "Neon" [ref=f34e1243]:
+                        - img "Neon" [ref=f34e1244]
+                - generic [ref=f34e1245]: All Environments
+                - generic [ref=f34e1251]:
+                  - generic [ref=f34e1253]:
+                    - generic [ref=f34e1255] [cursor=pointer]:
+                      - generic [ref=f34e1256]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1258] [cursor=pointer]
+                  - button "Menu" [ref=f34e1263] [cursor=pointer]
+              - generic [ref=f34e1271]:
+                - generic [ref=f34e1272]:
+                  - img "Config environment variable" [ref=f34e1275]
+                  - generic [ref=f34e1282]:
+                    - generic [ref=f34e1283]:
+                      - button "DATABASE_URL" [ref=f34e1285] [cursor=pointer]
+                      - link [ref=f34e1291] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                        - img "Neon" [ref=f34e1292]:
+                          - img "Neon" [ref=f34e1293]
+                    - generic "DATABASE_URL looks like a secret; consider rotating and saving as Secret" [ref=f34e1297]: Needs Attention
+                - generic [ref=f34e1299]: All Environments
+                - generic [ref=f34e1305]:
+                  - generic [ref=f34e1307]:
+                    - generic [ref=f34e1309] [cursor=pointer]:
+                      - generic [ref=f34e1310]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1312] [cursor=pointer]
+                  - button "Menu" [ref=f34e1317] [cursor=pointer]
+              - generic [ref=f34e1325]:
+                - generic [ref=f34e1326]:
+                  - img "Config environment variable" [ref=f34e1329]
+                  - generic [ref=f34e1336]:
+                    - generic [ref=f34e1337]:
+                      - button "POSTGRES_URL_NON_POOLING" [ref=f34e1339] [cursor=pointer]
+                      - link [ref=f34e1345] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                        - img "Neon" [ref=f34e1346]:
+                          - img "Neon" [ref=f34e1347]
+                    - generic "POSTGRES_URL_NON_POOLING looks like a secret; consider rotating and saving as Secret" [ref=f34e1351]: Needs Attention
+                - generic [ref=f34e1353]: All Environments
+                - generic [ref=f34e1359]:
+                  - generic [ref=f34e1361]:
+                    - generic [ref=f34e1363] [cursor=pointer]:
+                      - generic [ref=f34e1364]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1366] [cursor=pointer]
+                  - button "Menu" [ref=f34e1371] [cursor=pointer]
+              - generic [ref=f34e1379]:
+                - generic [ref=f34e1380]:
+                  - img "Config environment variable" [ref=f34e1383]
+                  - generic [ref=f34e1391]:
+                    - button "PGHOST" [ref=f34e1393] [cursor=pointer]
+                    - link [ref=f34e1399] [cursor=pointer]:
+                      - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                      - img "Neon" [ref=f34e1400]:
+                        - img "Neon" [ref=f34e1401]
+                - generic [ref=f34e1402]: All Environments
+                - generic [ref=f34e1408]:
+                  - generic [ref=f34e1410]:
+                    - generic [ref=f34e1412] [cursor=pointer]:
+                      - generic [ref=f34e1413]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1415] [cursor=pointer]
+                  - button "Menu" [ref=f34e1420] [cursor=pointer]
+              - generic [ref=f34e1428]:
+                - generic [ref=f34e1429]:
+                  - img "Config environment variable" [ref=f34e1432]
+                  - generic [ref=f34e1439]:
+                    - generic [ref=f34e1440]:
+                      - button "POSTGRES_PRISMA_URL" [ref=f34e1442] [cursor=pointer]
+                      - link [ref=f34e1448] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                        - img "Neon" [ref=f34e1449]:
+                          - img "Neon" [ref=f34e1450]
+                    - generic "POSTGRES_PRISMA_URL looks like a secret; consider rotating and saving as Secret" [ref=f34e1454]: Needs Attention
+                - generic [ref=f34e1456]: All Environments
+                - generic [ref=f34e1462]:
+                  - generic [ref=f34e1464]:
+                    - generic [ref=f34e1466] [cursor=pointer]:
+                      - generic [ref=f34e1467]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1469] [cursor=pointer]
+                  - button "Menu" [ref=f34e1474] [cursor=pointer]
+              - generic [ref=f34e1482]:
+                - generic [ref=f34e1483]:
+                  - img "Config environment variable" [ref=f34e1486]
+                  - generic [ref=f34e1493]:
+                    - generic [ref=f34e1494]:
+                      - button "DATABASE_URL_UNPOOLED" [ref=f34e1496] [cursor=pointer]
+                      - link [ref=f34e1502] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/integrations/neon/icfg_2T4fwnRDbK9xwZkzytfqNxAY/resources/storage/store_5hmrAyjdsSja5PL4/guides
+                        - img "Neon" [ref=f34e1503]:
+                          - img "Neon" [ref=f34e1504]
+                    - generic "DATABASE_URL_UNPOOLED looks like a secret; consider rotating and saving as Secret" [ref=f34e1508]: Needs Attention
+                - generic [ref=f34e1510]: All Environments
+                - generic [ref=f34e1516]:
+                  - generic [ref=f34e1518]:
+                    - generic [ref=f34e1520] [cursor=pointer]:
+                      - generic [ref=f34e1521]: Added
+                      - text: Mar 12
+                    - generic [ref=f34e1523] [cursor=pointer]
+                  - button "Menu" [ref=f34e1528] [cursor=pointer]
+            - generic [ref=f34e1537]:
+              - checkbox [checked] [ref=f34e1540]
+              - generic [ref=f34e1544]:
+                - text: Enable access to
+                - link "System Environment Variables" [ref=f34e1545] [cursor=pointer]:
+                  - /url: /docs/environment-variables/system-environment-variables
+  - alert [ref=f34e238]

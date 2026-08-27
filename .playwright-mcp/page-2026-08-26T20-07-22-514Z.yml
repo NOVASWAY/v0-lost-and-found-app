@@ -1,0 +1,13 @@
+- generic [active] [ref=f7e1]:
+  - main [ref=f7e4]:
+    - generic [ref=f7e5]:
+      - button "Back" [ref=f7e7]
+      - generic [ref=f7e9]:
+        - heading "Location Management" [level=1] [ref=f7e10]
+        - button "Add Location" [ref=f7e11]
+      - paragraph [ref=f7e12]: Manage locations where items are found
+    - textbox "Search locations..." [ref=f7e18]
+    - paragraph [ref=f7e24]: No locations found
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f7e25]

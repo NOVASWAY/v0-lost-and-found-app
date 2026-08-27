@@ -1,0 +1,271 @@
+- generic [active] [ref=f27e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=f27e3]:
+    - generic [ref=f27e4]:
+      - generic [ref=f27e5]:
+        - generic [ref=f27e6]:
+          - generic [ref=f27e7]:
+            - generic [ref=f27e10]:
+              - link "njauwangari6-gmailcom's projects Hobby" [ref=f27e11] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects
+                - generic [ref=f27e13]:
+                  - generic [ref=f27e14]: njauwangari6-gmailcom's projects
+                  - generic [ref=f27e15]: Hobby
+              - button [ref=f27e17] [cursor=pointer]
+            - button "Find F" [ref=f27e22]:
+              - generic [ref=f27e24]:
+                - generic [ref=f27e28]: Find
+                - generic [ref=f27e29]: F
+          - navigation [ref=f27e33]:
+            - generic [ref=f27e37]:
+              - link "Overview" [ref=f27e38] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+              - link "Deployments" [ref=f27e43] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+              - link "Logs" [ref=f27e49] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+              - link "Analytics" [ref=f27e55] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/analytics
+              - link "Speed Insights" [ref=f27e61] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+              - link "Observability" [ref=f27e67] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability
+              - link "Firewall" [ref=f27e76] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall
+              - link "CDN" [ref=f27e86] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/cdn
+              - separator [ref=f27e95]
+              - link "Environment Variables" [ref=f27e96] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environment-variables
+              - link "Domains" [ref=f27e102] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/domains
+              - link "Connect Beta" [ref=f27e108] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/connect
+                - generic [ref=f27e112]:
+                  - generic [ref=f27e113]: Connect
+                  - generic [ref=f27e114]: Beta
+              - link "Integrations" [ref=f27e116] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/integrations
+              - link "Storage" [ref=f27e122] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores
+              - link "Flags" [ref=f27e128] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/flags
+              - link "Agent" [ref=f27e137] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/agent
+              - link "AI Gateway" [ref=f27e146] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/ai-gateway
+              - link "Sandboxes" [ref=f27e155] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/sandboxes
+              - link "Workflows" [ref=f27e164] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/workflows
+              - link "Images Beta" [ref=f27e170] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/images
+                - generic [ref=f27e174]:
+                  - generic [ref=f27e175]: Images
+                  - generic [ref=f27e176]: Beta
+              - separator [ref=f27e178]
+              - link "Usage" [ref=f27e179] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/usage
+              - link "Support" [ref=f27e185] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/support
+              - link "Settings" [ref=f27e191] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings
+          - generic [ref=f27e204]:
+            - button "Avatar for njauwangari6-9400 njauwangari6-9400" [ref=f27e205] [cursor=pointer]:
+              - img "Avatar for njauwangari6-9400" [ref=f27e206]:
+                - img "Avatar for njauwangari6-9400" [ref=f27e207]
+              - generic [ref=f27e208]: njauwangari6-9400
+            - button "72 unseen notifications" [ref=f27e653] [cursor=pointer]
+        - button [ref=f27e218] [cursor=pointer]
+      - generic [ref=f27e222]:
+        - generic [ref=f27e1607]:
+          - generic [ref=f27e1610]:
+            - link "v0-lost-and-found-app" [ref=f27e1611] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+            - button [ref=f27e1615] [cursor=pointer]
+            - link "Back to team view" [ref=f27e1621] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/~/deployments
+          - navigation "Breadcrumb" [ref=f27e1625]:
+            - link "Deployments" [ref=f27e1627] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+            - generic [ref=f27e1633]:
+              - generic [ref=f27e1634]: 6C1zZKY4d
+              - button "Copy ID" [ref=f27e1638] [cursor=pointer]
+          - button "Vercel Agent is available on Pro" [ref=f27e1648] [cursor=pointer]:
+            - generic [ref=f27e1661]: Agent
+        - generic [ref=f27e1663]:
+          - generic [ref=f27e1665]:
+            - link "Deployment" [ref=f27e1666] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/6C1zZKY4dvUKP1aRMuUAuvuHt76Y
+            - link "Logs" [ref=f27e1667] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/6C1zZKY4dvUKP1aRMuUAuvuHt76Y/logs
+            - link "Resources" [ref=f27e1668] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/6C1zZKY4dvUKP1aRMuUAuvuHt76Y/resources
+            - link "Source" [ref=f27e1669] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/6C1zZKY4dvUKP1aRMuUAuvuHt76Y/source
+            - link "Open Graph" [ref=f27e1670] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/6C1zZKY4dvUKP1aRMuUAuvuHt76Y/og
+          - generic [ref=f27e1671]:
+            - generic [ref=f27e1673]:
+              - generic [ref=f27e1674]:
+                - heading "Deployment Details" [level=3] [ref=f27e1676]
+                - generic [ref=f27e1677]:
+                  - button "Redeploy" [ref=f27e1679] [cursor=pointer]
+                  - button "Deployment Actions" [ref=f27e1684] [cursor=pointer]
+              - generic [ref=f27e1689]:
+                - generic [ref=f27e1694]:
+                  - heading "Build Failed" [level=3] [ref=f27e1700]
+                  - generic [ref=f27e1701]: Command "DATABASE_PROVIDER=postgresql prisma migrate deploy && prisma generate && next build --webpack" exited with 1
+                - generic [ref=f27e1707]:
+                  - generic [ref=f27e1708]:
+                    - generic [ref=f27e1709]:
+                      - generic [ref=f27e1710]: Created
+                      - generic [ref=f27e1711]:
+                        - img "github/NOVASWAY" [ref=f27e1716] [cursor=pointer]:
+                          - img "github/NOVASWAY" [ref=f27e1717]
+                        - generic [ref=f27e1718]: NOVASWAY
+                        - generic [ref=f27e1719]: 8m ago
+                    - generic [ref=f27e1721]:
+                      - generic [ref=f27e1722]: Status
+                      - generic "This deployment had an error." [ref=f27e1723]:
+                        - generic [ref=f27e1726]: Error
+                        - link "Latest" [ref=f27e1728] [cursor=pointer]:
+                          - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments?filterBranch=main
+                    - generic [ref=f27e1729]:
+                      - generic [ref=f27e1730]: Duration
+                      - generic "Aug 22, 2026, 9:08:59 PM GMT+3" [ref=f27e1731]:
+                        - text: 10s
+                        - generic [ref=f27e1734]: 8m ago
+                    - generic [ref=f27e1736]:
+                      - generic [ref=f27e1737]: Environment
+                      - link "Production" [ref=f27e1741] [cursor=pointer]:
+                        - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environments/production
+                  - generic [ref=f27e1742]:
+                    - generic [ref=f27e1743]: Domains
+                    - generic [ref=f27e1744]:
+                      - link "v0-lost-and-found-app-git-main-njauwangari6-gmailcoms-projects.vercel.app" [ref=f27e1749] [cursor=pointer]:
+                        - /url: https://v0-lost-and-found-app-git-main-njauwangari6-gmailcoms-projects.vercel.app
+                      - link "v0-lost-and-found-ezygyuetd-njauwangari6-gmailcoms-projects.vercel.app" [ref=f27e1756] [cursor=pointer]:
+                        - /url: https://v0-lost-and-found-ezygyuetd-njauwangari6-gmailcoms-projects.vercel.app
+                  - generic [ref=f27e1759]:
+                    - generic [ref=f27e1760]: Source
+                    - link "main" [ref=f27e1764] [cursor=pointer]:
+                      - /url: https://github.com/NOVASWAY/v0-lost-and-found-app/tree/main
+                    - 'link "b700cc4 fix: add prisma migrate deploy to vercel.json buildCommand" [ref=f27e1769] [cursor=pointer]':
+                      - /url: https://github.com/NOVASWAY/v0-lost-and-found-app/commit/b700cc4bc1d9ed1b20feb649922804700eceac89
+                      - generic [ref=f27e1770]: b700cc4
+                      - 'generic "fix: add prisma migrate deploy to vercel.json buildCommand" [ref=f27e1771]'
+              - button "Deployment Settings 2 Recommendations" [ref=f27e1775] [cursor=pointer]:
+                - generic [ref=f27e1779]:
+                  - generic [ref=f27e1780]: Deployment Settings
+                  - generic [ref=f27e1781]: 2 Recommendations
+            - generic [ref=f27e1787]:
+              - generic [ref=f27e1788]:
+                - generic [ref=f27e1789]:
+                  - heading "Build Logs 10s" [level=2] [ref=f27e1790]:
+                    - generic [ref=f27e1791] [cursor=pointer]:
+                      - generic [ref=f27e1794]: Build Logs
+                      - generic [ref=f27e1797]: 10s
+                  - region "Build Logs 10s" [ref=f27e1801]:
+                    - generic [ref=f27e1803]:
+                      - generic [ref=f27e1804]:
+                        - button "all lines" [ref=f27e1805] [cursor=pointer]
+                        - generic [ref=f27e1814]: 40 lines
+                        - generic [ref=f27e1815]:
+                          - 'button "error count: 2" [ref=f27e1817] [cursor=pointer]':
+                            - generic [ref=f27e1818]: "2"
+                          - 'button "warning count: 1" [ref=f27e1824] [cursor=pointer]':
+                            - generic [ref=f27e1825]: "1"
+                          - 'button "sensitive environment variable redaction count: 1" [ref=f27e1831] [cursor=pointer]':
+                            - generic [ref=f27e1832]:
+                              - generic [ref=f27e1835]: Sensitive Environment Variable Redacted
+                              - generic [ref=f27e1836]: "1"
+                        - generic [ref=f27e1839]:
+                          - searchbox "Search" [ref=f27e1840]
+                          - generic [ref=f27e1845]:
+                            - generic [ref=f27e1846]: Ctrl
+                            - generic [ref=f27e1847]: F
+                      - generic [ref=f27e1851]:
+                        - generic [ref=f27e1852]: 21:08:57.317
+                        - generic [ref=f27e1856]:
+                          - generic [ref=f27e1857]: 21:08:57.318
+                          - generic [ref=f27e1859]: ✔ Generated Prisma Client (v7.9.1) to ./node_modules/@prisma/client in 162ms
+                        - generic [ref=f27e1861]: 21:08:57.318
+                        - generic [ref=f27e1865]:
+                          - generic [ref=f27e1866]: 21:08:57.319
+                          - generic [ref=f27e1869]:
+                            - text: "Start by importing your Prisma Client (See:"
+                            - link "https://pris.ly/d/importing-client" [ref=f27e1870] [cursor=pointer]:
+                              - /url: https://pris.ly/d/importing-client
+                            - text: )
+                        - generic [ref=f27e1871]: 21:08:57.319
+                        - generic [ref=f27e1875]: 21:08:57.319
+                        - generic [ref=f27e1879]: 21:08:57.332
+                        - generic [ref=f27e1883]:
+                          - generic [ref=f27e1884]: 21:08:57.332
+                          - generic [ref=f27e1886]: Checked 1202 installs across 1305 packages (no changes) [4.45s]
+                        - generic [ref=f27e1888]:
+                          - generic [ref=f27e1889]: 21:08:57.348
+                          - generic [ref=f27e1891]: "Detected Next.js version: 16.3.0"
+                        - generic [ref=f27e1893]:
+                          - generic [ref=f27e1894]: 21:08:57.349
+                          - generic [ref=f27e1896]: Running "DATABASE_PROVIDER=postgresql prisma migrate deploy && prisma generate && next build --webpack"
+                        - generic [ref=f27e1898]:
+                          - generic [ref=f27e1899]: 21:08:58.035
+                          - generic [ref=f27e1901]: Loaded Prisma config from prisma.config.ts.
+                        - generic [ref=f27e1903]: 21:08:58.035
+                        - generic [ref=f27e1907]:
+                          - generic [ref=f27e1908]: 21:08:58.066
+                          - generic [ref=f27e1910]: Prisma schema loaded from prisma/schema.postgresql.prisma.
+                        - generic [ref=f27e1912]:
+                          - generic [ref=f27e1913]: 21:08:58.087
+                          - generic [ref=f27e1915]: "Datasource \"db\": PostgreSQL database \"neondb\", schema \"public\" at \"[REDACTED]\""
+                        - generic [ref=f27e1917]: 21:08:58.155
+                        - generic [ref=f27e1921]:
+                          - generic [ref=f27e1922]: 21:08:58.156
+                          - generic [ref=f27e1924]: 2 migrations found in prisma/migrations
+                        - generic [ref=f27e1926]: 21:08:58.156
+                        - generic [ref=f27e1930]:
+                          - generic [ref=f27e1931]: 21:08:58.233
+                          - generic [ref=f27e1933]: "Error: P3005"
+                        - generic [ref=f27e1935]: 21:08:58.233
+                        - generic [ref=f27e1939]:
+                          - generic [ref=f27e1940]: 21:08:58.233
+                          - generic [ref=f27e1943]:
+                            - text: "The database schema is not empty. Read more about how to baseline an existing production database:"
+                            - link "https://pris.ly/d/migrate-baseline" [ref=f27e1944] [cursor=pointer]:
+                              - /url: https://pris.ly/d/migrate-baseline
+                        - generic [ref=f27e1945]: 21:08:58.233
+                        - generic [ref=f27e1949]:
+                          - generic [ref=f27e1950]: 21:08:58.248
+                          - generic [ref=f27e1952]: "Error: Command \"DATABASE_PROVIDER=postgresql prisma migrate deploy && prisma generate && next build --webpack\" exited with 1"
+                - heading "Deployment Summary" [level=2] [ref=f27e1956]
+                - heading "Deployment Checks" [level=2] [ref=f27e1958]
+                - heading "Assigning Custom Domains" [level=2] [ref=f27e1968]
+              - generic [ref=f27e1970]:
+                - link [ref=f27e1971] [cursor=pointer]:
+                  - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+                  - generic [ref=f27e1972]:
+                    - paragraph [ref=f27e1974]: Runtime Logs
+                    - paragraph [ref=f27e1975]: View and debug runtime logs & errors
+                - link [ref=f27e1976] [cursor=pointer]:
+                  - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability/serverless-functions
+                  - generic [ref=f27e1977]:
+                    - paragraph [ref=f27e1979]: Observability
+                    - paragraph [ref=f27e1980]: Monitor app health & performance
+                - link "Speed Insights No Data Performance metrics from real users" [ref=f27e1981] [cursor=pointer]:
+                  - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+                  - generic [ref=f27e1982]:
+                    - generic [ref=f27e1983]:
+                      - paragraph [ref=f27e1984]: Speed Insights
+                      - generic [ref=f27e1985]: No Data
+                    - paragraph [ref=f27e1987]: Performance metrics from real users
+                - link "BotID New Classify and detect bot traffic" [ref=f27e1988] [cursor=pointer]:
+                  - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall/configure
+                  - generic [ref=f27e1989]:
+                    - generic [ref=f27e1990]:
+                      - paragraph [ref=f27e1991]: BotID
+                      - generic [ref=f27e1992]: New
+                    - paragraph [ref=f27e1994]: Classify and detect bot traffic
+  - alert [ref=f27e650]

@@ -1,0 +1,71 @@
+- generic [ref=f19e1]:
+  - banner [ref=f19e2]:
+    - generic [ref=f19e3]:
+      - link "Vault Church THE VAULT Security Operations" [ref=f19e4] [cursor=pointer]:
+        - /url: /
+        - img "Vault Church" [ref=f19e6]
+        - generic [ref=f19e7]:
+          - generic [ref=f19e8]: THE VAULT
+          - generic [ref=f19e9]: Security Operations
+      - navigation [ref=f19e10]:
+        - link "Dashboard" [ref=f19e11] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Browse Items" [ref=f19e12] [cursor=pointer]:
+          - /url: /browse
+        - link "Upload Item" [ref=f19e13] [cursor=pointer]:
+          - /url: /upload
+        - link "My Claims" [ref=f19e14] [cursor=pointer]:
+          - /url: /my-claims
+        - link "My Uploads" [ref=f19e15] [cursor=pointer]:
+          - /url: /my-uploads
+      - button "Toggle theme" [ref=f19e17]
+  - generic [ref=f19e19]:
+    - button "Toggle theme" [ref=f19e124]
+    - generic [ref=f19e24]: SECURITY OPERATIONS // CLEARANCE REQUIRED
+    - generic [ref=f19e36]:
+      - generic [ref=f19e67]:
+        - generic [ref=f19e68]: "0"
+        - generic [ref=f19e69]: "5"
+        - generic [ref=f19e70]: "10"
+        - generic [ref=f19e71]: "15"
+        - generic [ref=f19e72]: "20"
+        - generic [ref=f19e73]: "25"
+        - generic [ref=f19e74]: "30"
+        - generic [ref=f19e75]: "35"
+        - generic [ref=f19e76]: "40"
+        - generic [ref=f19e77]: "45"
+        - generic [ref=f19e78]: "50"
+        - generic [ref=f19e79]: "55"
+        - generic [ref=f19e80]: "60"
+        - generic [ref=f19e81]: "65"
+        - generic [ref=f19e82]: "70"
+        - generic [ref=f19e83]: "75"
+        - generic [ref=f19e84]: "80"
+        - generic [ref=f19e85]: "85"
+        - generic [ref=f19e86]: "90"
+        - generic [ref=f19e87]: "95"
+      - generic [ref=f19e105]:
+        - heading "THE VAULT" [level=1] [ref=f19e106]
+        - paragraph [ref=f19e107]: SECURITY OPERATIONS
+      - generic [ref=f19e108]:
+        - generic [ref=f19e109]:
+          - generic [ref=f19e110]:
+            - generic [ref=f19e111]: Username
+            - textbox "Username" [ref=f19e112]:
+              - /placeholder: Enter your username
+              - text: admin
+          - generic [ref=f19e113]:
+            - generic [ref=f19e114]: Password
+            - textbox "Password" [ref=f19e115]:
+              - /placeholder: ••••••••
+              - text: SecureAdmin123!
+          - button "Sign In" [active] [ref=f19e116]
+        - generic [ref=f19e117]:
+          - generic [ref=f19e118]: status
+          - generic [ref=f19e119]: KEY — SECURE
+        - generic [ref=f19e120]: Contact an administrator to create an account
+      - link "Back to home" [ref=f19e122] [cursor=pointer]:
+        - /url: /
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f19e123]

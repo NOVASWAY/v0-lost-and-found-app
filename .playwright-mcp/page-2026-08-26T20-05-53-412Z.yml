@@ -1,0 +1,23 @@
+- generic [active] [ref=f3e1]:
+  - main [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - button "Back" [ref=f3e7]
+      - generic [ref=f3e9]:
+        - heading "Asset Personnel Registry" [level=1] [ref=f3e10]
+        - button "Grant Clearance" [ref=f3e11]
+      - paragraph [ref=f3e12]: Modify credentials and security clearances
+    - textbox "Filter by ID, Name or Clearance Level..." [ref=f3e18]
+    - table [ref=f3e21]:
+      - rowgroup [ref=f3e22]:
+        - row [ref=f3e23]:
+          - columnheader "Entity" [ref=f3e24]
+          - columnheader "Clearance" [ref=f3e25]
+          - columnheader "Standing" [ref=f3e26]
+          - columnheader "Activity" [ref=f3e27]
+          - columnheader "Protocol" [ref=f3e28]
+      - rowgroup [ref=f3e29]:
+        - row [ref=f3e30]:
+          - cell "Loading personnel..." [ref=f3e31]
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f3e32]

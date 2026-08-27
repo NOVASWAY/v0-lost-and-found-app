@@ -1,0 +1,25 @@
+- generic [active] [ref=f23e1]:
+  - banner [ref=f23e2]:
+    - generic [ref=f23e3]:
+      - link "Vault Church THE VAULT Security Operations" [ref=f23e4] [cursor=pointer]:
+        - /url: /
+        - img "Vault Church" [ref=f23e6]
+        - generic [ref=f23e7]:
+          - generic [ref=f23e8]: THE VAULT
+          - generic [ref=f23e9]: Security Operations
+      - navigation [ref=f23e10]:
+        - link "Dashboard" [ref=f23e11] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Browse Items" [ref=f23e12] [cursor=pointer]:
+          - /url: /browse
+        - link "Upload Item" [ref=f23e13] [cursor=pointer]:
+          - /url: /upload
+        - link "My Claims" [ref=f23e14] [cursor=pointer]:
+          - /url: /my-claims
+        - link "My Uploads" [ref=f23e15] [cursor=pointer]:
+          - /url: /my-uploads
+      - button "Toggle theme" [ref=f23e17]
+  - paragraph [ref=f23e24]: Loading...
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f23e25]

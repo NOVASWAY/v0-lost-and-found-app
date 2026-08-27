@@ -1,0 +1,33 @@
+- generic [active] [ref=f5e1]:
+  - main [ref=f5e4]:
+    - generic [ref=f5e5]:
+      - button "Back" [ref=f5e7]
+      - generic [ref=f5e9]:
+        - heading "Security Orders" [level=1] [ref=f5e10]
+        - button "New Order" [ref=f5e11]
+      - paragraph [ref=f5e12]: Send and monitor security directives to users
+    - textbox "Search by title, recipient, or message..." [ref=f5e18]
+    - generic [ref=f5e19]:
+      - generic [ref=f5e20]:
+        - paragraph [ref=f5e21]: "0"
+        - paragraph [ref=f5e22]: Total Orders
+      - generic [ref=f5e23]:
+        - paragraph [ref=f5e24]: "0"
+        - paragraph [ref=f5e25]: Unread
+      - generic [ref=f5e26]:
+        - paragraph [ref=f5e27]: "0"
+        - paragraph [ref=f5e28]: High Priority
+    - table [ref=f5e31]:
+      - rowgroup [ref=f5e32]:
+        - row [ref=f5e33]:
+          - columnheader "Order" [ref=f5e34]
+          - columnheader "Recipient" [ref=f5e35]
+          - columnheader "Date" [ref=f5e36]
+          - columnheader "Priority" [ref=f5e37]
+          - columnheader "Status" [ref=f5e38]
+      - rowgroup [ref=f5e39]:
+        - row [ref=f5e40]:
+          - cell "No orders to display. Send an order to get started." [ref=f5e41]
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f5e42]

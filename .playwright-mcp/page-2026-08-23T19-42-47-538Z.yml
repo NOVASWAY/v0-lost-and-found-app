@@ -1,0 +1,90 @@
+- generic [active] [ref=f19e1]:
+  - banner [ref=f19e2]:
+    - generic [ref=f19e3]:
+      - link "Vault Church THE VAULT Security Operations" [ref=f19e4] [cursor=pointer]:
+        - /url: /
+        - img "Vault Church" [ref=f19e6]
+        - generic [ref=f19e7]:
+          - generic [ref=f19e8]: THE VAULT
+          - generic [ref=f19e9]: Security Operations
+      - navigation [ref=f19e10]:
+        - link "Dashboard" [ref=f19e11] [cursor=pointer]:
+          - /url: /admin
+        - link "Items" [ref=f19e12] [cursor=pointer]:
+          - /url: /admin/items
+        - link "Claims" [ref=f19e13] [cursor=pointer]:
+          - /url: /admin/claims
+        - link "Locations" [ref=f19e14] [cursor=pointer]:
+          - /url: /admin/locations
+        - link "Missions" [ref=f19e15] [cursor=pointer]:
+          - /url: /admin/missions
+        - link "Orders" [ref=f19e16] [cursor=pointer]:
+          - /url: /admin/orders
+        - link "Donations" [ref=f19e17] [cursor=pointer]:
+          - /url: /admin/donations
+        - link "Release Logs" [ref=f19e18] [cursor=pointer]:
+          - /url: /admin/releases
+        - link "User Activity" [ref=f19e19] [cursor=pointer]:
+          - /url: /admin/users
+        - link "Playbooks" [ref=f19e20] [cursor=pointer]:
+          - /url: /admin/playbooks
+        - link "Meeting Minutes" [ref=f19e21] [cursor=pointer]:
+          - /url: /admin/meeting-minutes
+        - link "Audit Logs" [ref=f19e22] [cursor=pointer]:
+          - /url: /admin/audit-logs
+        - link "Settings" [ref=f19e23] [cursor=pointer]:
+          - /url: /admin/settings
+      - generic [ref=f19e24]:
+        - button "Toggle theme" [ref=f19e25]
+        - link [ref=f19e26] [cursor=pointer]:
+          - /url: /profile
+          - button "System Administrator" [ref=f19e27]
+        - button "Logout" [ref=f19e28]
+  - generic [ref=f19e30]:
+    - button "Toggle theme" [ref=f19e35]
+    - generic [ref=f19e36]: SECURITY OPERATIONS // CLEARANCE REQUIRED
+    - generic [ref=f19e48]:
+      - generic [ref=f19e79]:
+        - generic [ref=f19e80]: "0"
+        - generic [ref=f19e81]: "5"
+        - generic [ref=f19e82]: "10"
+        - generic [ref=f19e83]: "15"
+        - generic [ref=f19e84]: "20"
+        - generic [ref=f19e85]: "25"
+        - generic [ref=f19e86]: "30"
+        - generic [ref=f19e87]: "35"
+        - generic [ref=f19e88]: "40"
+        - generic [ref=f19e89]: "45"
+        - generic [ref=f19e90]: "50"
+        - generic [ref=f19e91]: "55"
+        - generic [ref=f19e92]: "60"
+        - generic [ref=f19e93]: "65"
+        - generic [ref=f19e94]: "70"
+        - generic [ref=f19e95]: "75"
+        - generic [ref=f19e96]: "80"
+        - generic [ref=f19e97]: "85"
+        - generic [ref=f19e98]: "90"
+        - generic [ref=f19e99]: "95"
+      - generic [ref=f19e117]:
+        - heading "THE VAULT" [level=1] [ref=f19e118]
+        - paragraph [ref=f19e119]: SECURITY OPERATIONS
+      - generic [ref=f19e120]:
+        - generic [ref=f19e121]:
+          - generic [ref=f19e122]:
+            - generic [ref=f19e123]: Username
+            - textbox "Username" [ref=f19e124]:
+              - /placeholder: Enter your username
+          - generic [ref=f19e125]:
+            - generic [ref=f19e126]: Password
+            - textbox "Password" [ref=f19e127]:
+              - /placeholder: ••••••••
+          - button "Sign In" [ref=f19e128]
+        - generic [ref=f19e129]:
+          - generic [ref=f19e130]: status
+          - generic [ref=f19e131]: IDLE — AWAITING INPUT
+        - generic [ref=f19e132]: Contact an administrator to create an account
+      - link "Back to home" [ref=f19e134] [cursor=pointer]:
+        - /url: /
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f19e135]

@@ -1,0 +1,77 @@
+- generic [ref=f23e1]:
+  - banner [ref=f23e2]:
+    - generic [ref=f23e3]:
+      - link "Vault Church THE VAULT Security Operations" [ref=f23e4] [cursor=pointer]:
+        - /url: /
+        - img "Vault Church" [ref=f23e6]
+        - generic [ref=f23e7]:
+          - generic [ref=f23e8]: THE VAULT
+          - generic [ref=f23e9]: Security Operations
+      - navigation [ref=f23e10]:
+        - link "Dashboard" [ref=f23e11] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Browse Items" [ref=f23e12] [cursor=pointer]:
+          - /url: /browse
+        - link "Upload Item" [ref=f23e13] [cursor=pointer]:
+          - /url: /upload
+        - link "My Claims" [ref=f23e14] [cursor=pointer]:
+          - /url: /my-claims
+        - link "My Uploads" [ref=f23e15] [cursor=pointer]:
+          - /url: /my-uploads
+      - button "Toggle theme" [ref=f23e17]
+  - generic [ref=f23e26]:
+    - button "Toggle theme" [ref=f23e31]
+    - generic [ref=f23e32]: SECURITY OPERATIONS // CLEARANCE REQUIRED
+    - generic [ref=f23e44]:
+      - generic [ref=f23e75]:
+        - generic [ref=f23e76]: "0"
+        - generic [ref=f23e77]: "5"
+        - generic [ref=f23e78]: "10"
+        - generic [ref=f23e79]: "15"
+        - generic [ref=f23e80]: "20"
+        - generic [ref=f23e81]: "25"
+        - generic [ref=f23e82]: "30"
+        - generic [ref=f23e83]: "35"
+        - generic [ref=f23e84]: "40"
+        - generic [ref=f23e85]: "45"
+        - generic [ref=f23e86]: "50"
+        - generic [ref=f23e87]: "55"
+        - generic [ref=f23e88]: "60"
+        - generic [ref=f23e89]: "65"
+        - generic [ref=f23e90]: "70"
+        - generic [ref=f23e91]: "75"
+        - generic [ref=f23e92]: "80"
+        - generic [ref=f23e93]: "85"
+        - generic [ref=f23e94]: "90"
+        - generic [ref=f23e95]: "95"
+      - generic [ref=f23e113]:
+        - heading "THE VAULT" [level=1] [ref=f23e114]
+        - paragraph [ref=f23e115]: SECURITY OPERATIONS
+      - generic [ref=f23e116]:
+        - generic [ref=f23e117]:
+          - generic [ref=f23e118]:
+            - generic [ref=f23e119]: Username
+            - textbox "Username" [ref=f23e120]:
+              - /placeholder: Enter your username
+              - text: admin
+          - generic [ref=f23e121]:
+            - generic [ref=f23e122]: Password
+            - textbox "Password" [ref=f23e123]:
+              - /placeholder: ••••••••
+              - text: SecureAdmin123!
+          - button "Sign In" [active] [ref=f23e124]
+        - generic [ref=f23e125]:
+          - generic [ref=f23e126]: status
+          - generic [ref=f23e127]: KEY — SECURE
+        - generic [ref=f23e128]: Contact an administrator to create an account
+      - link "Back to home" [ref=f23e130] [cursor=pointer]:
+        - /url: /
+  - region "Notifications (F8)":
+    - list [ref=f23e137]:
+      - status [ref=f23e138]:
+        - generic [ref=f23e139]:
+          - generic [ref=f23e140]: Access Denied
+          - generic [ref=f23e141]: Invalid username or password. Please try again.
+        - button [ref=f23e142]
+  - alert [ref=f23e25]
+  - status [ref=f23e147]: Notification Access DeniedInvalid username or password. Please try again.

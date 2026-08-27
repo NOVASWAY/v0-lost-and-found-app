@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]:
+            - generic [ref=e10]:
+              - link "njauwangari6-gmailcom's projects Hobby" [ref=e11] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects
+                - generic [ref=e13]:
+                  - generic [ref=e14]: njauwangari6-gmailcom's projects
+                  - generic [ref=e15]: Hobby
+              - button [ref=e17] [cursor=pointer]
+            - button "Find F" [ref=e22]:
+              - generic [ref=e24]:
+                - generic [ref=e28]: Find
+                - generic [ref=e29]: F
+          - navigation [ref=e33]:
+            - generic [ref=e37]:
+              - link "Overview" [ref=e38] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+              - link "Deployments" [ref=e43] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/deployments
+              - link "Logs" [ref=e49] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/logs
+              - link "Analytics" [ref=e55] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/analytics
+              - link "Speed Insights" [ref=e61] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/speed-insights
+              - link "Observability" [ref=e67] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/observability
+              - link "Firewall" [ref=e76] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/firewall
+              - link "CDN" [ref=e86] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/cdn
+              - separator [ref=e95]
+              - link "Environment Variables" [ref=e96] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/environment-variables
+              - link "Domains" [ref=e102] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/domains
+              - link "Connect" [ref=e108] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/connect
+              - link "Integrations" [ref=e114] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings/integrations
+              - link "Storage" [ref=e120] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/stores
+              - link "Flags" [ref=e126] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/flags
+              - link "Agent" [ref=e135] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/agent
+              - link "AI Gateway" [ref=e144] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/ai-gateway
+              - link "Sandboxes" [ref=e153] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/sandboxes
+              - link "Workflows" [ref=e162] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/workflows
+              - link "Images" [ref=e168] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/images
+              - separator [ref=e174]
+              - link "Usage" [ref=e175] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/usage
+              - link "Support" [ref=e181] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/support
+              - link "Settings" [ref=e187] [cursor=pointer]:
+                - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app/settings
+          - generic [ref=e200]:
+            - button "Avatar for njauwangari6-9400 njauwangari6-9400" [ref=e201] [cursor=pointer]:
+              - img "Avatar for njauwangari6-9400" [ref=e202]:
+                - img "Avatar for njauwangari6-9400" [ref=e203]
+              - generic [ref=e204]: njauwangari6-9400
+            - button "notifications" [ref=e211] [cursor=pointer]
+        - button [ref=e215] [cursor=pointer]
+      - generic [ref=e219]:
+        - generic [ref=e220]:
+          - generic [ref=e223]:
+            - link "v0-lost-and-found-app" [ref=e224] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/v0-lost-and-found-app
+            - button [ref=e228] [cursor=pointer]
+            - link "Back to team view" [ref=e234] [cursor=pointer]:
+              - /url: /njauwangari6-gmailcoms-projects/~/deployments
+          - navigation "Breadcrumb" [ref=e238]:
+            - generic [ref=e239]: Deployments
+          - button "Vercel Agent is available on Pro" [ref=e244] [cursor=pointer]:
+            - generic [ref=e257]: Agent
+        - generic [ref=e264]:
+          - combobox [ref=e266]:
+            - generic [ref=e267]:
+              - searchbox "All Branches" [ref=e268]
+              - button "Open menu" [ref=e269] [cursor=pointer]
+          - combobox [ref=e273]:
+            - generic [ref=e274]:
+              - searchbox "All Authors" [ref=e275]
+              - button "Open menu" [ref=e276] [cursor=pointer]
+          - button "Menu" [ref=e281] [cursor=pointer]:
+            - generic [ref=e282]: All Environments
+          - button "Select Date Range" [ref=e293] [cursor=pointer]
+          - generic [ref=e298]:
+            - button "Filter by deployment status. 6 of 7 statuses selected" [ref=e302] [cursor=pointer]:
+              - generic [ref=e303]:
+                - generic [ref=e309]: Status
+                - generic "6 of 7 statuses selected" [ref=e310]: 6/7
+            - button "Deployments actions" [ref=e317] [cursor=pointer]
+  - alert [ref=e646]

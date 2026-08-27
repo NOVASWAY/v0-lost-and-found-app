@@ -1,0 +1,21 @@
+- generic [active] [ref=f7e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - main [ref=f7e3]:
+    - generic [ref=f7e6]:
+      - generic [ref=f7e7]:
+        - generic [ref=f7e10]:
+          - link "njauwangari6-gmailcom's projects" [ref=f7e11] [cursor=pointer]:
+            - /url: /njauwangari6-gmailcoms-projects
+          - button [ref=f7e15] [cursor=pointer]
+        - generic [ref=f7e19]: Not Found
+        - button [ref=f7e24] [cursor=pointer]:
+          - img "Avatar for njauwangari6-9400" [ref=f7e25]:
+            - img "Avatar for njauwangari6-9400" [ref=f7e26]
+      - generic [ref=f7e32]:
+        - heading "404" [level=1] [ref=f7e40]
+        - generic [ref=f7e42]:
+          - paragraph [ref=f7e43]: This page doesn’t exist.
+          - link "Return to Team" [ref=f7e45] [cursor=pointer]:
+            - /url: /njauwangari6-gmailcoms-projects
+  - alert [ref=f7e47]

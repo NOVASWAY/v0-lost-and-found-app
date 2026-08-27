@@ -1,0 +1,11 @@
+- generic [active] [ref=f3e1]:
+  - main [ref=f3e4]:
+    - generic [ref=f3e116]:
+      - heading "Item Uploaded!" [level=1] [ref=f3e120]
+      - paragraph [ref=f3e121]: Thank you for helping reunite items with their owners. Your upload has been added to our database.
+      - generic [ref=f3e122]:
+        - button "Upload Another" [ref=f3e123]
+        - button "Browse Items" [ref=f3e124]
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f3e25]

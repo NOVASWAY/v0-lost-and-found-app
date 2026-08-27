@@ -1,0 +1,16 @@
+- generic [active] [ref=f11e1]:
+  - main [ref=f11e4]:
+    - generic [ref=f11e5]:
+      - button "Back" [ref=f11e7]
+      - generic [ref=f11e9]:
+        - heading "Mission Assignments" [level=1] [ref=f11e10]
+        - button "New Mission" [ref=f11e11]
+      - paragraph [ref=f11e12]: Assign and track security missions and tasks
+    - generic [ref=f11e14]:
+      - textbox "Search missions..." [ref=f11e19]
+      - combobox [ref=f11e20]:
+        - generic: All Status
+    - paragraph [ref=f11e26]: No missions found
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f11e27]

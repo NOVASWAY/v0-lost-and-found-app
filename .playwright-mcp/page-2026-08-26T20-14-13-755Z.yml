@@ -1,0 +1,85 @@
+- generic [active] [ref=f9e1]:
+  - main [ref=f9e4]:
+    - generic [ref=f9e5]:
+      - generic [ref=f9e6]:
+        - heading "Security Command Center" [level=1] [ref=f9e12]
+        - paragraph [ref=f9e13]: "Vault Church high-security asset management. Authorization level: SUPERUSER"
+      - generic [ref=f9e14]:
+        - link [ref=f9e15] [cursor=pointer]:
+          - /url: /admin/audit-logs
+          - button "Audit Logs" [ref=f9e16]
+        - link [ref=f9e17] [cursor=pointer]:
+          - /url: /admin/users
+          - button "Manage Users" [ref=f9e18]
+    - generic [ref=f9e19]:
+      - generic [ref=f9e20]:
+        - paragraph [ref=f9e24]: Active Nodes
+        - heading "0" [level=3] [ref=f9e25]
+      - generic [ref=f9e26]:
+        - paragraph [ref=f9e31]: Secure Vaults
+        - heading "0" [level=3] [ref=f9e32]
+      - generic [ref=f9e33]:
+        - paragraph [ref=f9e44]: Verified Claims
+        - heading "0" [level=3] [ref=f9e45]
+      - generic [ref=f9e46]:
+        - paragraph [ref=f9e51]: Audit Logs
+        - heading "0" [level=3] [ref=f9e52]
+    - generic [ref=f9e53]:
+      - link [ref=f9e54] [cursor=pointer]:
+        - /url: /admin/users
+        - generic [ref=f9e63]:
+          - heading "User Management" [level=3] [ref=f9e64]
+          - paragraph [ref=f9e65]: Manage users & permissions
+      - link [ref=f9e66] [cursor=pointer]:
+        - /url: /admin/items
+        - generic [ref=f9e74]:
+          - heading "Items" [level=3] [ref=f9e75]
+          - paragraph [ref=f9e76]: Manage all items
+      - link [ref=f9e77] [cursor=pointer]:
+        - /url: /admin/claims
+        - generic [ref=f9e84]:
+          - heading "Claims" [level=3] [ref=f9e85]
+          - paragraph [ref=f9e86]: Review & manage claims
+      - link [ref=f9e87] [cursor=pointer]:
+        - /url: /admin/locations
+        - generic [ref=f9e94]:
+          - heading "Locations" [level=3] [ref=f9e95]
+          - paragraph [ref=f9e96]: Manage locations
+      - link [ref=f9e97] [cursor=pointer]:
+        - /url: /admin/releases
+        - generic [ref=f9e104]:
+          - heading "Release Logs" [level=3] [ref=f9e105]
+          - paragraph [ref=f9e106]: View release history
+      - link [ref=f9e107] [cursor=pointer]:
+        - /url: /admin/donations
+        - generic [ref=f9e115]:
+          - heading "Donations" [level=3] [ref=f9e116]
+          - paragraph [ref=f9e117]: Manage donation queue
+      - link [ref=f9e118] [cursor=pointer]:
+        - /url: /admin/audit-logs
+        - generic [ref=f9e125]:
+          - heading "Audit Logs" [level=3] [ref=f9e126]
+          - paragraph [ref=f9e127]: View system activity
+      - link [ref=f9e128] [cursor=pointer]:
+        - /url: /admin/playbooks
+        - generic [ref=f9e134]:
+          - heading "Playbooks" [level=3] [ref=f9e135]
+          - paragraph [ref=f9e136]: Manage security protocols
+      - link [ref=f9e137] [cursor=pointer]:
+        - /url: /admin/missions
+        - generic [ref=f9e143]:
+          - heading "Missions" [level=3] [ref=f9e144]
+          - paragraph [ref=f9e145]: Assign & track missions
+      - link [ref=f9e146] [cursor=pointer]:
+        - /url: /admin/meeting-minutes
+        - generic [ref=f9e152]:
+          - heading "Meeting Minutes" [level=3] [ref=f9e153]
+          - paragraph [ref=f9e154]: Record & manage minutes
+      - link [ref=f9e155] [cursor=pointer]:
+        - /url: /admin/settings
+        - generic [ref=f9e162]:
+          - heading "Settings" [level=3] [ref=f9e163]
+          - paragraph [ref=f9e164]: System configuration
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=f9e165]
