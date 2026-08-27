@@ -2,6 +2,7 @@ import type React from "react"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { verifyAccessToken } from "@/lib/jwt"
+import { prisma, withDbRetry } from "@/lib/db"
 
 export const metadata = {
   title: "Volunteer - Vault Church Security System",
@@ -23,7 +24,22 @@ export default async function VolunteerLayout({ children }: { children: React.Re
     payload = null
   }
 
-  if (!payload || (payload.role !== "volunteer" && payload.role !== "admin")) {
+  if (!payload) {
+    redirect("/login")
+  }
+
+  // Re-validate against DB: reject revoked sessions and reflect current role
+  try {
+    const user = await withDbRetry(() =>
+      prisma.user.findUnique({
+        where: { id: payload!.sub },
+        select: { role: true, tokenVersion: true },
+      })
+    )
+    if (!user || user.tokenVersion !== payload!.tokenVersion || (user.role !== "volunteer" && user.role !== "admin")) {
+      redirect("/login")
+    }
+  } catch {
     redirect("/login")
   }
 

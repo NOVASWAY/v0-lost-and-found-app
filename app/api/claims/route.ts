@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
-import { sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -108,6 +108,10 @@ export async function POST(request: NextRequest) {
     }
     if (authResult.user.role === "admin") {
       return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting

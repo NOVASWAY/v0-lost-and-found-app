@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { put } from "@vercel/blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
+import { assertSameOrigin } from "@/lib/security"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     const clientId = getClientIdentifier(request)

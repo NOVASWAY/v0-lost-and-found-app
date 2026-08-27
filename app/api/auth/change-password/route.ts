@@ -4,6 +4,7 @@ import { comparePassword, hashPassword } from "@/lib/db"
 import { changePasswordSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
+import { assertSameOrigin } from "@/lib/security"
 import { signAccessToken } from "@/lib/jwt"
 
 export async function POST(request: NextRequest) {
@@ -11,6 +12,10 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting - stricter for password changes

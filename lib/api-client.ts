@@ -109,10 +109,10 @@ export const authApi = {
       body: JSON.stringify({ userId, username }),
     }),
 
-  changePassword: (userId: string, currentPassword: string, newPassword: string) =>
+  changePassword: (currentPassword: string, newPassword: string) =>
     fetchApi<{ message: string }>("/auth/change-password", {
       method: "POST",
-      body: JSON.stringify({ userId, currentPassword, newPassword }),
+      body: JSON.stringify({ currentPassword, newPassword }),
     }),
 }
 

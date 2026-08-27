@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { validateRouteId } from "@/lib/security"
+import { assertSameOrigin, validateRouteId } from "@/lib/security"
 import { updatePlaybookSchema, validateAndSanitize } from "@/lib/validation"
 
 // PATCH update playbook (admin only)
@@ -12,6 +12,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting
@@ -81,6 +85,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
-import { validateRouteId } from "@/lib/security"
+import { assertSameOrigin, validateRouteId } from "@/lib/security"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { updateMeetingMinutesSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -12,6 +12,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     const clientId = getClientIdentifier(request)
@@ -77,6 +81,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     const clientId = getClientIdentifier(request)

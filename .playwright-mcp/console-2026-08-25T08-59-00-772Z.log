@@ -1,5 +1,0 @@
-[    3406ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://v0-lost-and-found-app-sepia-eight.vercel.app/login:0
-[    4919ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://v0-lost-and-found-app-sepia-eight.vercel.app/api/auth/me:0
-[  177919ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://v0-lost-and-found-app-sepia-eight.vercel.app/api/auth/logout:0
-[  178874ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://v0-lost-and-found-app-sepia-eight.vercel.app/login:0
-[  179661ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://v0-lost-and-found-app-sepia-eight.vercel.app/api/auth/me:0

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createLocationSchema, validateAndSanitize } from "@/lib/validation"
+import { assertSameOrigin } from "@/lib/security"
 
 // GET all locations (authenticated users only)
 export async function GET(request: NextRequest) {
@@ -30,6 +31,10 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting

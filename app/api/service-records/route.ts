@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { validateRouteId } from "@/lib/security"
+import { assertSameOrigin, validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -50,6 +50,10 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     const clientId = getClientIdentifier(request)

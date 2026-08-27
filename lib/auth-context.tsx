@@ -63,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.removeItem("userId")
       sessionStorage.removeItem("user")
       router.push("/")
-      console.log("[Security] Session expired due to inactivity")
     }, SESSION_TIMEOUT)
   }, [router])
 
@@ -138,7 +137,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Rate limit check (simple implementation)
     const loginAttempts = parseInt(sessionStorage.getItem("loginAttempts") || "0")
     if (loginAttempts > 5) {
-      console.log("[Security] Too many login attempts")
       return false
     }
 
@@ -160,7 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const foundUser = data.user
 
       if (!foundUser) {
-        console.error("[Security] Missing user in login response")
         return false
       }
       
@@ -190,8 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       return true
-    } catch (error) {
-      console.error("[Security] Login error:", error)
+    } catch {
       return false
     }
   }
@@ -233,7 +229,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        console.error("Password change failed")
         return false
       }
 
@@ -246,8 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         "info"
       )
       return true
-    } catch (error) {
-      console.error("Password change error:", error)
+    } catch {
       return false
     }
   }

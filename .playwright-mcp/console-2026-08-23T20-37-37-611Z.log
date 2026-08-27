@@ -1,3 +1,0 @@
-[    1584ms] [ERROR] Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'unsafe-inline' 'nonce-M2MyY2UxN2UtODU4My00MWVlLTk2YTAtM2U5YTI5ZjNjNjMz''. Note that 'unsafe-inline' is ignored if either a hash or nonce value is present in the source list. The action has been blocked. @ https://v0-lost-and-found-app-sepia-eight.vercel.app/login:0
-[    1746ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://v0-lost-and-found-app-sepia-eight.vercel.app/login:0
-[    3307ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://v0-lost-and-found-app-sepia-eight.vercel.app/api/auth/me:0

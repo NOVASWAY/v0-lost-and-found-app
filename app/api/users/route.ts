@@ -4,7 +4,7 @@ import { hashPassword } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createUserSchema, validateAndSanitize } from "@/lib/validation"
-import { sanitizeSearchQuery } from "@/lib/security"
+import { assertSameOrigin, sanitizeSearchQuery } from "@/lib/security"
 
 // GET all users (admin only)
 export async function GET(request: NextRequest) {
@@ -84,6 +84,10 @@ export async function POST(request: NextRequest) {
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     // Rate limiting

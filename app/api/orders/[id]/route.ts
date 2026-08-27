@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { validateRouteId } from "@/lib/security"
+import { assertSameOrigin, validateRouteId } from "@/lib/security"
 import { requireAuth } from "@/lib/auth-middleware"
 import { updateOrderSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -11,6 +11,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const authResult = await requireAuth(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
     }
 
     const clientId = getClientIdentifier(request)

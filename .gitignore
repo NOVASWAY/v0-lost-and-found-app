@@ -58,4 +58,7 @@ SECURITY_PATH_TRAVERSAL.md
 public/sw.js
 public/swe-worker-*.js
 public/workbox-*.js
-.env.local
+
+# IDE / tooling
+.opencode/
+.playwright-mcp/
