@@ -425,7 +425,7 @@ export default function AdminOccurrenceBookPage() {
       <div><strong>Date:</strong> ${new Date(occurrence.occurrenceDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
       ${occurrence.occurrenceTime ? `<div><strong>Time:</strong> ${escapeHtml(occurrence.occurrenceTime)}</div>` : ''}
       ${occurrence.location ? `<div><strong>Location:</strong> ${escapeHtml(occurrence.location)}</div>` : ''}
-      <div><strong>Reported by:</strong> ${escapeHtml(occurrence.reportedByName || occurrence.reportedBy || "Unknown")}</div>
+      <div><strong>Reported by:</strong> ${escapeHtml(occurrence.reportedByName || occurrence.reportedBy?.name || occurrence.reportedBy || "Unknown")}</div>
       <div><strong>Created:</strong> ${new Date(occurrence.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
     </div>
   </div>
@@ -967,7 +967,7 @@ export default function AdminOccurrenceBookPage() {
                     </div>
                   )}
                   <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                    Reported by {occurrence.reportedByName || occurrence.reportedBy || "Unknown"} on {new Date(occurrence.createdAt).toLocaleDateString()}
+                    Reported by {occurrence.reportedBy?.name || occurrence.reportedByName || occurrence.reportedBy || "Unknown"} on {new Date(occurrence.createdAt).toLocaleDateString()}
                   </div>
                 </Card>
               ))}
