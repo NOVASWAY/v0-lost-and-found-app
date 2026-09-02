@@ -10,4 +10,4 @@ npx prisma db push --schema=prisma/schema.postgresql.prisma --accept-data-loss
 npx prisma generate --schema=prisma/schema.postgresql.prisma
 
 # Build Next.js
-next build
+next build --webpack
