@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ShieldAlert, Plus, Edit, Trash2, Search, Calendar, MapPin, Clock, X, Printer, Upload, Link as LinkIcon, AlertTriangle } from "lucide-react"
@@ -38,14 +38,14 @@ export default function AdminOccurrenceBookPage() {
   const [editingOccurrence, setEditingOccurrence] = useState<any | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{ id: string; title: string } | null>(null)
-  const [newOccurrence, setNewOccurrence] = useState<Partial<any>>({
+  const [newOccurrence, setNewOccurrence] = useState<Partial<any>>(() => ({
     title: "",
     categoryId: "",
     description: "",
     location: "",
     severity: "medium",
     status: "open",
-    occurrenceDate: new Date().toISOString().split("T")[0],
+    occurrenceDate: "",
     occurrenceTime: "",
     notes: "",
     followUpRequired: false,
@@ -53,7 +53,7 @@ export default function AdminOccurrenceBookPage() {
     linkedItemId: "",
     linkedClaimId: "",
     attachments: [],
-  })
+  }))
   const [isLoaded, setIsLoaded] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
 
@@ -590,6 +590,9 @@ export default function AdminOccurrenceBookPage() {
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingOccurrence ? "Edit Occurrence" : "New Occurrence Entry"}</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    {editingOccurrence ? "Edit occurrence details" : "Create a new occurrence entry"}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
