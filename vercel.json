@@ -1,5 +1,5 @@
 {
-  "buildCommand": "DATABASE_PROVIDER=postgresql prisma generate && next build --webpack",
+  "buildCommand": "DATABASE_PROVIDER=postgresql npx prisma migrate deploy && DATABASE_PROVIDER=postgresql prisma generate && next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "crons": [
