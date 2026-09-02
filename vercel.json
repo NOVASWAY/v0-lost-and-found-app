@@ -1,5 +1,5 @@
 {
-  "buildCommand": "DATABASE_PROVIDER=postgresql DATABASE_URL=\"$DATABASE_URL\" npx prisma db push --schema=prisma/schema.postgresql.prisma --accept-data-loss && DATABASE_PROVIDER=postgresql DATABASE_URL=\"$DATABASE_URL\" npx prisma generate --schema=prisma/schema.postgresql.prisma && next build",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "crons": [
