@@ -84,7 +84,26 @@ async function main() {
     })
   }
 
-  console.log("Seed complete: 3 users + 8 locations")
+  // --- Default Occurrence Book categories ---
+
+  const defaultCategories = [
+    { name: "Visitor", color: "#6366f1" },
+    { name: "Maintenance", color: "#f59e0b" },
+    { name: "Medical", color: "#ef4444" },
+    { name: "Security", color: "#8b5cf6" },
+    { name: "Safety Check", color: "#10b981" },
+    { name: "Other", color: "#6b7280" },
+  ]
+
+  for (const cat of defaultCategories) {
+    await prisma.occurrenceCategory.upsert({
+      where: { name: cat.name },
+      update: {},
+      create: cat,
+    })
+  }
+
+  console.log("Seed complete: 3 users + 8 locations + 6 occurrence categories")
 }
 
 main()

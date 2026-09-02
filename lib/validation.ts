@@ -221,6 +221,61 @@ export const createServiceRecordSchema = z.object({
   notes: z.string().max(500).trim().optional(),
 })
 
+// Occurrence category validation schemas
+export const createOccurrenceCategorySchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
+})
+
+export const updateOccurrenceCategorySchema = z.object({
+  name: z.string().min(1).max(100).trim().optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  isActive: z.boolean().optional(),
+})
+
+// Occurrence book validation schemas
+export const createOccurrenceBookSchema = z.object({
+  title: z.string().min(1).max(200).trim(),
+  categoryId: z.string().min(1),
+  description: z.string().min(1).max(5000).trim(),
+  location: z.string().max(200).trim().optional().nullable(),
+  severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  status: z.enum(["open", "investigating", "resolved", "closed"]).default("open"),
+  occurrenceDate: z.string().min(1).max(20).trim(),
+  occurrenceTime: z.string().max(5).trim().optional().nullable(),
+  attachments: z.array(z.object({
+    url: z.string().url(),
+    name: z.string().max(200),
+    type: z.string().max(100),
+  })).max(10).default([]),
+  linkedItemId: z.string().optional().nullable(),
+  linkedClaimId: z.string().optional().nullable(),
+  notes: z.string().max(5000).trim().optional().nullable(),
+  followUpRequired: z.boolean().default(false),
+  followUpNotes: z.string().max(5000).trim().optional().nullable(),
+})
+
+export const updateOccurrenceBookSchema = z.object({
+  title: z.string().min(1).max(200).trim().optional(),
+  categoryId: z.string().min(1).optional(),
+  description: z.string().min(1).max(5000).trim().optional(),
+  location: z.string().max(200).trim().optional().nullable(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+  status: z.enum(["open", "investigating", "resolved", "closed"]).optional(),
+  occurrenceDate: z.string().min(1).max(20).trim().optional(),
+  occurrenceTime: z.string().max(5).trim().optional().nullable(),
+  attachments: z.array(z.object({
+    url: z.string().url(),
+    name: z.string().max(200),
+    type: z.string().max(100),
+  })).max(10).optional(),
+  linkedItemId: z.string().optional().nullable(),
+  linkedClaimId: z.string().optional().nullable(),
+  notes: z.string().max(5000).trim().optional().nullable(),
+  followUpRequired: z.boolean().optional(),
+  followUpNotes: z.string().max(5000).trim().optional().nullable(),
+})
+
 // Sanitization helper
 export function sanitizeString(input: string): string {
   return input

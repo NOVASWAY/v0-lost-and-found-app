@@ -42,6 +42,8 @@ export function Navbar({ role = "user" }: NavbarProps) {
     { href: "/admin/users", label: "User Activity" },
     { href: "/admin/playbooks", label: "Playbooks" },
     { href: "/admin/meeting-minutes", label: "Meeting Minutes" },
+    { href: "/admin/occurrence-book", label: "Occurrence Book" },
+    { href: "/admin/occurrence-categories", label: "OB Categories" },
     { href: "/admin/audit-logs", label: "Audit Logs" },
     { href: "/admin/settings", label: "Settings" },
   ]

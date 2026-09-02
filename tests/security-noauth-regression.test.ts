@@ -17,6 +17,10 @@ import * as missionsRoute from "../app/api/missions/route"
 import * as missionByIdRoute from "../app/api/missions/[id]/route"
 import * as meetingMinutesRoute from "../app/api/meeting-minutes/route"
 import * as meetingMinuteByIdRoute from "../app/api/meeting-minutes/[id]/route"
+import * as occurrenceCategoriesRoute from "../app/api/occurrence-categories/route"
+import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[id]/route"
+import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
+import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
 
 function mockRequest(): NextRequest {
   const headers = new Headers()
@@ -134,6 +138,56 @@ describe("no-auth regression: protected routes require a session", () => {
   it("rejects DELETE /api/meeting-minutes/:id without auth", async () => {
     const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
     const res = (await meetingMinuteByIdRoute.DELETE(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects GET /api/occurrence-categories without auth", async () => {
+    const res = (await occurrenceCategoriesRoute.GET(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects POST /api/occurrence-categories without auth", async () => {
+    const res = (await occurrenceCategoriesRoute.POST(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects PATCH /api/occurrence-categories/:id without auth", async () => {
+    const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
+    const res = (await occurrenceCategoryByIdRoute.PATCH(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects DELETE /api/occurrence-categories/:id without auth", async () => {
+    const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
+    const res = (await occurrenceCategoryByIdRoute.DELETE(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects GET /api/occurrence-book without auth", async () => {
+    const res = (await occurrenceBookRoute.GET(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects POST /api/occurrence-book without auth", async () => {
+    const res = (await occurrenceBookRoute.POST(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects GET /api/occurrence-book/:id without auth", async () => {
+    const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
+    const res = (await occurrenceBookByIdRoute.GET(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects PATCH /api/occurrence-book/:id without auth", async () => {
+    const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
+    const res = (await occurrenceBookByIdRoute.PATCH(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects DELETE /api/occurrence-book/:id without auth", async () => {
+    const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
+    const res = (await occurrenceBookByIdRoute.DELETE(req, ctx)) as NextResponse
     expect(res.status).toBe(401)
   })
 })

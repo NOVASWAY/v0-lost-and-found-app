@@ -110,6 +110,15 @@ const ALLOWED_TYPES = [
   "login",
   "logout",
   "order_sent",
+  "occurrence_book_created",
+  "occurrence_book_updated",
+  "occurrence_book_deleted",
+  "occurrence_category_created",
+  "occurrence_category_updated",
+  "occurrence_category_deleted",
+  "meeting_minutes_created",
+  "meeting_minutes_updated",
+  "meeting_minutes_deleted",
 ] as const
 
 const createAuditLogSchema = z.object({

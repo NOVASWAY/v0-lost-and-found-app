@@ -382,3 +382,56 @@ export const meetingMinutesApi = {
       method: "DELETE",
     }),
 }
+
+export const occurrenceCategoriesApi = {
+  getAll: () => fetchApi<{ categories: any[] }>("/occurrence-categories"),
+
+  create: (data: Record<string, unknown>) =>
+    fetchApi<{ category: any; message: string }>("/occurrence-categories", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    fetchApi<{ category: any; message: string }>(`/occurrence-categories/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/occurrence-categories/${id}`, {
+      method: "DELETE",
+    }),
+}
+
+export const occurrenceBookApi = {
+  getAll: (params?: { search?: string; categoryId?: string; severity?: string; status?: string }) => {
+    const query = new URLSearchParams()
+    if (params?.search) query.set("search", params.search)
+    if (params?.categoryId) query.set("categoryId", params.categoryId)
+    if (params?.severity) query.set("severity", params.severity)
+    if (params?.status) query.set("status", params.status)
+    const qs = query.toString()
+    return fetchApi<{ occurrences: any[] }>(`/occurrence-book${qs ? `?${qs}` : ""}`)
+  },
+
+  getById: (id: string) =>
+    fetchApi<{ occurrence: any }>(`/occurrence-book/${id}`),
+
+  create: (data: Record<string, unknown>) =>
+    fetchApi<{ occurrence: any; message: string }>("/occurrence-book", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: string, data: Record<string, unknown>) =>
+    fetchApi<{ occurrence: any; message: string }>(`/occurrence-book/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/occurrence-book/${id}`, {
+      method: "DELETE",
+    }),
+}

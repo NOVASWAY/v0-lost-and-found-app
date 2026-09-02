@@ -31,8 +31,9 @@ model User {
   orders          Order[]
   auditLogs       AuditLog[]
   releaseLogs     ReleaseLog[]
-  missionsAssigned Mission[] @relation("MissionAssignedTo")
-  missionsCreated   Mission[] @relation("MissionAssignedBy")
+  missionsAssigned    Mission[]            @relation("MissionAssignedTo")
+  missionsCreated     Mission[]            @relation("MissionAssignedBy")
+  occurrenceBookEntries OccurrenceBook[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -58,6 +59,7 @@ model Item {
   uploadedById    String
   uploadedBy      User     @relation(fields: [uploadedById], references: [id])
   claims          Claim[]
+  occurrences     OccurrenceBook[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -87,6 +89,7 @@ model Claim {
   claimantId    String
   claimant      User     @relation(fields: [claimantId], references: [id])
   releaseLog    ReleaseLog?
+  linkedOccurrences OccurrenceBook[]
   
   claimedAt     DateTime @default(now())
   createdAt     DateTime @default(now())
@@ -228,4 +231,52 @@ model AuditLog {
   @@index([severity])
   @@index([userId])
   @@index([timestamp])
+}
+
+model OccurrenceCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#6366f1")
+  isActive  Boolean  @default(true)
+
+  occurrences OccurrenceBook[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OccurrenceBook {
+  id             String  @id @default(cuid())
+  entryNumber    Int     @unique
+  title          String
+  description    String
+  location       String?
+  severity       String  @default("medium") // low, medium, high, critical
+  status         String  @default("open") // open, investigating, resolved, closed
+  occurrenceDate String // YYYY-MM-DD
+  occurrenceTime String? // HH:MM
+  attachments    Json    @default("[]") // { url, name, type }[]
+  notes          String?
+  followUpRequired Boolean @default(false)
+  followUpNotes  String?
+
+  // Relations
+  categoryId     String
+  category       OccurrenceCategory @relation(fields: [categoryId], references: [id])
+  reportedById   String
+  reportedBy     User @relation(fields: [reportedById], references: [id])
+  linkedItemId   String?
+  linkedItem     Item? @relation(fields: [linkedItemId], references: [id])
+  linkedClaimId  String?
+  linkedClaim    Claim? @relation(fields: [linkedClaimId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([severity])
+  @@index([status])
+  @@index([reportedById])
+  @@index([linkedItemId])
+  @@index([linkedClaimId])
 }

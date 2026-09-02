@@ -14,6 +14,10 @@ import * as missionsRoute from "../app/api/missions/route"
 import * as missionByIdRoute from "../app/api/missions/[id]/route"
 import * as meetingMinutesRoute from "../app/api/meeting-minutes/route"
 import * as meetingMinuteByIdRoute from "../app/api/meeting-minutes/[id]/route"
+import * as occurrenceCategoriesRoute from "../app/api/occurrence-categories/route"
+import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[id]/route"
+import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
+import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
 
 // Endpoint-level role authorization tests against the real dev database. Users
 // are created for the test and removed afterwards, so the suite is self-contained.
@@ -579,6 +583,105 @@ describe("endpoint role authorization (real DB)", () => {
     await prisma.claim.deleteMany({ where: { id: claim.id } })
     await prisma.item.delete({ where: { id: item.id } })
     await prisma.user.delete({ where: { id: uploader.id } })
+  })
+
+  // --- Occurrence Book authorization tests ---
+
+  it("GET /api/occurrence-categories allows a regular user (200)", async () => {
+    const res = (await occurrenceCategoriesRoute.GET(
+      cookieRequest("http://localhost/api/occurrence-categories", { token: tokenFor(users.user) })
+    )) as NextResponse
+    expect(res.status).toBe(200)
+  })
+
+  it("POST /api/occurrence-categories rejects a regular user (403)", async () => {
+    const res = (await occurrenceCategoriesRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-categories", {
+        token: tokenFor(users.user),
+        method: "POST",
+        body: { name: "Should not exist", color: "#000000" },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("POST /api/occurrence-categories rejects a volunteer (403)", async () => {
+    const res = (await occurrenceCategoriesRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-categories", {
+        token: tokenFor(users.volunteer),
+        method: "POST",
+        body: { name: "Should not exist", color: "#000000" },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("POST /api/occurrence-categories allows an admin (200)", async () => {
+    const res = (await occurrenceCategoriesRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-categories", {
+        token: tokenFor(users.admin),
+        method: "POST",
+        body: { name: `OB Authz Test ${SUFFIX}`, color: "#6366f1" },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    const cat = await prisma.occurrenceCategory.findUnique({ where: { id: data.category.id } })
+    expect(cat).not.toBeNull()
+    await prisma.occurrenceCategory.delete({ where: { id: data.category.id } })
+  })
+
+  it("GET /api/occurrence-book allows a regular user (200)", async () => {
+    const res = (await occurrenceBookRoute.GET(
+      cookieRequest("http://localhost/api/occurrence-book", { token: tokenFor(users.user) })
+    )) as NextResponse
+    expect(res.status).toBe(200)
+  })
+
+  it("POST /api/occurrence-book rejects a regular user (403)", async () => {
+    const res = (await occurrenceBookRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-book", {
+        token: tokenFor(users.user),
+        method: "POST",
+        body: { title: "Should not exist", categoryId: "x", description: "test", occurrenceDate: "2026-08-01" },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("POST /api/occurrence-book rejects a volunteer (403)", async () => {
+    const res = (await occurrenceBookRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-book", {
+        token: tokenFor(users.volunteer),
+        method: "POST",
+        body: { title: "Should not exist", categoryId: "x", description: "test", occurrenceDate: "2026-08-01" },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("POST /api/occurrence-book allows an admin and creates entry (200)", async () => {
+    const cat = await prisma.occurrenceCategory.findFirst({ where: { isActive: true } })
+    if (!cat) return
+
+    const res = (await occurrenceBookRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-book", {
+        token: tokenFor(users.admin),
+        method: "POST",
+        body: {
+          title: `OB Authz Test Entry ${SUFFIX}`,
+          categoryId: cat.id,
+          description: "Test occurrence entry",
+          occurrenceDate: "2026-08-01",
+          severity: "low",
+          status: "open",
+        },
+      })
+    )) as NextResponse
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.occurrence.title).toContain("OB Authz Test Entry")
+    await prisma.occurrenceBook.delete({ where: { id: data.occurrence.id } })
   })
 })
 
