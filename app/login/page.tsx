@@ -83,6 +83,15 @@ export default function LoginPage() {
   const router = useRouter()
   const userRef = useRef(user)
 
+  // Redirect away if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") router.replace("/admin")
+      else if (user.role === "volunteer") router.replace("/volunteer/dashboard")
+      else router.replace("/dashboard")
+    }
+  }, [user, router])
+
   useEffect(() => {
     userRef.current = user
   }, [user])
