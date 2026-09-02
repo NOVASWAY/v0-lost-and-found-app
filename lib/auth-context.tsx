@@ -48,8 +48,8 @@ function readCachedUser(): User | null {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readCachedUser())
-  const [isAuthenticated, setIsAuthenticated] = useState(() => readCachedUser() !== null)
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const router = useRouter()
 

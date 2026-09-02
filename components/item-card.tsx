@@ -1,3 +1,4 @@
+import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -26,7 +27,10 @@ export function ItemCard({
   status,
   donationDeadline,
 }: ItemCardProps) {
-  const daysAgo = Math.floor((new Date().getTime() - dateFound.getTime()) / (1000 * 60 * 60 * 24))
+  const [daysAgo, setDaysAgo] = React.useState(0)
+  React.useEffect(() => {
+    setDaysAgo(Math.floor((Date.now() - dateFound.getTime()) / (1000 * 60 * 60 * 24)))
+  }, [dateFound])
 
   return (
     <Link href={`/items/${id}`}>

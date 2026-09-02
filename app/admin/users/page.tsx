@@ -26,7 +26,7 @@ export default function AdminUsersPage() {
   const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null)
   const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false)
-  const [serviceDate, setServiceDate] = useState(new Date().toISOString().split("T")[0])
+  const [serviceDate, setServiceDate] = useState("")
   const [markAttended, setMarkAttended] = useState(true)
   const [markServed, setMarkServed] = useState(false)
   const [serviceNotes, setServiceNotes] = useState("")
@@ -49,6 +49,7 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
+    setServiceDate(new Date().toISOString().split("T")[0])
     loadUsers()
   }, [])
 

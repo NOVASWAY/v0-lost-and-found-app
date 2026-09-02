@@ -28,12 +28,13 @@ const [imageFile, setImageFile] = useState<File | null>(null)
   const [category, setCategory] = useState("")
   const [color, setColor] = useState("")
   const [location, setLocation] = useState("")
-  const [dateFound, setDateFound] = useState(new Date().toISOString().split("T")[0])
+  const [dateFound, setDateFound] = useState("")
   const [description, setDescription] = useState("")
   const [locations, setLocations] = useState<Location[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
+    setDateFound(new Date().toISOString().split("T")[0])
     locationsApi
       .getAll()
       .then((res) => setLocations(res.locations))
