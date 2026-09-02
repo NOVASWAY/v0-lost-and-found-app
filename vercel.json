@@ -1,5 +1,5 @@
 {
-  "buildCommand": "DATABASE_PROVIDER=postgresql npx prisma migrate deploy && DATABASE_PROVIDER=postgresql prisma generate && next build",
+  "buildCommand": "DATABASE_PROVIDER=postgresql DATABASE_URL=\"$DATABASE_URL\" npx prisma db push --schema=prisma/schema.postgresql.prisma && DATABASE_PROVIDER=postgresql DATABASE_URL=\"$DATABASE_URL\" npx prisma generate --schema=prisma/schema.postgresql.prisma && next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "crons": [
