@@ -2,11 +2,10 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from "@/lib/auth-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
+import { NavbarDropdown } from "@/components/navbar-dropdown"
 
 interface NavbarProps {
   role?: "user" | "volunteer" | "admin"
@@ -30,27 +29,50 @@ export function Navbar({ role = "user" }: NavbarProps) {
     { href: "/my-claims", label: "My Claims" },
   ]
 
-  const adminLinks = [
+  const adminTopLinks = [
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/items", label: "Items" },
     { href: "/admin/claims", label: "Claims" },
-    { href: "/admin/locations", label: "Locations" },
-    { href: "/admin/missions", label: "Missions" },
-    { href: "/admin/orders", label: "Orders" },
-    { href: "/admin/donations", label: "Donations" },
-    { href: "/admin/releases", label: "Release Logs" },
-    { href: "/admin/users", label: "User Activity" },
-    { href: "/admin/playbooks", label: "Playbooks" },
-    { href: "/admin/meeting-minutes", label: "Meeting Minutes" },
-    { href: "/admin/occurrence-book", label: "Occurrence Book" },
-    { href: "/admin/occurrence-categories", label: "OB Categories" },
-    { href: "/admin/audit-logs", label: "Audit Logs" },
-    { href: "/admin/settings", label: "Settings" },
   ]
 
-  let links = userLinks
-  if (role === "volunteer") links = volunteerLinks
-  if (role === "admin") links = adminLinks
+  const adminDropdowns = [
+    {
+      label: "Management",
+      items: [
+        { href: "/admin/locations", label: "Locations" },
+        { href: "/admin/users", label: "Users" },
+        { href: "/admin/orders", label: "Orders" },
+        { href: "/admin/donations", label: "Donations" },
+      ],
+    },
+    {
+      label: "Operations",
+      items: [
+        { href: "/admin/missions", label: "Missions" },
+        { href: "/admin/releases", label: "Release Logs" },
+        { href: "/admin/meeting-minutes", label: "Meeting Minutes" },
+      ],
+    },
+    {
+      label: "Security",
+      items: [
+        { href: "/admin/playbooks", label: "Playbooks" },
+        { href: "/admin/occurrence-book", label: "Occurrence Book" },
+        { href: "/admin/occurrence-categories", label: "OB Categories" },
+      ],
+    },
+    {
+      label: "System",
+      items: [
+        { href: "/admin/audit-logs", label: "Audit Logs" },
+        { href: "/admin/settings", label: "Settings" },
+      ],
+    },
+  ]
+
+  const isVolunteer = role === "volunteer"
+  const isAdmin = role === "admin"
+  const links = isAdmin ? adminTopLinks : isVolunteer ? volunteerLinks : userLinks
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/30 glass-effect hidden md:block animate-slide-in-down">
@@ -66,8 +88,8 @@ export function Navbar({ role = "user" }: NavbarProps) {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
-          {links.map((link, i) => (
+        <nav className="hidden items-center gap-5 md:flex">
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -76,6 +98,9 @@ export function Navbar({ role = "user" }: NavbarProps) {
               {link.label}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent group-hover:w-full transition-all duration-300 rounded-full" />
             </Link>
+          ))}
+          {isAdmin && adminDropdowns.map((dropdown) => (
+            <NavbarDropdown key={dropdown.label} label={dropdown.label} items={dropdown.items} />
           ))}
         </nav>
 
