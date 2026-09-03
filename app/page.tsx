@@ -28,8 +28,8 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-border/50 bg-card/50 backdrop-blur-xl glass-effect">
         <div className="container mx-auto flex items-center justify-between px-4 py-4 animate-fade-in">
           <div className="flex items-center gap-2 sm:gap-3 group">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
-              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 32px, 40px" className="object-contain" priority />
+            <div className="relative h-8 w-6 sm:h-10 sm:w-8 flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 24px, 32px" className="object-contain object-top" priority />
             </div>
             <span className="text-base sm:text-xl font-bold text-foreground truncate group-hover:text-primary transition-colors duration-300">Vault Church</span>
           </div>
@@ -48,9 +48,9 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20 md:py-32 relative">
         <div className="mx-auto max-w-3xl text-center space-y-8">
           <div className="mb-8 flex justify-center animate-bounce-subtle">
-            <div className="relative h-32 w-32 sm:h-40 sm:w-40 group">
-              <div className="absolute inset-0 animate-glow-pulse rounded-full" />
-              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="160px" className="object-contain drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" priority />
+            <div className="relative w-36 h-52 sm:w-44 sm:h-64 group">
+              <div className="absolute inset-0 animate-glow-pulse rounded-2xl" />
+              <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 144px, 176px" className="object-contain drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-300" priority />
             </div>
           </div>
           

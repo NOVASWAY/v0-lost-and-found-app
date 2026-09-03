@@ -10,19 +10,24 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const pathname = usePathname()
 
-  // Show navbar on public pages or desktop
-  const isPublicPage = !user || pathname === "/" || pathname === "/login" || pathname === "/signup"
-  const showNavbar = isPublicPage && pathname !== "/" // Don't show navbar on landing page (it has its own header)
-  const showMobileHeader = user && !isPublicPage
+  // Never show navigation on the landing page (it has its own header)
+  // or on login/signup (they are self-contained).
+  const hideNav = pathname === "/" || pathname === "/login" || pathname === "/signup"
+
+  // Desktop navbar: show on all pages except landing/login/signup
+  const showNavbar = !hideNav
+
+  // Mobile header: only when logged in (outside of landing/login/signup)
+  const showMobileHeader = !!user && !hideNav
 
   return (
     <>
       {showNavbar && <Navbar role={user?.role || "user"} />}
       {showMobileHeader && <MobileHeader />}
-      <div className={user && !isPublicPage ? "pb-20 md:pb-0 min-h-screen" : "min-h-screen"}>
+      <div className={user && !hideNav ? "pb-20 md:pb-0 min-h-screen" : "min-h-screen"}>
         {children}
       </div>
-      {user && !isPublicPage && <MobileBottomNav />}
+      {user && !hideNav && <MobileBottomNav />}
     </>
   )
 }

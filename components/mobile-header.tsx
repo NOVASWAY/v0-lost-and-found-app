@@ -19,8 +19,8 @@ export function MobileHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-xl md:hidden">
       <div className="flex h-14 items-center justify-between px-4">
         <Link href={user.role === "admin" ? "/admin" : user.role === "volunteer" ? "/volunteer/dashboard" : "/dashboard"} className="flex items-center gap-2">
-          <div className="relative h-8 w-8 grayscale transition-all duration-500 border border-primary/20 rounded-lg p-0.5 bg-white/5">
-            <Image src="/vault-church-logo.jpeg" alt="Vault Church" width={32} height={32} className="object-contain" priority />
+          <div className="relative h-8 w-6 grayscale transition-all duration-500 border border-primary/20 rounded-lg p-0.5 bg-white/5">
+            <Image src="/vault-church-logo.jpeg" alt="Vault Church" width={24} height={36} className="object-contain object-top" priority />
           </div>
           <span className="text-sm font-black tracking-tighter text-foreground">THE VAULT</span>
         </Link>

@@ -56,8 +56,8 @@ export function Navbar({ role = "user" }: NavbarProps) {
     <header className="sticky top-0 z-50 border-b border-border/30 glass-effect hidden md:block animate-slide-in-down">
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
         <Link href="/" className="flex items-center gap-4 group">
-          <div className="relative h-10 w-10 sm:h-12 sm:w-12 transition-all duration-500 border border-primary/30 group-hover:border-primary/60 rounded-lg p-1 bg-gradient-to-br from-primary/10 to-accent/10 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/20">
-            <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 40px, 48px" className="object-contain group-hover:drop-shadow-lg transition-all duration-300" priority />
+          <div className="relative h-10 w-7 sm:h-12 sm:w-8 transition-all duration-500 border border-primary/30 group-hover:border-primary/60 rounded-lg p-1 bg-gradient-to-br from-primary/10 to-accent/10 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/20">
+            <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 28px, 32px" className="object-contain object-top group-hover:drop-shadow-lg transition-all duration-300" priority />
           </div>
           <div className="flex flex-col">
             <span className="text-base sm:text-lg font-black tracking-tighter text-foreground group-hover:gradient-text transition-all duration-300 leading-none">THE VAULT</span>
