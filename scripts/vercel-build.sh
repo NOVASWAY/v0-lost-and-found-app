@@ -9,6 +9,9 @@ npx prisma db push --schema=prisma/schema.postgresql.prisma --accept-data-loss
 # Seed default categories (idempotent upserts)
 DATABASE_PROVIDER=postgresql npx tsx scripts/seed-categories.ts
 
+# Seed locations with categories (idempotent upserts)
+DATABASE_PROVIDER=postgresql npx tsx scripts/seed-locations.ts
+
 # Generate Prisma client for PostgreSQL
 npx prisma generate --schema=prisma/schema.postgresql.prisma
 

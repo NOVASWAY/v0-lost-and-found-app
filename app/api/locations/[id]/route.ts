@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { name, description } = validation.data
+    const { name, description, category } = validation.data
     const actorId = authResult.user.id
 
     const location = await prisma.location.findUnique({
@@ -52,6 +52,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description: description || null }),
+        ...(category !== undefined && { category: category || null }),
       },
     })
 

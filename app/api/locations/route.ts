@@ -51,13 +51,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { name, description } = validation.data
+    const { name, description, category } = validation.data
     const actorId = authResult.user.id
 
     const location = await prisma.location.create({
       data: {
         name,
         description: description || null,
+        category: category || null,
       },
     })
 

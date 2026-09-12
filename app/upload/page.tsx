@@ -291,7 +291,7 @@ const [imageFile, setImageFile] = useState<File | null>(null)
                   <SelectContent>
                     {locations.map((loc) => (
                       <SelectItem key={loc.id} value={loc.name}>
-                        {loc.name}
+                        {loc.category ? `${loc.category}: ${loc.name}` : loc.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

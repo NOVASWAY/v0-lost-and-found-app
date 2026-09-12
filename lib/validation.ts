@@ -186,12 +186,14 @@ export const updateMeetingMinutesSchema = z.object({
 export const createLocationSchema = z.object({
   name: z.string().min(1).max(200).trim(),
   description: z.string().max(500).trim().optional(),
+  category: z.string().max(100).trim().optional(),
   userId: z.string().min(1).optional(),
 })
 
 export const updateLocationSchema = z.object({
   name: z.string().min(1).max(200).trim().optional(),
   description: z.string().max(500).trim().optional().nullable(),
+  category: z.string().max(100).trim().optional().nullable(),
   userId: z.string().min(1).optional(),
 })
 

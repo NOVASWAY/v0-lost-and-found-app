@@ -24,6 +24,7 @@ export interface Location {
   id: string
   name: string
   description?: string | null
+  category?: string | null
   createdAt?: string
 }
 
@@ -220,13 +221,13 @@ export const claimsApi = {
 export const locationsApi = {
   getAll: () => fetchApi<{ locations: Location[] }>("/locations"),
 
-  create: (data: { name: string; description?: string; userId?: string }) =>
+  create: (data: { name: string; description?: string; category?: string; userId?: string }) =>
     fetchApi<{ location: any; message: string }>("/locations", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: { name?: string; description?: string; userId?: string }) =>
+  update: (id: string, data: { name?: string; description?: string; category?: string; userId?: string }) =>
     fetchApi<{ location: any; message: string }>(`/locations/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),

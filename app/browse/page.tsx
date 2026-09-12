@@ -152,7 +152,7 @@ export default function BrowsePage() {
                 <SelectItem value="all">All Locations</SelectItem>
                 {locations.map((loc) => (
                   <SelectItem key={loc.id} value={loc.name}>
-                    {loc.name}
+                    {loc.category ? `${loc.category}: ${loc.name}` : loc.name}
                   </SelectItem>
                 ))}
               </SelectContent>

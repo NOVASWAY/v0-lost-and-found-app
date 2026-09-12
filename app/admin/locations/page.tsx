@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,11 +8,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { MapPin, Plus, Edit, Trash2, Search } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MapPin, Plus, Edit, Trash2, Search, Tag } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { locationsApi, ApiError, type Location } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { BackButton } from "@/components/back-button"
+
+const LOCATION_CATEGORIES = [
+  "Main Campus",
+  "Youth Wing",
+  "Children's Area",
+  "Fellowship Hall",
+  "Parking Lot",
+  "Office",
+  "Chapel",
+  "Outreach Center",
+  "Satellite Location",
+]
 
 export default function AdminLocationsPage() {
   const { user, isAuthenticated } = useAuth()
@@ -21,11 +34,13 @@ export default function AdminLocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
   const [newLocation, setNewLocation] = useState<Partial<Location>>({
     name: "",
     description: "",
+    category: "",
   })
 
   const loadLocations = () => {
@@ -54,6 +69,11 @@ export default function AdminLocationsPage() {
     }
   }, [isLoaded, isAuthenticated, user, router])
 
+  const existingCategories = useMemo(() => {
+    const cats = new Set(locations.map((l) => l.category).filter(Boolean))
+    return LOCATION_CATEGORIES.filter((c) => cats.has(c) || LOCATION_CATEGORIES.includes(c))
+  }, [locations])
+
   if (!isLoaded || !isAuthenticated || user?.role !== "admin") {
     return (
       <div className="min-h-screen bg-background">
@@ -74,7 +94,10 @@ export default function AdminLocationsPage() {
 
   const filteredLocations = locations.filter((loc) => {
     const searchLower = searchQuery.toLowerCase()
-    return loc.name.toLowerCase().includes(searchLower) || (loc.description || "").toLowerCase().includes(searchLower)
+    const matchesSearch =
+      loc.name.toLowerCase().includes(searchLower) || (loc.description || "").toLowerCase().includes(searchLower)
+    const matchesCategory = categoryFilter === "all" || loc.category === categoryFilter
+    return matchesSearch && matchesCategory
   })
 
   const handleSaveLocation = async () => {
@@ -92,6 +115,7 @@ export default function AdminLocationsPage() {
         await locationsApi.update(editingLocation.id, {
           name: newLocation.name,
           description: newLocation.description || "",
+          category: newLocation.category || "",
           userId: user.id,
         })
         toast({
@@ -102,6 +126,7 @@ export default function AdminLocationsPage() {
         await locationsApi.create({
           name: newLocation.name,
           description: newLocation.description || "",
+          category: newLocation.category || "",
           userId: user.id,
         })
         toast({
@@ -112,7 +137,7 @@ export default function AdminLocationsPage() {
       loadLocations()
       setIsDialogOpen(false)
       setEditingLocation(null)
-      setNewLocation({ name: "", description: "" })
+      setNewLocation({ name: "", description: "", category: "" })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Failed to save location"
       toast({ title: "Error", description: message, variant: "destructive" })
@@ -140,13 +165,14 @@ export default function AdminLocationsPage() {
     setNewLocation({
       name: location.name,
       description: location.description || "",
+      category: location.category || "",
     })
     setIsDialogOpen(true)
   }
 
   const openNewDialog = () => {
     setEditingLocation(null)
-    setNewLocation({ name: "", description: "" })
+    setNewLocation({ name: "", description: "", category: "" })
     setIsDialogOpen(true)
   }
 
@@ -181,6 +207,24 @@ export default function AdminLocationsPage() {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Select
+                      value={newLocation.category || ""}
+                      onValueChange={(value) => setNewLocation({ ...newLocation, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LOCATION_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
@@ -205,16 +249,32 @@ export default function AdminLocationsPage() {
           <p className="text-sm sm:text-base text-muted-foreground">Manage locations where items are found</p>
         </div>
 
-        {/* Search */}
+        {/* Search and Filter */}
         <Card className="mb-6 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search locations..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search locations..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Tag className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {LOCATION_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </Card>
 
@@ -229,6 +289,12 @@ export default function AdminLocationsPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-1">{location.name}</h3>
+                    {location.category && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full mb-1">
+                        <Tag className="w-3 h-3" />
+                        {location.category}
+                      </span>
+                    )}
                     {location.description && (
                       <p className="text-sm text-muted-foreground">{location.description}</p>
                     )}
@@ -265,7 +331,9 @@ export default function AdminLocationsPage() {
           {filteredLocations.length === 0 && (
             <Card className="p-12 text-center col-span-full">
               <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No locations found</p>
+              <p className="text-muted-foreground">
+                {categoryFilter !== "all" ? `No locations in "${categoryFilter}" category` : "No locations found"}
+              </p>
             </Card>
           )}
         </div>
