@@ -176,7 +176,7 @@ export default function LoginPage() {
         : KEY_STATUS(password.length)
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 px-4 py-12 dark:from-slate-950 dark:via-zinc-900 dark:to-slate-950">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_15%_15%,oklch(0.92_0.06_158/.8),transparent_30%),radial-gradient(circle_at_85%_85%,oklch(0.9_0.08_86/.28),transparent_28%),linear-gradient(135deg,oklch(0.98_0.008_155),oklch(0.94_0.025_158))] px-4 py-12 dark:bg-[radial-gradient(circle_at_15%_15%,oklch(0.3_0.09_158/.45),transparent_32%),radial-gradient(circle_at_85%_85%,oklch(0.35_0.08_86/.18),transparent_30%),linear-gradient(135deg,oklch(0.12_0.025_158),oklch(0.16_0.035_175))]">
       {/* Living starfield */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-40 dark:opacity-80">
         {STARFIELD.map((s) => (
@@ -265,7 +265,7 @@ export default function LoginPage() {
         {/* Login form card */}
         <div
           className={cn(
-            "rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl sm:p-8",
+            "rounded-3xl border border-white/60 bg-white/70 p-6 text-card-foreground shadow-[0_24px_80px_-28px_oklch(0.25_0.1_158/.45)] backdrop-blur-2xl sm:p-8 dark:border-white/10 dark:bg-card/70 dark:shadow-[0_24px_80px_-28px_oklch(0.02_0.03_158/.8)]",
             shake && "animate-cinematic-shake"
           )}
         >
