@@ -25,6 +25,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { usersApi, auditLogsApi, ApiError, type UserListItem } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { VaultBackground } from "@/components/vault-background"
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -66,7 +67,7 @@ export default function AdminDashboardPage() {
   // Show loading while checking auth or fetching data
   if (!isLoaded || !isAuthenticated || user?.role !== "admin") {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <div className="mb-6 sm:mb-8 space-y-2">
             <div className="h-8 w-64 bg-muted animate-pulse rounded" />
@@ -78,12 +79,12 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+    <VaultBackground intensity="cinematic" className="text-foreground font-sans selection:bg-primary/30">
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-in fade-in duration-700 pb-24 sm:pb-10">
         <div className="mb-8 sm:mb-12 border-b border-border/50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
@@ -301,6 +302,6 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
       </main>
-    </div>
+    </VaultBackground>
   )
 }

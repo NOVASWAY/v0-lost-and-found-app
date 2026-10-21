@@ -267,6 +267,72 @@
   background-clip: text;
 }
 
+/* Shared vault atmosphere */
+.vault-background__wash,
+.vault-background__grid,
+.vault-background__grain,
+.vault-background__orb,
+.vault-background__ring {
+  pointer-events: none;
+  position: absolute;
+}
+
+.vault-background__wash {
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 8%, oklch(0.92 0.06 158 / 0.75), transparent 32%),
+    radial-gradient(circle at 88% 92%, oklch(0.9 0.08 86 / 0.22), transparent 30%),
+    linear-gradient(135deg, oklch(0.98 0.008 155), oklch(0.95 0.02 158));
+}
+
+.vault-background__wash--cinematic {
+  background:
+    radial-gradient(circle at 18% 16%, oklch(0.3 0.09 158 / 0.44), transparent 34%),
+    radial-gradient(circle at 82% 84%, oklch(0.35 0.08 86 / 0.18), transparent 32%),
+    linear-gradient(135deg, oklch(0.12 0.025 158), oklch(0.16 0.035 175));
+}
+
+.vault-background__grid {
+  inset: 0;
+  opacity: 0.45;
+  background-image: linear-gradient(oklch(0.55 0.04 158 / 0.07) 1px, transparent 1px), linear-gradient(90deg, oklch(0.55 0.04 158 / 0.07) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 90%);
+}
+
+.vault-background__orb {
+  border-radius: 9999px;
+  filter: blur(72px);
+  opacity: 0.28;
+  animation: vault-drift 18s ease-in-out infinite alternate;
+}
+.vault-background__orb--green { left: -8rem; top: 12%; width: 24rem; height: 24rem; background: oklch(0.58 0.16 158 / 0.28); }
+.vault-background__orb--gold { right: -6rem; top: 4%; width: 22rem; height: 22rem; background: oklch(0.74 0.16 86 / 0.2); animation-delay: -7s; }
+.vault-background__orb--blue { right: 24%; bottom: -10rem; width: 20rem; height: 20rem; background: oklch(0.58 0.16 230 / 0.14); animation-delay: -12s; }
+
+.vault-background__ring {
+  border: 1px solid oklch(0.58 0.12 158 / 0.12);
+  border-radius: 9999px;
+  animation: vault-spin 42s linear infinite;
+}
+.vault-background__ring--one { width: 34rem; height: 34rem; right: -15rem; top: 22%; }
+.vault-background__ring--two { width: 46rem; height: 46rem; left: -24rem; bottom: -24rem; animation-direction: reverse; animation-duration: 58s; }
+
+.vault-background__grain {
+  inset: 0;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+}
+
+@keyframes vault-drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(3%, 3%, 0) scale(1.08); } }
+@keyframes vault-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-background__orb,
+  .vault-background__ring { animation: none; }
+}
+
 /* Smooth transitions */
 * {
   @apply transition-colors duration-200;

@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
 import { claimsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { VaultBackground } from "@/components/vault-background"
 
 export default function VolunteerDashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -71,7 +72,7 @@ export default function VolunteerDashboardPage() {
   }).length
 
   return (
-    <div className="min-h-screen bg-background">
+    <VaultBackground>
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Release Dashboard</h1>
@@ -208,6 +209,6 @@ export default function VolunteerDashboardPage() {
                   )}
         </Card>
       </main>
-    </div>
+    </VaultBackground>
   )
 }
