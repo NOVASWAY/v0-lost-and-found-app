@@ -21,6 +21,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // next-pwa adds a webpack hook; keep Turbopack explicit for Next 16 previews.
+  turbopack: {},
   async headers() {
     return [
       // Apply the same hardening to API routes (middleware excludes /api).
