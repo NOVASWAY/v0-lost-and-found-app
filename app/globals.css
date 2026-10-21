@@ -4,25 +4,25 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.98 0.008 155);
-  --foreground: oklch(0.19 0.025 158);
-  --card: oklch(1 0.002 155);
-  --card-foreground: oklch(0.19 0.025 158);
-  --popover: oklch(1 0.002 155);
-  --popover-foreground: oklch(0.19 0.025 158);
-  --primary: oklch(0.43 0.12 158);
-  --primary-foreground: oklch(0.98 0.008 155);
-  --secondary: oklch(0.93 0.025 155);
-  --secondary-foreground: oklch(0.32 0.08 158);
-  --muted: oklch(0.94 0.012 155);
-  --muted-foreground: oklch(0.5 0.025 158);
+  --background: oklch(0.975 0.014 158);
+  --foreground: oklch(0.18 0.035 158);
+  --card: oklch(0.995 0.006 158);
+  --card-foreground: oklch(0.18 0.035 158);
+  --popover: oklch(0.995 0.006 158);
+  --popover-foreground: oklch(0.18 0.035 158);
+  --primary: oklch(0.39 0.12 158);
+  --primary-foreground: oklch(0.985 0.012 158);
+  --secondary: oklch(0.925 0.035 158);
+  --secondary-foreground: oklch(0.28 0.075 158);
+  --muted: oklch(0.935 0.022 158);
+  --muted-foreground: oklch(0.43 0.035 158);
   --accent: oklch(0.79 0.14 86);
   --accent-foreground: oklch(0.2 0.03 158);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.99 0.002 264);
-  --border: oklch(0.91 0.008 264);
-  --input: oklch(0.91 0.008 264);
-  --ring: oklch(0.35 0.08 162);
+  --border: oklch(0.88 0.025 158);
+  --input: oklch(0.86 0.025 158);
+  --ring: oklch(0.42 0.1 158);
   --chart-1: oklch(0.62 0.18 142);
   --chart-2: oklch(0.55 0.15 220);
   --chart-3: oklch(0.65 0.2 85);
@@ -280,12 +280,20 @@
 .vault-background__wash {
   inset: 0;
   background:
-    radial-gradient(circle at 12% 8%, oklch(0.92 0.06 158 / 0.75), transparent 32%),
-    radial-gradient(circle at 88% 92%, oklch(0.9 0.08 86 / 0.22), transparent 30%),
-    linear-gradient(135deg, oklch(0.98 0.008 155), oklch(0.95 0.02 158));
+    radial-gradient(circle at 8% 4%, oklch(0.91 0.085 158 / 0.78), transparent 30%),
+    radial-gradient(circle at 92% 96%, oklch(0.92 0.1 86 / 0.3), transparent 32%),
+    radial-gradient(circle at 58% 42%, oklch(1 0 0 / 0.42), transparent 38%),
+    linear-gradient(135deg, oklch(0.975 0.014 158), oklch(0.94 0.035 158));
 }
 
 .vault-background__wash--cinematic {
+  background:
+    radial-gradient(circle at 12% 10%, oklch(0.9 0.1 158 / 0.72), transparent 34%),
+    radial-gradient(circle at 86% 88%, oklch(0.92 0.1 86 / 0.28), transparent 32%),
+    linear-gradient(135deg, oklch(0.975 0.014 158), oklch(0.93 0.035 175));
+}
+
+.dark .vault-background__wash--cinematic {
   background:
     radial-gradient(circle at 18% 16%, oklch(0.3 0.09 158 / 0.44), transparent 34%),
     radial-gradient(circle at 82% 84%, oklch(0.35 0.08 86 / 0.18), transparent 32%),
