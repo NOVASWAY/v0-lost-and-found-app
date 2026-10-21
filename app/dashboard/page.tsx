@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/lib/auth-context"
 import { itemsApi, claimsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { VaultBackground } from "@/components/vault-background"
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -54,7 +55,7 @@ export default function DashboardPage() {
 
   if (!isLoaded || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <div className="mb-6 sm:mb-8 space-y-2">
             <div className="h-8 w-64 bg-muted animate-pulse rounded" />
@@ -74,7 +75,7 @@ export default function DashboardPage() {
             ))}
           </div>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 

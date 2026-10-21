@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RubiksSafe } from "@/components/rubiks-safe"
 import { cn } from "@/lib/utils"
+import { VaultBackground } from "@/components/vault-background"
 
 type Phase = "idle" | "running" | "unlocking"
 
@@ -20,18 +21,22 @@ type Phase = "idle" | "running" | "unlocking"
 const UNLOCK_DELAY = 3050 // vault door swings open
 const NAVIGATE_DELAY = 4800 // then route to the user's dashboard
 
-// Fixed starfield computed once at module load so positions never reshuffle.
-const STARFIELD = Array.from({ length: 60 }, (_, i) => ({
-  id: i,
-  left: Math.random() * 100,
-  top: Math.random() * 100,
-  size: Math.random() * 2 + 1,
-  duration: 9 + Math.random() * 16,
-  delay: -Math.random() * 24,
-  opacity: 0.15 + Math.random() * 0.45,
-  driftX: (Math.random() - 0.5) * 60,
-  driftY: -30 - Math.random() * 80,
-}))
+  // Deterministic starfield keeps the animated login surface stable across SSR and hydration.
+  const STARFIELD = Array.from({ length: 60 }, (_, i) => {
+    const seed = (i * 37 + 17) % 101
+    const secondary = (i * 61 + 29) % 101
+    return {
+      id: i,
+      left: seed,
+      top: secondary,
+      size: 1 + ((i * 17) % 100) / 100,
+      duration: 9 + ((i * 13) % 160) / 10,
+      delay: -((i * 19) % 240) / 10,
+      opacity: 0.15 + ((i * 23) % 45) / 100,
+      driftX: (((i * 29) % 60) - 30),
+      driftY: -30 - ((i * 31) % 80),
+    }
+  })
 
 const KEY_STATUS = (len: number): { label: string; tone: string } => {
   if (len === 0) return { label: "IDLE — AWAITING INPUT", tone: "text-slate-400 dark:text-slate-500" }
@@ -176,7 +181,7 @@ export default function LoginPage() {
         : KEY_STATUS(password.length)
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_15%_15%,oklch(0.92_0.06_158/.8),transparent_30%),radial-gradient(circle_at_85%_85%,oklch(0.9_0.08_86/.28),transparent_28%),linear-gradient(135deg,oklch(0.98_0.008_155),oklch(0.94_0.025_158))] px-4 py-12 dark:bg-[radial-gradient(circle_at_15%_15%,oklch(0.3_0.09_158/.45),transparent_32%),radial-gradient(circle_at_85%_85%,oklch(0.35_0.08_86/.18),transparent_30%),linear-gradient(135deg,oklch(0.12_0.025_158),oklch(0.16_0.035_175))]">
+    <VaultBackground intensity="cinematic" className="flex items-center justify-center px-4 py-12">
       {/* Living starfield */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-40 dark:opacity-80">
         {STARFIELD.map((s) => (
@@ -345,6 +350,6 @@ export default function LoginPage() {
         </div>
         </SafeFrame>
       </div>
-    </div>
+    </VaultBackground>
   )
 }
