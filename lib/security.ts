@@ -37,7 +37,13 @@ export function assertSameOrigin(request: NextRequest): boolean {
     const configured = process.env.NEXT_PUBLIC_SITE_URL
     let allowedHost: string | null
     if (configured) {
-      allowedHost = new URL(configured).host
+      try {
+        allowedHost = new URL(configured).host
+      } catch {
+        // Misconfigured value — fall back to the request host rather than
+        // rejecting every state-changing request.
+        allowedHost = request.headers.get("host") ?? new URL(request.url).host
+      }
     } else {
       // Prefer the Host header; fall back to the request URL host for
       // manually-constructed requests (e.g. tests) where no Host is set.
@@ -156,16 +162,7 @@ export function validateUrl(url: string): { valid: boolean; sanitized?: string; 
     return { valid: false, error: "URL contains invalid characters" }
   }
 
-  // For data URLs (base64 images), validate format
-  if (url.startsWith("data:")) {
-    const dataUrlPattern = /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/
-    if (!dataUrlPattern.test(url)) {
-      return { valid: false, error: "Invalid data URL format" }
-    }
-    return { valid: true, sanitized: url }
-  }
-
-  // For HTTP/HTTPS URLs, validate format
+  // Only HTTP/HTTPS URLs are accepted — data URLs (base64 images) are not.
   try {
     const urlObj = new URL(url)
     // Only allow http, https protocols

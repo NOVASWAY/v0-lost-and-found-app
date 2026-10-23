@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resetSessionTimeout()
 
       // Add audit log
-      addAuditLog("login", "User logged in", foundUser.id, foundUser.name, `User '${foundUser.username}' logged in`, "info")
+      addAuditLog("login", "User logged in", `User '${foundUser.username}' logged in`)
 
       // Route based on role. Set `opts.redirect: false` to let the caller play
       // its own cinematic transition before navigating (used by the login page).
@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     if (user) {
-      addAuditLog("logout", "User logged out", user.id, user.name, `User '${user.username}' logged out`, "info")
+      addAuditLog("logout", "User logged out", `User '${user.username}' logged out`)
     }
     // Clear the httpOnly session cookie server-side.
     try {
@@ -235,10 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addAuditLog(
         "user_password_changed",
         "User password changed",
-        user.id,
-        user.name,
         `Password changed for user '${user.username}'`,
-        "info"
       )
       return true
     } catch {

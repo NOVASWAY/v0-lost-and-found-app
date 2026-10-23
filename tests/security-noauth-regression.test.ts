@@ -21,6 +21,8 @@ import * as occurrenceCategoriesRoute from "../app/api/occurrence-categories/rou
 import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[id]/route"
 import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
 import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
+import * as uploadRoute from "../app/api/upload/route"
+import * as auditLogsRoute from "../app/api/audit-logs/route"
 
 function mockRequest(): NextRequest {
   const headers = new Headers()
@@ -188,6 +190,21 @@ describe("no-auth regression: protected routes require a session", () => {
   it("rejects DELETE /api/occurrence-book/:id without auth", async () => {
     const ctx = { params: Promise.resolve({ id: "c0000000000000000000000000" }) } as unknown as { params: Promise<{ id: string }> }
     const res = (await occurrenceBookByIdRoute.DELETE(req, ctx)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects POST /api/upload without auth", async () => {
+    const res = (await uploadRoute.POST(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects DELETE /api/upload without auth", async () => {
+    const res = (await uploadRoute.DELETE(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects POST /api/audit-logs without auth", async () => {
+    const res = (await auditLogsRoute.POST(req)) as NextResponse
     expect(res.status).toBe(401)
   })
 })

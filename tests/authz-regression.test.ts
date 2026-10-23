@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma, hashPassword } from "../lib/db"
 import { signAccessToken } from "../lib/jwt"
 import * as usersRoute from "../app/api/users/route"
+import * as usersByIdRoute from "../app/api/users/[id]/route"
+import * as auditLogsRoute from "../app/api/audit-logs/route"
+import * as serviceRecordsRoute from "../app/api/service-records/route"
 import * as itemsRoute from "../app/api/items/route"
 import * as itemByIdRoute from "../app/api/items/[id]/route"
 import * as claimsRoute from "../app/api/claims/route"
@@ -502,7 +505,7 @@ describe("endpoint role authorization (real DB)", () => {
           color: "black",
           location: "Lobby",
           dateFounded: new Date().toISOString(),
-          imageUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          imageUrl: "https://blob.example.com/items/test-image.png",
         },
       }),
     )) as NextResponse
@@ -520,7 +523,7 @@ describe("endpoint role authorization (real DB)", () => {
     expect(detailItem.uploadedBy).toEqual({ id: uploader.id })
 
     const proofImage =
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+      "https://blob.example.com/items/test-image.png"
 
     // The uploader cannot claim their own item.
     const selfClaim = (await claimsRoute.POST(
@@ -682,6 +685,178 @@ describe("endpoint role authorization (real DB)", () => {
     const data = await res.json()
     expect(data.occurrence.title).toContain("OB Authz Test Entry")
     await prisma.occurrenceBook.delete({ where: { id: data.occurrence.id } })
+  })
+
+  it("DELETE /api/items/:id returns 409 when the item still has claims", async () => {
+    const uploader = await createUser(`authz_del_uploader_${SUFFIX}`, "user")
+    const claimant = await createUser(`authz_del_claimant_${SUFFIX}`, "user")
+
+    const created = (await itemsRoute.POST(
+      cookieRequest("http://localhost/api/items", {
+        token: tokenFor(uploader),
+        method: "POST",
+        origin: "http://localhost",
+        body: {
+          category: "Phone",
+          color: "black",
+          location: "Lobby",
+          dateFounded: new Date().toISOString(),
+          imageUrl: "https://blob.example.com/items/test-image.png",
+        },
+      }),
+    )) as NextResponse
+    expect(created.status).toBe(200)
+    const item = (await created.json()).item
+
+    const claim = (await claimsRoute.POST(
+      cookieRequest("http://localhost/api/claims", {
+        token: tokenFor(claimant),
+        method: "POST",
+        origin: "http://localhost",
+        body: { itemId: item.id, proofImage: "https://blob.example.com/items/test-image.png" },
+      }),
+    )) as NextResponse
+    expect(claim.status).toBe(200)
+
+    const res = (await itemByIdRoute.DELETE(
+      cookieRequest(`http://localhost/api/items/${item.id}`, {
+        token: tokenFor(users.admin),
+        method: "DELETE",
+        origin: "http://localhost",
+      }),
+      { params: Promise.resolve({ id: item.id }) },
+    )) as NextResponse
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toMatch(/claim/i)
+
+    await prisma.claim.deleteMany({ where: { itemId: item.id } })
+    await prisma.item.delete({ where: { id: item.id } })
+    await prisma.user.deleteMany({ where: { id: { in: [uploader.id, claimant.id] } } })
+  })
+
+  it("DELETE /api/users/:id returns 400 when the user reported an occurrence", async () => {
+    const cat = await prisma.occurrenceCategory.findFirst({ where: { isActive: true } })
+    if (!cat) return
+
+    const reporter = await createUser(`authz_reporter_${SUFFIX}`, "admin")
+    const created = (await occurrenceBookRoute.POST(
+      cookieRequest("http://localhost/api/occurrence-book", {
+        token: tokenFor(reporter),
+        method: "POST",
+        origin: "http://localhost",
+        body: {
+          title: `OB Delete Blocker ${SUFFIX}`,
+          categoryId: cat.id,
+          description: "Blocks user deletion",
+          occurrenceDate: "2026-08-01",
+        },
+      }),
+    )) as NextResponse
+    expect(created.status).toBe(200)
+    const entry = (await created.json()).occurrence
+
+    const res = (await usersByIdRoute.DELETE(
+      cookieRequest(`http://localhost/api/users/${reporter.id}`, {
+        token: tokenFor(users.admin),
+        method: "DELETE",
+        origin: "http://localhost",
+      }),
+      { params: Promise.resolve({ id: reporter.id }) },
+    )) as NextResponse
+    expect(res.status).toBe(400)
+    expect((await res.json()).error).toMatch(/occurrence/i)
+
+    await prisma.occurrenceBook.delete({ where: { id: entry.id } })
+    await prisma.user.delete({ where: { id: reporter.id } })
+  })
+
+  it("PATCH /api/users/:id writes an audit entry for role changes", async () => {
+    const target = await createUser(`authz_role_target_${SUFFIX}`, "user")
+
+    const res = (await usersByIdRoute.PATCH(
+      cookieRequest(`http://localhost/api/users/${target.id}`, {
+        token: tokenFor(users.admin),
+        method: "PATCH",
+        origin: "http://localhost",
+        body: { role: "volunteer" },
+      }),
+      { params: Promise.resolve({ id: target.id }) },
+    )) as NextResponse
+    expect(res.status).toBe(200)
+    expect((await res.json()).user.role).toBe("volunteer")
+
+    const log = await prisma.auditLog.findFirst({
+      where: { type: "user_role_changed", userId: users.admin.id },
+      orderBy: { createdAt: "desc" },
+    })
+    expect(log).not.toBeNull()
+    expect(log!.details).toContain(target.username)
+
+    await prisma.auditLog.delete({ where: { id: log!.id } })
+    await prisma.user.delete({ where: { id: target.id } })
+  })
+
+  it("POST /api/audit-logs refuses privileged event types (no forged entries)", async () => {
+    const res = (await auditLogsRoute.POST(
+      cookieRequest("http://localhost/api/audit-logs", {
+        token: tokenFor(users.user),
+        method: "POST",
+        origin: "http://localhost",
+        body: { type: "user_created", action: "forged entry", severity: "critical" },
+      }),
+    )) as NextResponse
+    expect(res.status).toBe(400)
+
+    const forged = await prisma.auditLog.findFirst({ where: { action: "forged entry" } })
+    expect(forged).toBeNull()
+  })
+
+  it("POST /api/audit-logs records client-originated types with a fixed severity", async () => {
+    const res = (await auditLogsRoute.POST(
+      cookieRequest("http://localhost/api/audit-logs", {
+        token: tokenFor(users.user),
+        method: "POST",
+        origin: "http://localhost",
+        body: { type: "login", action: `Audit Authz Login ${SUFFIX}`, severity: "critical" },
+      }),
+    )) as NextResponse
+    expect(res.status).toBe(201)
+
+    const data = await res.json()
+    expect(data.log.severity).toBe("info")
+    expect(data.log.userId).toBe(users.user.id)
+
+    await prisma.auditLog.delete({ where: { id: data.log.id } })
+  })
+
+  it("POST /api/service-records attributes the audit entry to the actor", async () => {
+    const target = await createUser(`authz_service_target_${SUFFIX}`, "user")
+
+    const res = (await serviceRecordsRoute.POST(
+      cookieRequest("http://localhost/api/service-records", {
+        token: tokenFor(users.volunteer),
+        method: "POST",
+        origin: "http://localhost",
+        body: {
+          userId: target.id,
+          serviceDate: new Date("2026-08-01T10:00:00.000Z").toISOString(),
+          attended: true,
+        },
+      }),
+    )) as NextResponse
+    expect(res.status).toBe(200)
+
+    const log = await prisma.auditLog.findFirst({
+      where: { type: "attendance_marked", userId: users.volunteer.id },
+      orderBy: { createdAt: "desc" },
+    })
+    expect(log).not.toBeNull()
+    expect(log!.userId).toBe(users.volunteer.id)
+    expect(log!.details).toContain(target.username)
+
+    await prisma.serviceRecord.deleteMany({ where: { userId: target.id } })
+    await prisma.auditLog.delete({ where: { id: log!.id } })
+    await prisma.user.delete({ where: { id: target.id } })
   })
 })
 

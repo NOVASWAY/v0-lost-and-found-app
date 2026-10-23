@@ -24,8 +24,9 @@ export function sanitizeInput(input: string): string {
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
     // Remove javascript: protocol
     .replace(/javascript:/gi, "")
-    // Remove data: protocol (except data:image for images)
-    .replace(/data:(?!image\/)/gi, "")
+    // Remove data: protocol (including data:image — images are uploaded to
+    // Blob storage and referenced by URL, never inlined as base64)
+    .replace(/data:/gi, "")
     // Remove vbscript: protocol
     .replace(/vbscript:/gi, "")
     // Remove iframe tags
@@ -70,16 +71,7 @@ export function sanitizeUrl(url: string): string {
 
   const trimmed = url.trim()
 
-  // Allow data:image URLs for base64 images
-  if (trimmed.startsWith("data:image/")) {
-    // Validate base64 data URL format
-    if (/^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(trimmed)) {
-      return trimmed
-    }
-    return ""
-  }
-
-  // Only allow http/https URLs
+  // Only allow http/https URLs — data URLs (base64 images) are rejected
   if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
     return ""
   }

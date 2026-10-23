@@ -10,6 +10,7 @@ import {
   sanitizeSearchQuery,
   validateRouteId,
 } from "../../lib/security"
+import { safeCompare } from "../../lib/secret"
 
 function makeRequest(headers: Record<string, string>): NextRequest {
   return { headers: new Headers(headers) } as unknown as NextRequest
@@ -130,8 +131,8 @@ describe("validateUrl", () => {
     expect(validateUrl(`https://example.com/${"a".repeat(5001)}`).valid).toBe(false)
   })
 
-  it("accepts valid base64 data URLs for images", () => {
-    expect(validateUrl("data:image/png;base64,iVBORw0KGgo=").valid).toBe(true)
+  it("rejects base64 data URLs", () => {
+    expect(validateUrl("data:image/png;base64,iVBORw0KGgo=").valid).toBe(false)
     expect(validateUrl("data:text/html;base64,PHNjcmlwdD4=").valid).toBe(false)
   })
 })
@@ -160,5 +161,26 @@ describe("validateRouteId", () => {
     expect(validateRouteId("../../etc/passwd").valid).toBe(false)
     expect(validateRouteId("garbage").valid).toBe(false)
     expect(validateRouteId("").valid).toBe(false)
+  })
+})
+
+describe("safeCompare", () => {
+  it("returns true for identical strings", () => {
+    expect(safeCompare("Bearer s3cret", "Bearer s3cret")).toBe(true)
+  })
+
+  it("returns false for differing strings of equal length", () => {
+    expect(safeCompare("Bearer s3cret", "Bearer s3crev")).toBe(false)
+    expect(safeCompare("Bearer s3cret", "Bearer s3cre")).toBe(false)
+  })
+
+  it("returns false for strings of different lengths without throwing", () => {
+    expect(safeCompare("short", "much longer secret")).toBe(false)
+    expect(safeCompare("", "x")).toBe(false)
+  })
+
+  it("returns false for non-string inputs", () => {
+    expect(safeCompare(undefined as unknown as string, "x")).toBe(false)
+    expect(safeCompare("x", null as unknown as string)).toBe(false)
   })
 })

@@ -37,11 +37,8 @@ export const createItemSchema = z.object({
     .max(5000)
     .refine(
       (url) => {
-        if (url.startsWith("data:")) {
-          // Base64-encoded client-side images (png/jpeg/gif/webp).
-          return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(url)
-        }
-        // Otherwise must be an http(s) URL without path traversal.
+        // Must be an http(s) URL without path traversal. Base64 data URLs are
+        // rejected: images are uploaded to Blob storage and referenced by URL.
         return (
           /^https?:\/\//i.test(url) &&
           !url.includes("..") &&
@@ -87,9 +84,8 @@ export const createClaimSchema = z.object({
     .max(5000)
     .refine(
       (url) => {
-        if (url.startsWith("data:")) {
-          return /^data:image\/(png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(url)
-        }
+        // Must be an http(s) URL without path traversal. Base64 data URLs are
+        // rejected: proof photos are uploaded to Blob storage and referenced by URL.
         return (
           /^https?:\/\//i.test(url) &&
           !url.includes("..") &&

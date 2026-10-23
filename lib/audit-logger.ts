@@ -1,66 +1,14 @@
-export type AuditLogType =
-  | "user_created"
-  | "user_deleted"
-  | "user_password_changed"
-  | "item_uploaded"
-  | "item_claimed"
-  | "item_released"
-  | "item_donated"
-  | "attendance_marked"
-  | "service_marked"
-  | "location_created"
-  | "location_updated"
-  | "location_deleted"
-  | "playbook_created"
-  | "playbook_updated"
-  | "playbook_deleted"
-  | "mission_created"
-  | "mission_assigned"
-  | "mission_completed"
-  | "mission_cancelled"
-  | "system_settings_updated"
-  | "login"
-  | "logout"
-  | "order_sent"
-  | "meeting_minutes_created"
-  | "meeting_minutes_updated"
-  | "meeting_minutes_deleted"
-  | "donation_expired"
+// Audit types a client is allowed to record. Every other event is written
+// server-side by the route handler that owns it, so the trail cannot be forged
+// from the browser.
+export type AuditLogType = "login" | "logout" | "user_password_changed"
 
-interface AuditLog {
-  id: string
-  type: AuditLogType
-  userId?: string
-  userName?: string
-  action: string
-  details?: string
-  timestamp: string
-  ipAddress?: string
-  severity: "info" | "warning" | "error" | "critical"
-}
-
-const AUDIT_LOGS_STORAGE_KEY = "vault_audit_logs"
-
-function addAuditLogToStorage(log: AuditLog) {
-  if (typeof window === "undefined") return
-  const existing = localStorage.getItem(AUDIT_LOGS_STORAGE_KEY)
-  const logs: AuditLog[] = existing ? (JSON.parse(existing) as AuditLog[]) : []
-  logs.push(log)
-  localStorage.setItem(AUDIT_LOGS_STORAGE_KEY, JSON.stringify(logs))
-}
-
-// Writes an audit entry. When an authenticated session exists this is recorded
-// server-side via the API (identity derived from the session, so the trail is
-// tamper-evident). localStorage is only used as a fallback for anonymous users
-// or when the server is unreachable. Fire-and-forget: never breaks the UI.
-export function addAuditLog(
-  type: AuditLogType,
-  action: string,
-  userId?: string,
-  userName?: string,
-  details?: string,
-  severity: "info" | "warning" | "error" | "critical" = "info",
-) {
+// Writes an audit entry server-side via the API. Identity is derived from the
+// session on the server, so the entry is tamper-evident. Fire-and-forget:
+// never breaks the UI. If the server call fails the entry is dropped rather
+// than faked locally — the audit trail must only ever contain server-recorded
+// events.
+export function addAuditLog(type: AuditLogType, action: string, details?: string) {
   try {
     // Server-side recording requires the httpOnly session cookie.
     if (typeof window === "undefined") {
@@ -71,22 +19,10 @@ export function addAuditLog(
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, action, details, severity }),
+      body: JSON.stringify({ type, action, details }),
+    }).catch(() => {
+      console.warn("Failed to record audit log:", action)
     })
-      .catch(() => {
-        // Fallback: record locally so the entry is not lost entirely.
-        const log: AuditLog = {
-          id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          type,
-          action,
-          details: details || undefined,
-          severity,
-          userId: userId || undefined,
-          userName: userName || undefined,
-          timestamp: new Date().toISOString(),
-        }
-        addAuditLogToStorage(log)
-      })
 
     return null
   } catch (error) {

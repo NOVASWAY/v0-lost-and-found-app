@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Validate type and severity to prevent injection
     const validSeverities = ["info", "warning", "error", "critical"]
-    const validTypes = ["user_created", "user_deleted", "user_password_changed", "item_uploaded", "item_claimed", "item_released", "item_donated", "attendance_marked", "service_marked", "location_created", "location_updated", "location_deleted", "playbook_created", "playbook_updated", "playbook_deleted", "mission_created", "mission_assigned", "mission_completed", "mission_cancelled", "mission_deleted", "meeting_minutes_created", "meeting_minutes_updated", "meeting_minutes_deleted", "donation_expired", "system_settings_updated", "login", "logout", "order_sent"]
-    if (type && validTypes.includes(type)) {
+    if (type && AUDIT_LOG_TYPES.includes(type as (typeof AUDIT_LOG_TYPES)[number])) {
       where.type = type
     }
 
@@ -84,11 +83,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Whitelist of audit log types the client may record. Anything not listed here
-// is rejected so callers cannot forge arbitrary audit entries.
-const ALLOWED_TYPES = [
+// Every audit type the system can record. The GET filter and the POST
+// allowlist are both derived from this list so they cannot drift apart.
+const AUDIT_LOG_TYPES = [
   "user_created",
   "user_deleted",
+  "user_updated",
+  "user_role_changed",
   "user_password_changed",
   "item_uploaded",
   "item_claimed",
@@ -106,6 +107,11 @@ const ALLOWED_TYPES = [
   "mission_assigned",
   "mission_completed",
   "mission_cancelled",
+  "mission_deleted",
+  "meeting_minutes_created",
+  "meeting_minutes_updated",
+  "meeting_minutes_deleted",
+  "donation_expired",
   "system_settings_updated",
   "login",
   "logout",
@@ -116,21 +122,24 @@ const ALLOWED_TYPES = [
   "occurrence_category_created",
   "occurrence_category_updated",
   "occurrence_category_deleted",
-  "meeting_minutes_created",
-  "meeting_minutes_updated",
-  "meeting_minutes_deleted",
 ] as const
 
+// Types a client is allowed to record. Everything else is written
+// server-side by the route handler that owns the event, so a caller can never
+// forge a privileged entry (e.g. `user_created` or a critical severity).
+const CLIENT_WRITABLE_TYPES = ["login", "logout", "user_password_changed"] as const
+
 const createAuditLogSchema = z.object({
-  type: z.enum(ALLOWED_TYPES),
+  type: z.enum(CLIENT_WRITABLE_TYPES),
   action: z.string().min(1).max(200).trim(),
   details: z.string().max(500).trim().optional(),
-  severity: z.enum(["info", "warning", "error", "critical"]).default("info"),
 })
 
 // POST record an audit log entry. The acting user is always derived from the
 // authenticated session — never trusted from the client — so the trail cannot
-// be forged by spoofing userId/userName in the request body.
+// be forged by spoofing userId/userName in the request body. Only the
+// client-originated event types are accepted; the severity is fixed
+// server-side so a caller cannot escalate the severity of an entry.
 export async function POST(request: NextRequest) {
   try {
     const authResult = await requireAuth(request)
@@ -159,7 +168,7 @@ export async function POST(request: NextRequest) {
         type: parsed.data.type,
         action: parsed.data.action,
         details: parsed.data.details || null,
-        severity: parsed.data.severity,
+        severity: "info",
         userId: authResult.user.id,
       },
     })

@@ -167,6 +167,19 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Item not found" }, { status: 404 })
     }
 
+    // Claims reference the item with ON DELETE RESTRICT, so deleting an item
+    // that has claims would fail at the database level. Surface it as a 409
+    // instead of an unhandled 500.
+    const claimCount = await prisma.claim.count({ where: { itemId: id } })
+    if (claimCount > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete item: ${claimCount} claim${claimCount !== 1 ? "s" : ""} reference it. Resolve or reject the claims first.`,
+        },
+        { status: 409 },
+      )
+    }
+
     await prisma.item.delete({
       where: { id },
     })

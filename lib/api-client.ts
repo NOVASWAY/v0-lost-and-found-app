@@ -73,6 +73,23 @@ export async function uploadImage(file: File): Promise<string> {
   return data.url as string
 }
 
+// Remove an upload that was stored but never attached to a record (e.g. the
+// upload succeeded but creating the item or claim failed). The server only
+// deletes blobs inside the caller's own namespace. Failures are swallowed —
+// this is cleanup, not a user-visible operation.
+export async function deleteUpload(url: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/upload`, {
+      method: "DELETE",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    })
+  } catch {
+    /* ignore cleanup failures */
+  }
+}
+
 async function fetchApi<T>(
   endpoint: string,
   options?: RequestInit,

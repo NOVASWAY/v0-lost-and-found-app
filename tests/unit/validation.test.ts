@@ -76,8 +76,8 @@ describe("item schema", () => {
     expect(createItemSchema.safeParse({ ...baseItem, imageUrl: "not a url" }).success).toBe(false)
   })
 
-  it("accepts a base64 image data URL and rejects a non-image one", () => {
-    expect(createItemSchema.safeParse({ ...baseItem, imageUrl: "data:image/png;base64,iVBORw0KGgo=" }).success).toBe(true)
+  it("rejects base64 data URLs for imageUrl", () => {
+    expect(createItemSchema.safeParse({ ...baseItem, imageUrl: "data:image/png;base64,iVBORw0KGgo=" }).success).toBe(false)
     expect(createItemSchema.safeParse({ ...baseItem, imageUrl: "data:text/html;base64,PHNjcmlwdD4=" }).success).toBe(false)
   })
 

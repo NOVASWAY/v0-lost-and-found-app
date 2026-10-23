@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { put } from "@vercel/blob"
+import { del, put } from "@vercel/blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin } from "@/lib/security"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com"
 
 // Verify a file's magic bytes match its declared MIME type. The multipart
 // Content-Type is client-supplied and can be forged, so we inspect the actual
@@ -42,6 +43,42 @@ function detectImageType(bytes: Uint8Array): string | null {
   return null
 }
 
+// Every upload is namespaced under the uploader's id so a user can only ever
+// address — and delete — their own blobs.
+function uploadPathname(userId: string, ext: string): string {
+  return `items/${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
+}
+
+// Resolve a blob URL to its pathname, but only when it points at a blob in the
+// caller's own namespace. Anything else is rejected.
+function ownedBlobPathname(url: string, userId: string): string | null {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return null
+  }
+
+  if (parsed.protocol !== "https:") return null
+  if (!parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) return null
+
+  let pathname: string
+  try {
+    pathname = decodeURIComponent(parsed.pathname)
+  } catch {
+    return null
+  }
+  pathname = pathname.replace(/^\/+/, "")
+
+  const prefix = `items/${userId}/`
+  if (!pathname.startsWith(prefix)) return null
+  // The remainder must be a single file name, never a nested path.
+  if (pathname.slice(prefix.length).includes("/")) return null
+  if (pathname.length <= prefix.length) return null
+
+  return pathname
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authResult = await requireAuth(request)
@@ -56,7 +93,11 @@ export async function POST(request: NextRequest) {
     const clientId = getClientIdentifier(request)
     const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
     if (!rateLimitResult.allowed) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+    }
+
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({ error: "Image storage is not configured" }, { status: 503 })
     }
 
     const formData = await request.formData()
@@ -83,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = detectedType.split("/")[1]
-    const filename = `items/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const filename = uploadPathname(authResult.user.id, ext)
 
     const blob = await put(filename, file, {
       access: "public",
@@ -95,5 +136,49 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+  }
+}
+
+// DELETE removes an upload that was stored but never attached to a record
+// (e.g. the upload succeeded but creating the item or claim failed). Only the
+// caller's own uploads can be deleted.
+export async function DELETE(request: NextRequest) {
+  try {
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) {
+      return authResult
+    }
+
+    if (!assertSameOrigin(request)) {
+      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
+    }
+
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+    }
+
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({ error: "Image storage is not configured" }, { status: 503 })
+    }
+
+    const body = await request.json()
+    const url = typeof body?.url === "string" ? body.url : ""
+    if (!url) {
+      return NextResponse.json({ error: "URL is required" }, { status: 400 })
+    }
+
+    const pathname = ownedBlobPathname(url, authResult.user.id)
+    if (!pathname) {
+      return NextResponse.json({ error: "Invalid upload URL" }, { status: 400 })
+    }
+
+    await del(pathname, { token: process.env.BLOB_READ_WRITE_TOKEN })
+
+    return NextResponse.json({ message: "Upload deleted successfully" })
+  } catch (error) {
+    console.error("Delete upload error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

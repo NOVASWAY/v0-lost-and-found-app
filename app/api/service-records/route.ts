@@ -111,17 +111,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Add audit logs
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    // Add audit logs. The actor is the staff member who recorded the entry —
+    // the target member only appears in the details, so the trail answers
+    // "who marked this" rather than "who was marked".
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { username: true } })
     if (user) {
       if (attended) {
         await prisma.auditLog.create({
           data: {
             type: "attendance_marked",
             action: "Attendance marked",
-            details: `Marked attendance for service on ${serviceDate}`,
+            details: `Marked attendance for '${user.username}' on ${serviceDate}`,
             severity: "info",
-            userId,
+            userId: authResult.user.id,
           },
         })
       }
@@ -130,9 +132,9 @@ export async function POST(request: NextRequest) {
           data: {
             type: "service_marked",
             action: "Service marked",
-            details: `Marked service participation for ${serviceDate}`,
+            details: `Marked service participation for '${user.username}' on ${serviceDate}`,
             severity: "info",
-            userId,
+            userId: authResult.user.id,
           },
         })
       }

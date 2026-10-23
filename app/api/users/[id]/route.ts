@@ -89,7 +89,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // Check for dependent records that block deletion
-    const [itemsCount, claimsCount, missionsAssignedCount, missionsCreatedCount, ordersCount, releasesCount] =
+    const [itemsCount, claimsCount, missionsAssignedCount, missionsCreatedCount, ordersCount, releasesCount, occurrencesCount] =
       await Promise.all([
         prisma.item.count({ where: { uploadedById: id } }),
         prisma.claim.count({ where: { claimantId: id } }),
@@ -97,6 +97,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         prisma.mission.count({ where: { assignedBy: id } }),
         prisma.order.count({ where: { userId: id } }),
         prisma.releaseLog.count({ where: { volunteerId: id } }),
+        prisma.occurrenceBook.count({ where: { reportedById: id } }),
       ])
 
     const blockers: string[] = []
@@ -106,6 +107,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (missionsCreatedCount > 0) blockers.push(`${missionsCreatedCount} created mission${missionsCreatedCount !== 1 ? "s" : ""}`)
     if (ordersCount > 0) blockers.push(`${ordersCount} order${ordersCount !== 1 ? "s" : ""}`)
     if (releasesCount > 0) blockers.push(`${releasesCount} release log${releasesCount !== 1 ? "s" : ""}`)
+    if (occurrencesCount > 0) blockers.push(`${occurrencesCount} occurrence report${occurrencesCount !== 1 ? "s" : ""}`)
 
     if (blockers.length > 0) {
       return NextResponse.json(
@@ -169,6 +171,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { name, role } = validation.data
 
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, username: true, role: true },
+    })
+
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: {
@@ -192,6 +203,30 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         updatedAt: true,
       },
     })
+
+    // Role changes are the most security-relevant state change in the app, so
+    // they must be attributable. The actor always comes from the session.
+    if (user.role !== existingUser.role) {
+      await prisma.auditLog.create({
+        data: {
+          type: "user_role_changed",
+          action: "User role changed",
+          details: `Role changed from '${existingUser.role}' to '${user.role}' for user '${existingUser.username}'`,
+          severity: "warning",
+          userId: authResult.user.id,
+        },
+      })
+    } else if (user.name !== existingUser.name) {
+      await prisma.auditLog.create({
+        data: {
+          type: "user_updated",
+          action: "User profile updated",
+          details: `Name changed from '${existingUser.name}' to '${user.name}' for user '${existingUser.username}'`,
+          severity: "info",
+          userId: authResult.user.id,
+        },
+      })
+    }
 
     return NextResponse.json({ user, message: "User updated successfully" })
   } catch (error) {
