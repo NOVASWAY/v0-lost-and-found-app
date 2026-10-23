@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -31,9 +31,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
     const claimantId = searchParams.get("claimantId")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100)
-    const skip = (page - 1) * limit
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 })
 
     const where: any = {}
 
@@ -121,7 +119,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createClaimSchema, body)
 
     if (!validation.success) {

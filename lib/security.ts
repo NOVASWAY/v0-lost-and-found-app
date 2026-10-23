@@ -226,6 +226,49 @@ export function sanitizeSearchQuery(query: string): string {
 }
 
 /**
+ * Parses page/limit query parameters safely.
+ *
+ * Reviewing every list endpoint showed the same bug: `parseInt` + `Math.min`
+ * accepted `?limit=abc`, `?limit=-1`, and `?page=0`, which produced NaN or
+ * negative values in Prisma's `take`/`skip` and returned a 500. Malformed
+ * values now fall back to the defaults; valid values are clamped to the cap.
+ */
+export function parsePagination(
+  searchParams: { get(name: string): string | null },
+  options: { defaultLimit?: number; maxLimit?: number } = {}
+): { page: number; limit: number; skip: number } {
+  const defaultLimit = options.defaultLimit ?? 20
+  const maxLimit = options.maxLimit ?? 100
+
+  const toPositiveInt = (raw: string | null, fallback: number, max?: number): number => {
+    if (raw === null) return fallback
+    const trimmed = raw.trim()
+    if (!/^\d+$/.test(trimmed)) return fallback
+    const value = Number(trimmed)
+    if (!Number.isSafeInteger(value) || value < 1) return fallback
+    return max === undefined ? value : Math.min(value, max)
+  }
+
+  const page = toPositiveInt(searchParams.get("page"), 1, 1_000_000)
+  const limit = toPositiveInt(searchParams.get("limit"), defaultLimit, maxLimit)
+  return { page, limit, skip: (page - 1) * limit }
+}
+
+/**
+ * Reads a JSON request body without throwing, so malformed JSON is answered
+ * with 400 instead of bubbling up as an unhandled 500.
+ */
+export async function readJsonBody(
+  request: Request
+): Promise<{ ok: true; data: unknown } | { ok: false }> {
+  try {
+    return { ok: true, data: await request.json() }
+  } catch {
+    return { ok: false }
+  }
+}
+
+/**
  * Validates ID parameter from route
  */
 export function validateRouteId(id: string): { valid: boolean; error?: string } {

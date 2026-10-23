@@ -4,7 +4,7 @@ import { comparePassword, hashPassword } from "@/lib/db"
 import { changePasswordSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 import { signAccessToken } from "@/lib/jwt"
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many password change attempts. Please try again later." }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(changePasswordSchema, body)
 
     if (!validation.success) {

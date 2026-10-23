@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth, requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 import { createOccurrenceCategorySchema, validateAndSanitize } from "@/lib/validation"
 
 // GET all active occurrence categories (all authenticated users)
@@ -49,7 +49,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createOccurrenceCategorySchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

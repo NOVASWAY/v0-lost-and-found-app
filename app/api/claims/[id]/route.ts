@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { assertSameOrigin, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -83,7 +83,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
 
-    const data = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const data = jsonBody.data
     const validation = validateAndSanitize(updateClaimSchema, data)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

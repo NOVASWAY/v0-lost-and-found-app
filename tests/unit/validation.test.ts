@@ -11,6 +11,7 @@ import {
   createLocationSchema,
   createPlaybookSchema,
   createServiceRecordSchema,
+  createOccurrenceBookSchema,
   validateAndSanitize,
   sanitizeString,
 } from "../../lib/validation"
@@ -169,5 +170,72 @@ describe("sanitizeString", () => {
     expect(clean).not.toContain("onerror=")
     expect(clean).not.toContain("javascript:")
     expect(clean).toContain("hello")
+  })
+})
+
+describe("occurrence attachments", () => {
+  const base = {
+    title: "Door left open",
+    categoryId: "c123456789012345678901234",
+    description: "Front door found unlocked",
+    occurrenceDate: "2026-10-01",
+  }
+
+  it("accepts http(s) attachment URLs", () => {
+    const r = createOccurrenceBookSchema.safeParse({
+      ...base,
+      attachments: [{ url: "https://example.com/photo.jpg", name: "photo.jpg", type: "image/jpeg" }],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it("rejects javascript: and data: attachment URLs", () => {
+    for (const url of ["javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4="]) {
+      const r = createOccurrenceBookSchema.safeParse({
+        ...base,
+        attachments: [{ url, name: "x", type: "text/html" }],
+      })
+      expect(r.success).toBe(false)
+    }
+  })
+})
+
+describe("validateAndSanitize deep sanitization", () => {
+  it("sanitizes top-level and nested strings", () => {
+    const r = validateAndSanitize(createOccurrenceBookSchema, {
+      title: "<script>alert(1)</script>Door",
+      categoryId: "c123456789012345678901234",
+      description: "javascript:alert(1) unlocked",
+      occurrenceDate: "2026-10-01",
+      attachments: [{ url: "https://example.com/a.png", name: "<b>photo</b>", type: "image/png" }],
+    })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.title).not.toContain("<")
+      expect(r.data.title).not.toContain(">")
+      expect(r.data.description).not.toContain("javascript:")
+      expect(r.data.attachments?.[0].name).toBe("bphoto/b")
+    }
+  })
+
+  it("never mangles credentials", () => {
+    const password = "Str0ng<Passwd!"
+    const r = validateAndSanitize(createUserSchema, {
+      name: "<b>Alice</b>",
+      username: "alice",
+      password,
+      role: "user",
+    })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.password).toBe(password)
+      expect(r.data.name).toBe("bAlice/b")
+    }
+  })
+
+  it("keeps legitimate text that merely ends with 'on'", () => {
+    const r = validateAndSanitize(createLocationSchema, { name: "Conference=Room" })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.name).toBe("Conference=Room")
   })
 })

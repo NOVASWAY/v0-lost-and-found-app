@@ -1,5 +1,30 @@
 import { z } from "zod"
 
+// z.string().url() accepts any scheme (javascript:, data:, ftp:). Every URL
+// that reaches storage must be http(s) so a stored value cannot become a
+// script payload if it is ever rendered into an attribute or redirect.
+const httpUrlSchema = z
+  .string()
+  .max(2000)
+  .url()
+  .refine(
+    (value) => {
+      try {
+        const parsed = new URL(value)
+        return parsed.protocol === "http:" || parsed.protocol === "https:"
+      } catch {
+        return false
+      }
+    },
+    { message: "URL must use http or https" }
+  )
+
+const attachmentSchema = z.object({
+  url: httpUrlSchema,
+  name: z.string().max(200).trim(),
+  type: z.string().max(100).trim(),
+})
+
 // User validation schemas
 export const loginSchema = z.object({
   username: z.string().min(3).max(50).trim(),
@@ -241,11 +266,7 @@ export const createOccurrenceBookSchema = z.object({
   status: z.enum(["open", "investigating", "resolved", "closed"]).default("open"),
   occurrenceDate: z.string().min(1).max(20).trim(),
   occurrenceTime: z.string().max(5).trim().optional().nullable(),
-  attachments: z.array(z.object({
-    url: z.string().url(),
-    name: z.string().max(200),
-    type: z.string().max(100),
-  })).max(10).default([]),
+  attachments: z.array(attachmentSchema).max(10).default([]),
   linkedItemId: z.string().optional().nullable(),
   linkedClaimId: z.string().optional().nullable(),
   notes: z.string().max(5000).trim().optional().nullable(),
@@ -262,11 +283,7 @@ export const updateOccurrenceBookSchema = z.object({
   status: z.enum(["open", "investigating", "resolved", "closed"]).optional(),
   occurrenceDate: z.string().min(1).max(20).trim().optional(),
   occurrenceTime: z.string().max(5).trim().optional().nullable(),
-  attachments: z.array(z.object({
-    url: z.string().url(),
-    name: z.string().max(200),
-    type: z.string().max(100),
-  })).max(10).optional(),
+  attachments: z.array(attachmentSchema).max(10).optional(),
   linkedItemId: z.string().optional().nullable(),
   linkedClaimId: z.string().optional().nullable(),
   notes: z.string().max(5000).trim().optional().nullable(),
@@ -278,15 +295,43 @@ export const updateOccurrenceBookSchema = z.object({
 export function sanitizeString(input: string): string {
   return input
     .trim()
-    .replace(/[<>]/g, "") // Remove potential HTML tags
-    .replace(/javascript:/gi, "") // Remove javascript: protocol
-    .replace(/on\w+=/gi, "") // Remove event handlers
+    // Strip NUL and other control characters that can break logs/headers.
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/[<>]/g, "") // Remove potential HTML tag delimiters
+    .replace(/(^|\s)on\w+\s*=/gi, "$1") // Drop event-handler attributes
+    .replace(/javascript\s*:/gi, "") // Neutralize the js: scheme
+}
+
+// Credentials must reach the hash byte-for-byte; sanitizing them would silently
+// change users' passwords.
+const UNSANITIZED_KEYS = new Set(["password", "currentPassword", "newPassword"])
+
+function sanitizeDeep(value: unknown, key?: string): unknown {
+  if (typeof value === "string") {
+    return key && UNSANITIZED_KEYS.has(key) ? value : sanitizeString(value)
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeDeep(entry))
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([entryKey, entryValue]) => [
+        entryKey,
+        sanitizeDeep(entryValue, entryKey),
+      ])
+    )
+  }
+  return value
 }
 
 // Validate and sanitize input
 export function validateAndSanitize<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
   try {
-    const result = schema.parse(data)
+    // Validate first, then sanitize every string in the parsed result. This
+    // keeps the Zod refinements (lengths, enums, URL schemes) operating on the
+    // raw input while guaranteeing that nothing text-like reaches Prisma
+    // unsanitized.
+    const result = sanitizeDeep(schema.parse(data)) as T
     return { success: true, data: result }
   } catch (error) {
     if (error instanceof z.ZodError) {

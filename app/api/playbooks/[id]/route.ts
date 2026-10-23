@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { updatePlaybookSchema, validateAndSanitize } from "@/lib/validation"
 
 // PATCH update playbook (admin only)
@@ -33,7 +33,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
     
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(updatePlaybookSchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

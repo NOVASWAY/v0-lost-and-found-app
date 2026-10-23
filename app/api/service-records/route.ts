@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { assertSameOrigin, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -62,7 +62,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createServiceRecordSchema, body)
 
     if (!validation.success) {
@@ -80,6 +84,13 @@ export async function POST(request: NextRequest) {
     const idValidation = validateRouteId(userId)
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error || "Invalid user ID format" }, { status: 400 })
+    }
+
+    // Verify the target exists up front; otherwise the foreign key violation
+    // surfaces as a 500 and lets a caller probe for valid user IDs.
+    const targetUser = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
     const record = await prisma.serviceRecord.create({

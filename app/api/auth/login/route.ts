@@ -4,7 +4,7 @@ import { comparePassword } from "@/lib/db"
 import { loginSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, resetRateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { signAccessToken } from "@/lib/jwt"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 
 // A valid bcrypt hash of a throwaway string. Used to equalize the bcrypt timing
 // for unknown usernames so an attacker cannot enumerate accounts via response time.
@@ -39,7 +39,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(loginSchema, body)
 
     if (!validation.success) {

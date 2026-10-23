@@ -3,8 +3,11 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAuth, requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin, sanitizeSearchQuery } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
 import { createOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
+
+const OCCURRENCE_SEVERITIES = ["low", "medium", "high", "critical"] as const
+const OCCURRENCE_STATUSES = ["open", "investigating", "resolved", "closed"] as const
 
 // GET all occurrences (all authenticated users)
 export async function GET(request: NextRequest) {
@@ -20,10 +23,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const search = sanitizeSearchQuery(request.nextUrl.searchParams.get("search") || "")
-    const categoryId = request.nextUrl.searchParams.get("categoryId") || ""
-    const severity = request.nextUrl.searchParams.get("severity") || ""
-    const status = request.nextUrl.searchParams.get("status") || ""
+    const searchParams = request.nextUrl.searchParams
+    const search = sanitizeSearchQuery(searchParams.get("search") || "")
+    const categoryId = searchParams.get("categoryId") || ""
+    const severity = searchParams.get("severity") || ""
+    const status = searchParams.get("status") || ""
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 200, maxLimit: 500 })
+
+    if (categoryId) {
+      const idValidation = validateRouteId(categoryId)
+      if (!idValidation.valid) {
+        return NextResponse.json({ error: "Invalid category ID format" }, { status: 400 })
+      }
+    }
+    if (severity && !OCCURRENCE_SEVERITIES.includes(severity as (typeof OCCURRENCE_SEVERITIES)[number])) {
+      return NextResponse.json({ error: "Invalid severity filter" }, { status: 400 })
+    }
+    if (status && !OCCURRENCE_STATUSES.includes(status as (typeof OCCURRENCE_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid status filter" }, { status: 400 })
+    }
 
     const where: any = {}
     if (search) {
@@ -47,9 +65,11 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { entryNumber: "desc" },
       ],
+      skip,
+      take: limit,
     })
 
-    return NextResponse.json({ occurrences })
+    return NextResponse.json({ occurrences, pagination: { page, limit } })
   } catch (error) {
     console.error("Get occurrence book error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -74,7 +94,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createOccurrenceBookSchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

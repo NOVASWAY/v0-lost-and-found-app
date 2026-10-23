@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin, sanitizeSearchQuery } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, sanitizeSearchQuery } from "@/lib/security"
 import { createMeetingMinutesSchema, validateAndSanitize } from "@/lib/validation"
 
 // GET all meeting minutes (admin only)
@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createMeetingMinutesSchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

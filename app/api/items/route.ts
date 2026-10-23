@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 import { requireAuth } from "@/lib/auth-middleware"
 
 // GET all items
@@ -21,9 +21,7 @@ export async function GET(request: NextRequest) {
     const category = sanitizeSearchQuery(searchParams.get("category") || "")
     const location = sanitizeSearchQuery(searchParams.get("location") || "")
     const uploadedById = searchParams.get("uploadedById")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100) // Max 100 per page
-    const skip = (page - 1) * limit
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 })
 
     // Validate status enum
     const validStatuses = ["available", "claimed", "released", "donated", "pending", "expired"]
@@ -109,7 +107,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createItemSchema, body)
 
     if (!validation.success) {

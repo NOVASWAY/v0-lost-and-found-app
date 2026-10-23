@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createMissionSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 
 // GET all missions
 export async function GET(request: NextRequest) {
@@ -58,7 +58,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createMissionSchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })

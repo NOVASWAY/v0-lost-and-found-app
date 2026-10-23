@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin, sanitizeSearchQuery } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery } from "@/lib/security"
 import { z } from "zod"
 
 // GET all audit logs (admin only)
@@ -25,9 +25,7 @@ export async function GET(request: NextRequest) {
     const search = sanitizeSearchQuery(searchParams.get("search") || "")
     const type = searchParams.get("type")
     const severity = searchParams.get("severity")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 200) // Max 200 per page
-    const skip = (page - 1) * limit
+    const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 50, maxLimit: 200 })
 
     const where: any = {}
 
@@ -157,7 +155,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const parsed = createAuditLogSchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })

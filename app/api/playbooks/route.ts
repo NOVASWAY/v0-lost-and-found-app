@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { requireAdmin, requireAdminOrVolunteer } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createPlaybookSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 
 // GET all playbooks (authenticated only - contains internal security procedures)
 export async function GET(request: NextRequest) {
@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(createPlaybookSchema, body)
 
     if (!validation.success) {

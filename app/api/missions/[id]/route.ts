@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { assertSameOrigin, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { updateMissionSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -38,7 +38,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const isStaff = authResult.user.role === "admin" || authResult.user.role === "volunteer"
 
-    const data = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const data = jsonBody.data
     const validation = validateAndSanitize(updateMissionSchema, data)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
@@ -54,8 +58,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { title, description, instructions, priority, status, dueDate, location, completionNotes, assignedTo } = validation.data
 
     if (!isStaff) {
-      // Restrict non-staff to status + completionNotes only.
-      if (title || description || instructions || priority || dueDate || location || assignedTo) {
+      // Restrict non-staff to status + completionNotes only. Check for
+      // presence (not truthiness): an empty string or null is still an
+      // attempted write and would let an assignee clear staff-owned fields.
+      const staffOnlyFields = { title, description, instructions, priority, dueDate, location, assignedTo }
+      if (Object.values(staffOnlyFields).some((value) => value !== undefined)) {
         return NextResponse.json({ error: "Forbidden - Only status updates are allowed" }, { status: 403 })
       }
     }

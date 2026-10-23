@@ -9,6 +9,8 @@ import {
   validateUrl,
   sanitizeSearchQuery,
   validateRouteId,
+  parsePagination,
+  readJsonBody,
 } from "../../lib/security"
 import { safeCompare } from "../../lib/secret"
 
@@ -182,5 +184,66 @@ describe("safeCompare", () => {
   it("returns false for non-string inputs", () => {
     expect(safeCompare(undefined as unknown as string, "x")).toBe(false)
     expect(safeCompare("x", null as unknown as string)).toBe(false)
+  })
+})
+
+describe("parsePagination", () => {
+  const params = (query: string) => new URLSearchParams(query)
+
+  it("uses defaults when params are absent", () => {
+    expect(parsePagination(params(""))).toEqual({ page: 1, limit: 20, skip: 0 })
+    expect(parsePagination(params(""), { defaultLimit: 50, maxLimit: 200 })).toEqual({
+      page: 1,
+      limit: 50,
+      skip: 0,
+    })
+  })
+
+  it("computes skip from page and limit", () => {
+    expect(parsePagination(params("page=3&limit=10"))).toEqual({ page: 3, limit: 10, skip: 20 })
+  })
+
+  it("clamps the limit to the cap", () => {
+    expect(parsePagination(params("limit=99999"), { maxLimit: 100 }).limit).toBe(100)
+  })
+
+  it("falls back instead of producing NaN or negatives", () => {
+    for (const bad of ["abc", "-1", "0", "1.5", "1e5", " ", "999999999999999999999"]) {
+      expect(parsePagination(params(`limit=${encodeURIComponent(bad)}`))).toEqual({
+        page: 1,
+        limit: 20,
+        skip: 0,
+      })
+      expect(parsePagination(params(`page=${encodeURIComponent(bad)}`))).toEqual({
+        page: 1,
+        limit: 20,
+        skip: 0,
+      })
+    }
+  })
+})
+
+describe("readJsonBody", () => {
+  it("parses a valid JSON body", async () => {
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: true }),
+    })
+    await expect(readJsonBody(request)).resolves.toEqual({ ok: true, data: { ok: true } })
+  })
+
+  it("returns ok:false for malformed JSON instead of throwing", async () => {
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{not json",
+    })
+    await expect(readJsonBody(request)).resolves.toEqual({ ok: false })
+  })
+
+  it("returns ok:false for an empty body", async () => {
+    const request = new Request("http://localhost/api/test", { method: "POST" })
+    await expect(readJsonBody(request)).resolves.toEqual({ ok: false })
   })
 })

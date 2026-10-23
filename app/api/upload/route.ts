@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { del, put } from "@vercel/blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
-import { assertSameOrigin } from "@/lib/security"
+import { assertSameOrigin, readJsonBody } from "@/lib/security"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -13,7 +13,17 @@ const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com"
 // bytes to prevent storing arbitrary content (polyglots, malformed images,
 // HTML/script disguised as an image) that could be weaponized against viewers.
 function detectImageType(bytes: Uint8Array): string | null {
-  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
     return "image/png"
   }
   if (
@@ -100,6 +110,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Image storage is not configured" }, { status: 503 })
     }
 
+    // formData() buffers the whole multipart body in memory, so reject an
+    // oversized request from its declared length before parsing it. Chunked
+    // uploads have no Content-Length and still hit the file.size check below.
+    const declaredLength = Number(request.headers.get("content-length") ?? "")
+    const MAX_REQUEST_SIZE = MAX_SIZE + 1024 * 1024 // allow multipart overhead
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_SIZE) {
+      return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 413 })
+    }
+
     const formData = await request.formData()
     const file = formData.get("file") as File | null
 
@@ -163,7 +182,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Image storage is not configured" }, { status: 503 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data as { url?: unknown } | null
     const url = typeof body?.url === "string" ? body.url : ""
     if (!url) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 })

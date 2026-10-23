@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAuth, requireAdmin } from "@/lib/auth-middleware"
-import { assertSameOrigin, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { updateOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
@@ -76,7 +76,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: "Occurrence not found" }, { status: 404 })
     }
 
-    const body = await request.json()
+    const jsonBody = await readJsonBody(request)
+    if (!jsonBody.ok) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const body = jsonBody.data
     const validation = validateAndSanitize(updateOccurrenceBookSchema, body)
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
@@ -94,8 +98,34 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (validation.data.notes !== undefined) updateData.notes = validation.data.notes || null
     if (validation.data.followUpRequired !== undefined) updateData.followUpRequired = validation.data.followUpRequired
     if (validation.data.followUpNotes !== undefined) updateData.followUpNotes = validation.data.followUpNotes || null
-    if (validation.data.linkedItemId !== undefined) updateData.linkedItemId = validation.data.linkedItemId || null
-    if (validation.data.linkedClaimId !== undefined) updateData.linkedClaimId = validation.data.linkedClaimId || null
+    if (validation.data.linkedItemId !== undefined) {
+      if (validation.data.linkedItemId) {
+        const linkedItemIdValidation = validateRouteId(validation.data.linkedItemId)
+        if (!linkedItemIdValidation.valid) {
+          return NextResponse.json({ error: "Invalid linked item ID format" }, { status: 400 })
+        }
+        const linkedItem = await prisma.item.findUnique({
+          where: { id: validation.data.linkedItemId },
+          select: { id: true },
+        })
+        if (!linkedItem) return NextResponse.json({ error: "Linked item not found" }, { status: 404 })
+      }
+      updateData.linkedItemId = validation.data.linkedItemId || null
+    }
+    if (validation.data.linkedClaimId !== undefined) {
+      if (validation.data.linkedClaimId) {
+        const linkedClaimIdValidation = validateRouteId(validation.data.linkedClaimId)
+        if (!linkedClaimIdValidation.valid) {
+          return NextResponse.json({ error: "Invalid linked claim ID format" }, { status: 400 })
+        }
+        const linkedClaim = await prisma.claim.findUnique({
+          where: { id: validation.data.linkedClaimId },
+          select: { id: true },
+        })
+        if (!linkedClaim) return NextResponse.json({ error: "Linked claim not found" }, { status: 404 })
+      }
+      updateData.linkedClaimId = validation.data.linkedClaimId || null
+    }
 
     if (validation.data.categoryId !== undefined) {
       const category = await prisma.occurrenceCategory.findUnique({ where: { id: validation.data.categoryId } })
