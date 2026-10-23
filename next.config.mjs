@@ -18,6 +18,10 @@ const nextConfig = {
     // Production should fail fast on type errors.
     ignoreBuildErrors: false,
   },
+  // The Prisma driver adapters must be loaded by Node at runtime, not bundled:
+  // the SQLite adapter requires the native better-sqlite3 binding, which breaks
+  // when webpack inlines it (dev server returns 500 on every DB query).
+  serverExternalPackages: ["@prisma/adapter-better-sqlite3", "@prisma/adapter-pg", "better-sqlite3"],
   images: {
     unoptimized: true,
   },
