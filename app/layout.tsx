@@ -8,12 +8,13 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { NavigationWrapper } from "@/components/navigation-wrapper"
+import { getSiteUrl } from "@/lib/site-url"
 
 export const dynamic = "force-dynamic"
 
 const inter = Inter({ subsets: ["latin"] })
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+const siteUrl = getSiteUrl()
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
