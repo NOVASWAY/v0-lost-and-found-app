@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ItemCard } from "@/components/item-card"
 import Link from "next/link"
 import {
   Upload,
@@ -16,11 +18,14 @@ import {
   TrendingUp,
   Activity,
   CheckCircle,
+  RefreshCw,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { itemsApi, claimsApi, ApiError } from "@/lib/api-client"
+import { itemsApi, claimsApi, ApiError, type Item } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { VaultBackground } from "@/components/vault-background"
+
+const RECENT_FINDS_LIMIT = 8
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -28,6 +33,9 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const [userUploads, setUserUploads] = useState<any[]>([])
   const [userClaims, setUserClaims] = useState<any[]>([])
+  const [recentItems, setRecentItems] = useState<Item[]>([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [feedError, setFeedError] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
@@ -52,6 +60,31 @@ export default function DashboardPage() {
       router.push("/login")
     }
   }, [isLoaded, isAuthenticated, router])
+
+  // Shared feed of the congregation's newest finds. Fetched separately from the
+  // stats below so a feed failure can never blank the member's own summary.
+  const loadRecentFinds = useCallback(() => {
+    return itemsApi
+      .getAll({ limit: RECENT_FINDS_LIMIT })
+      .then((res) => {
+        setRecentItems(res.items)
+        setFeedError(false)
+      })
+      .catch(() => {
+        setFeedError(true)
+      })
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    loadRecentFinds()
+  }, [user, loadRecentFinds])
+
+  const handleRefreshFinds = async () => {
+    setIsRefreshing(true)
+    await loadRecentFinds()
+    setIsRefreshing(false)
+  }
 
   if (!isLoaded || !isAuthenticated) {
     return (
@@ -217,6 +250,58 @@ export default function DashboardPage() {
             <p className="text-3xl font-bold text-card-foreground">{releasedItems.length}</p>
             <p className="text-sm text-muted-foreground">Items Received</p>
           </Card>
+        </div>
+
+        {/* Recent finds — the congregation's newest uploads, visible to everyone */}
+        <div className="mb-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Recent finds</h2>
+              <p className="text-sm text-muted-foreground">Newest items from the congregation</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshFinds}
+                disabled={isRefreshing}
+                aria-label="Refresh recent finds"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <Link href="/browse" className="text-sm font-medium text-primary hover:underline">
+                View all
+              </Link>
+            </div>
+          </div>
+
+          {recentItems.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {recentItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  id={item.id}
+                  imageUrl={item.imageUrl}
+                  category={item.category}
+                  color={item.color}
+                  dateFound={new Date(item.dateFounded)}
+                  location={item.location}
+                  status={item.status}
+                  donationDeadline={item.donationDeadline ? new Date(item.donationDeadline) : undefined}
+                  mine={item.uploadedBy?.id === user?.id}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">
+                {feedError
+                  ? "Couldn't load recent finds — press Refresh to retry."
+                  : "No items have been found yet. Upload the first one!"}
+              </p>
+            </Card>
+          )}
         </div>
 
         {/* Progress Widgets */}

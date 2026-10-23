@@ -2,6 +2,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { CountdownTimer } from "@/components/countdown-timer"
@@ -15,6 +16,9 @@ interface ItemCardProps {
   location: string
   status: "available" | "claimed" | "released" | "donated" | "expired"
   donationDeadline?: Date
+  // Marks the item as the current user's own upload. The comparison is done by
+  // the caller so no uploader identity is ever exposed to other members.
+  mine?: boolean
 }
 
 export function ItemCard({
@@ -26,6 +30,7 @@ export function ItemCard({
   location,
   status,
   donationDeadline,
+  mine = false,
 }: ItemCardProps) {
   const [daysAgo, setDaysAgo] = React.useState(0)
   React.useEffect(() => {
@@ -46,6 +51,11 @@ export function ItemCard({
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
           />
+          {mine && (
+            <Badge className="absolute left-2 top-2 z-10 bg-primary text-primary-foreground shadow-lg">
+              Yours
+            </Badge>
+          )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
