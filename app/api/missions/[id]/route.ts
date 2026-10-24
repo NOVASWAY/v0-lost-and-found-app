@@ -4,6 +4,7 @@ import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { updateMissionSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { awardPoints } from "@/lib/points"
 
 // PATCH update mission
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -113,6 +114,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     } else if (assignedTo && assignedTo !== mission.assignedTo) {
       auditType = "mission_assigned"
       auditAction = "Mission reassigned"
+    }
+
+    if (status === "completed" && mission.status !== "completed") {
+      await awardPoints({
+        userId: mission.assignedTo,
+        action: "mission_completed",
+        referenceId: mission.id,
+        fallbackPoints: 50,
+      })
     }
 
     await prisma.auditLog.create({

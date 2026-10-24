@@ -4,7 +4,7 @@ import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { refreshUserRanks } from "@/lib/ranking"
+import { awardPoints } from "@/lib/points"
 
 // GET service records for a user
 export async function GET(request: NextRequest) {
@@ -107,23 +107,19 @@ export async function POST(request: NextRequest) {
 
     // Update user stats
     const updateData: any = {}
-    if (attended) {
-      updateData.attendanceCount = { increment: 1 }
-      updateData.vaultPoints = { increment: 10 }
-    }
-    if (served) {
-      updateData.serviceCount = { increment: 1 }
-      updateData.vaultPoints = { increment: 25 }
-    }
+    if (attended) updateData.attendanceCount = { increment: 1 }
+    if (served) updateData.serviceCount = { increment: 1 }
 
     if (Object.keys(updateData).length > 0) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: updateData,
-      })
+      await prisma.user.update({ where: { id: userId }, data: updateData })
     }
 
-    await refreshUserRanks()
+    if (attended) {
+      await awardPoints({ userId, action: "service_attended", referenceId: record.id, fallbackPoints: 10 })
+    }
+    if (served) {
+      await awardPoints({ userId, action: "service_served", referenceId: record.id, fallbackPoints: 25 })
+    }
 
     // Add audit logs. The actor is the staff member who recorded the entry —
     // the target member only appears in the details, so the trail answers
