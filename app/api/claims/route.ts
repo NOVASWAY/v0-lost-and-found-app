@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { refreshUserRanks } from "@/lib/ranking"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
@@ -187,7 +188,9 @@ export async function POST(request: NextRequest) {
       return created
     })
 
-    return NextResponse.json({ claim, message: "Claim created successfully" })
+    await refreshUserRanks()
+
+    return NextResponse.json({ claim, message: "Claim created successfully" } )
   } catch (error) {
     if (error instanceof ClaimError) {
       return NextResponse.json({ error: error.message }, { status: error.status })

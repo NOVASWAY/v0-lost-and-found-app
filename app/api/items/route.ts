@@ -4,6 +4,7 @@ import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 import { requireAuth } from "@/lib/auth-middleware"
+import { refreshUserRanks } from "@/lib/ranking"
 
 // GET all items
 export async function GET(request: NextRequest) {
@@ -172,6 +173,8 @@ export async function POST(request: NextRequest) {
         vaultPoints: { increment: 50 },
       },
     })
+
+    await refreshUserRanks()
 
     // Add audit log
     await prisma.auditLog.create({
