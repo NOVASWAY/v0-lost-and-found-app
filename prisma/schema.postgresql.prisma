@@ -196,21 +196,30 @@ model Mission {
   @@index([status])
 }
 
-model MeetingMinutes {
-  id             String   @id @default(cuid())
-  title          String
-  meetingDate    String // date-only "YYYY-MM-DD"
-  location       String?
-  attendees      Json // string[]
-  agenda         Json // string[]
-  discussion     String   @default("")
-  actionItems    Json // { item, assignedTo, dueDate?, status }[]
-  decisions      Json // string[]
-  nextMeetingDate String?
-  recordedBy     String   @default("")
-
+model PointRule {
+  id        String   @id @default(cuid())
+  action    String   @unique
+  label     String
+  points    Int      @default(0)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model PointEvent {
+  id          String   @id @default(cuid())
+  action      String
+  referenceId String
+  points      Int
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([action, referenceId, userId])
+  @@index([userId])
+  @@index([action])
 }
 
 model AuditLog {
