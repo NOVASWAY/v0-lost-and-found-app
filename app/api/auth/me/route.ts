@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
+import { refreshUserRanks } from "@/lib/ranking"
 
 // GET current user - restores the client session from the httpOnly cookie.
 export async function GET(request: NextRequest) {
@@ -13,6 +14,8 @@ export async function GET(request: NextRequest) {
     if (!prisma) {
       return NextResponse.json({ error: "Database connection unavailable" }, { status: 503 })
     }
+
+    await refreshUserRanks()
 
     const user = await prisma.user.findUnique({
       where: { id: authResult.user.id },

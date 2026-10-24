@@ -4,6 +4,7 @@ import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { refreshUserRanks } from "@/lib/ranking"
 
 class ClaimUpdateError extends Error {
   constructor(message: string, public status: number) {
@@ -198,6 +199,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       return updated
     })
+
+    if (status === "released") {
+      await refreshUserRanks()
+    }
 
     return NextResponse.json({ claim: updatedClaim, message: "Claim updated successfully" })
   } catch (error) {

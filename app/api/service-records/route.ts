@@ -4,6 +4,7 @@ import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { refreshUserRanks } from "@/lib/ranking"
 
 // GET service records for a user
 export async function GET(request: NextRequest) {
@@ -121,6 +122,8 @@ export async function POST(request: NextRequest) {
         data: updateData,
       })
     }
+
+    await refreshUserRanks()
 
     // Add audit logs. The actor is the staff member who recorded the entry —
     // the target member only appears in the details, so the trail answers
