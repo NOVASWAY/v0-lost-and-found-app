@@ -43,11 +43,15 @@ async function createUser(username: string, role: string): Promise<TestUser> {
 
 function cookieRequest(url: string, opts: { token?: string; origin?: string; method?: string; body?: unknown }) {
   const headers = new Headers()
+  const method = opts.method ?? "GET"
+  const origin = opts.origin ?? (
+    ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase()) ? new URL(url).origin : undefined
+  )
   if (opts.token) headers.set("cookie", `auth_token=${opts.token}`)
-  if (opts.origin) headers.set("origin", opts.origin)
+  if (origin) headers.set("origin", origin)
   if (opts.body !== undefined) headers.set("content-type", "application/json")
   return new NextRequest(url, {
-    method: opts.method ?? "GET",
+    method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   })

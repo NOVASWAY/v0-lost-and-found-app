@@ -45,7 +45,6 @@ interface TestUser {
 }
 
 const users: Record<string, TestUser> = {}
-let createdByApi: TestUser | null = null
 
 async function createUser(username: string, role: string): Promise<TestUser> {
   const password = await hashPassword("Str0ng!Passw0rd")
@@ -59,11 +58,15 @@ async function createUser(username: string, role: string): Promise<TestUser> {
 
 function cookieRequest(url: string, opts: { token?: string; origin?: string; method?: string; body?: unknown }) {
   const headers = new Headers()
+  const method = opts.method ?? "GET"
+  const origin = opts.origin ?? (
+    ["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase()) ? new URL(url).origin : undefined
+  )
   if (opts.token) headers.set("cookie", `auth_token=${opts.token}`)
-  if (opts.origin) headers.set("origin", opts.origin)
+  if (origin) headers.set("origin", origin)
   if (opts.body !== undefined) headers.set("content-type", "application/json")
   return new NextRequest(url, {
-    method: opts.method ?? "GET",
+    method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   })
@@ -150,13 +153,7 @@ describe("endpoint role authorization (real DB)", () => {
     )) as NextResponse
     expect(res.status).toBe(200)
     const body = await res.json()
-    createdByApi = {
-      id: body.user.id,
-      username: body.user.username,
-      name: body.user.name,
-      role: body.user.role,
-      tokenVersion: 0,
-    }
+    expect(body.user.username).toBe(names.apiCreated)
   })
 
   it("rejects a session with a stale tokenVersion (revoked)", async () => {
@@ -169,10 +166,17 @@ describe("endpoint role authorization (real DB)", () => {
   })
 
   it("rejects a forged cross-site origin even for an admin", async () => {
-    const res = (await usersRoute.GET(
+    const res = (await usersRoute.POST(
       cookieRequest("http://localhost/api/users", {
         token: tokenFor(users.admin),
+        method: "POST",
         origin: "https://evil.example.com",
+        body: {
+          name: "Cross-site request",
+          username: `${names.apiCreated}_csrf`,
+          password: "Str0ng!Passw0rd",
+          role: "user",
+        },
       })
     )) as NextResponse
     expect(res.status).toBe(403)
@@ -380,7 +384,10 @@ describe("endpoint role authorization (real DB)", () => {
     })
 
     const res = (await missionByIdRoute.DELETE(
-      cookieRequest(`http://localhost/api/missions/${mission.id}`, { token: tokenFor(users.volunteer) }),
+      cookieRequest(`http://localhost/api/missions/${mission.id}`, {
+        token: tokenFor(users.volunteer),
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ id: mission.id }) },
     )) as NextResponse
     expect(res.status).toBe(403)
@@ -394,7 +401,10 @@ describe("endpoint role authorization (real DB)", () => {
     })
 
     const res = (await missionByIdRoute.DELETE(
-      cookieRequest(`http://localhost/api/missions/${mission.id}`, { token: tokenFor(users.admin) }),
+      cookieRequest(`http://localhost/api/missions/${mission.id}`, {
+        token: tokenFor(users.admin),
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ id: mission.id }) },
     )) as NextResponse
     expect(res.status).toBe(200)
@@ -483,13 +493,19 @@ describe("endpoint role authorization (real DB)", () => {
     })
 
     const denied = (await meetingMinuteByIdRoute.DELETE(
-      cookieRequest(`http://localhost/api/meeting-minutes/${minutes.id}`, { token: tokenFor(users.volunteer) }),
+      cookieRequest(`http://localhost/api/meeting-minutes/${minutes.id}`, {
+        token: tokenFor(users.volunteer),
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ id: minutes.id }) },
     )) as NextResponse
     expect(denied.status).toBe(403)
 
     const allowed = (await meetingMinuteByIdRoute.DELETE(
-      cookieRequest(`http://localhost/api/meeting-minutes/${minutes.id}`, { token: tokenFor(users.admin) }),
+      cookieRequest(`http://localhost/api/meeting-minutes/${minutes.id}`, {
+        token: tokenFor(users.admin),
+        method: "DELETE",
+      }),
       { params: Promise.resolve({ id: minutes.id }) },
     )) as NextResponse
     expect(allowed.status).toBe(200)
@@ -908,8 +924,32 @@ describe("endpoint role authorization (real DB)", () => {
 })
 
 afterAll(async () => {
-  const ids = [...Object.values(users).map((u) => u.id), ...(createdByApi ? [createdByApi.id] : [])]
+  const cleanupUsers = await prisma.user.findMany({
+    where: { username: { startsWith: "authz_", endsWith: `_${SUFFIX}` } },
+    select: { id: true, username: true },
+  })
+  const ids = cleanupUsers.map((user) => user.id)
+  const usernames = cleanupUsers.map((user) => user.username)
+  const items = await prisma.item.findMany({ where: { uploadedById: { in: ids } }, select: { id: true } })
+  const itemIds = items.map((item) => item.id)
+
+  await prisma.occurrenceBook.deleteMany({ where: { reportedById: { in: ids } } })
+  await prisma.releaseLog.deleteMany({
+    where: { OR: [{ volunteerId: { in: ids } }, { itemId: { in: itemIds } }] },
+  })
+  await prisma.claim.deleteMany({
+    where: { OR: [{ claimantId: { in: ids } }, { itemId: { in: itemIds } }] },
+  })
+  await prisma.item.deleteMany({ where: { id: { in: itemIds } } })
+  await prisma.order.deleteMany({ where: { userId: { in: ids } } })
+  await prisma.mission.deleteMany({
+    where: { OR: [{ assignedTo: { in: ids } }, { assignedBy: { in: ids } }] },
+  })
+  await prisma.meetingMinutes.deleteMany({ where: { recordedBy: { in: usernames } } })
+  await prisma.serviceRecord.deleteMany({ where: { userId: { in: ids } } })
+  await prisma.pointEvent.deleteMany({ where: { userId: { in: ids } } })
   await prisma.auditLog.deleteMany({ where: { userId: { in: ids } } })
+  await prisma.occurrenceCategory.deleteMany({ where: { name: `OB Authz Test ${SUFFIX}` } })
   await prisma.user.deleteMany({ where: { id: { in: ids } } })
   await prisma.$disconnect()
   if (ORIGINAL_SECRET === undefined) delete process.env.JWT_SECRET
