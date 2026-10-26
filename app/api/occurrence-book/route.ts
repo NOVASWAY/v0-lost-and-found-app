@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
     const where: Prisma.OccurrenceBookWhereInput = {}
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { location: { contains: search, mode: "insensitive" } },
-        { notes: { contains: search, mode: "insensitive" } },
+        { title: { contains: search } },
+        { description: { contains: search } },
+        { location: { contains: search } },
+        { notes: { contains: search } },
       ]
     }
     if (categoryId) where.categoryId = categoryId

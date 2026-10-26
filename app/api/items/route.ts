@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
     }
     if (search) {
       where.OR = [
-        { category: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { category: { contains: search } },
+        { description: { contains: search } },
       ]
     }
     if (status) where.status = status
-    if (category) where.category = { contains: category, mode: "insensitive" }
-    if (location) where.location = { contains: location, mode: "insensitive" }
+    if (category) where.category = { contains: category }
+    if (location) where.location = { contains: location }
 
     if (uploadedById) {
       const idValidation = validateRouteId(uploadedById)
