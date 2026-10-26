@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
@@ -6,7 +7,7 @@ import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
-import { canTransitionClaimStatus } from "@/lib/domain"
+import { canTransitionClaimStatus, isClaimStatus } from "@/lib/domain"
 
 class ClaimUpdateError extends Error {
   constructor(message: string, public status: number) {
@@ -53,7 +54,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
     }
 
-    return NextResponse.json({ claim })
+    const { claimantEmail: _claimantEmail, ...visibleClaim } = claim
+    const claimForViewer = authResult.user.role === "user"
+      ? {
+          ...visibleClaim,
+          item: (({ uniqueMarkings: _uniqueMarkings, ...item }) => item)(claim.item),
+        }
+      : visibleClaim
+
+    return NextResponse.json(
+      { claim: claimForViewer },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get claim error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -97,119 +109,126 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const actorId = authResult.user.id
-    const actorRole = authResult.user.role
     const { status, releaseNotes } = validation.data
 
-    if (actorRole !== "admin" && status === "pending") {
-      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
-    }
-
-    // Valid status transitions
-    const VALID_TRANSITIONS: Record<string, string[]> = {
-      pending: ["approved", "rejected"],
-      approved: ["released", "rejected"],
-      released: [],
-      rejected: [],
-    }
-
-    const updatedClaim = await prisma.$transaction(async (tx) => {
-      // Fresh read inside transaction — concurrent modifications are serialized
-      const claim = await tx.claim.findUnique({
-        where: { id },
-        include: { item: true, claimant: true },
-      })
-
+    const { updatedClaim, pointsAwarded } = await prisma.$transaction(async (tx) => {
+      const claim = await tx.claim.findUnique({ where: { id }, include: { item: true } })
       if (!claim) throw new ClaimUpdateError("Claim not found", 404)
 
-      // Validate status transition
-      if (status) {
-        const allowed = VALID_TRANSITIONS[claim.status] || []
-        if (!allowed.includes(status)) {
-          throw new ClaimUpdateError(
-            `Cannot transition claim from "${claim.status}" to "${status}"`,
-            400,
-          )
-        }
+      if (status && (!isClaimStatus(claim.status) || !canTransitionClaimStatus(claim.status, status))) {
+        throw new ClaimUpdateError(
+          `Cannot transition claim from "${claim.status}" to "${status}"`,
+          400,
+        )
       }
 
-      const updateData: Record<string, unknown> = {}
+      const updateData: Prisma.ClaimUpdateManyMutationInput = {}
       if (status) updateData.status = status
-      if (releaseNotes) updateData.releaseNotes = releaseNotes
-      updateData.releasedBy = actorId
-      if (status === "released") updateData.releasedAt = new Date()
+      if (releaseNotes !== undefined) updateData.releaseNotes = releaseNotes
+      if (status === "released") {
+        updateData.releasedBy = actorId
+        updateData.releasedAt = new Date()
+      }
 
-      // Approve: lock the item, but only if no other approved claim exists
       if (status === "approved") {
         const existingApproved = await tx.claim.findFirst({
-          where: {
-            itemId: claim.itemId,
-            status: "approved",
-            id: { not: id },
-          },
+          where: { itemId: claim.itemId, status: "approved", id: { not: id } },
+          select: { id: true },
         })
         if (existingApproved) {
           throw new ClaimUpdateError("Another claim on this item is already approved", 409)
         }
-        await tx.item.update({ where: { id: claim.itemId }, data: { status: "claimed" } })
-      }
 
-      // Reject a previously approved claim: free the item
-      if (status === "rejected" && claim.status === "approved") {
-        await tx.item.update({ where: { id: claim.itemId }, data: { status: "available" } })
-      }
-
-      const updated = await tx.claim.update({
-        where: { id },
-        data: updateData,
-        include: { item: true, claimant: true },
-      })
-
-      // Release: update item, create release log, award points
-      if (status === "released") {
-        await tx.item.update({ where: { id: claim.itemId }, data: { status: "released" } })
-
-        const volunteer = await tx.user.findUnique({ where: { id: actorId } })
-        if (volunteer) {
-          await tx.releaseLog.create({
-            data: {
-              itemId: claim.itemId,
-              itemName: claim.itemName,
-              claimantName: claim.claimantName,
-              volunteerName: volunteer.name,
-              notes: releaseNotes || "Item released to claimant",
-              claimId: claim.id,
-              volunteerId: actorId,
-            },
-          })
-
-          await tx.user.update({
-            where: { id: claim.claimantId },
-            data: { vaultPoints: { increment: 100 } },
-          })
-
-          await tx.auditLog.create({
-            data: {
-              type: "item_released",
-              action: "Item released",
-              details: `${claim.itemName} released to ${claim.claimantName}`,
-              severity: "info",
-              userId: actorId,
-            },
-          })
+        const itemLock = await tx.item.updateMany({
+          where: { id: claim.itemId, status: "available" },
+          data: { status: "claimed" },
+        })
+        if (itemLock.count !== 1) {
+          throw new ClaimUpdateError("Item is no longer available", 409)
         }
       }
 
-      return updated
+      if (status === "rejected" && claim.status === "approved") {
+        const itemRelease = await tx.item.updateMany({
+          where: { id: claim.itemId, status: "claimed" },
+          data: { status: "available" },
+        })
+        if (itemRelease.count !== 1) {
+          throw new ClaimUpdateError("Item state changed before the claim could be rejected", 409)
+        }
+      }
+
+      const claimUpdate = await tx.claim.updateMany({
+        where: { id, status: claim.status },
+        data: updateData,
+      })
+      if (claimUpdate.count !== 1) {
+        throw new ClaimUpdateError("Claim changed before the update could be applied", 409)
+      }
+
+      let pointsAwarded = false
+      if (status === "released") {
+        const itemRelease = await tx.item.updateMany({
+          where: { id: claim.itemId, status: "claimed" },
+          data: { status: "released" },
+        })
+        if (itemRelease.count !== 1) {
+          throw new ClaimUpdateError("Item state changed before release", 409)
+        }
+
+        await tx.releaseLog.create({
+          data: {
+            itemId: claim.itemId,
+            itemName: claim.itemName,
+            claimantName: claim.claimantName,
+            volunteerName: authResult.user.name,
+            notes: releaseNotes?.trim() || "Item released to claimant",
+            claimId: claim.id,
+            volunteerId: actorId,
+          },
+        })
+
+        const pointResult = await awardPoints({
+          tx,
+          userId: claim.claimantId,
+          action: "item_released",
+          referenceId: claim.id,
+        })
+        pointsAwarded = pointResult.awarded
+
+        await tx.auditLog.create({
+          data: {
+            type: "item_released",
+            action: "Item released",
+            details: `${claim.itemName} released to ${claim.claimantName}`,
+            severity: "info",
+            userId: actorId,
+          },
+        })
+      }
+
+      const updatedClaim = await tx.claim.findUnique({
+        where: { id },
+        include: { item: true, claimant: { select: { id: true, name: true, username: true } } },
+      })
+      if (!updatedClaim) throw new ClaimUpdateError("Claim not found", 404)
+
+      return { updatedClaim, pointsAwarded }
     })
 
-    if (status === "released") {
-      await refreshUserRanks()
-    }
+    if (pointsAwarded) await refreshUserRanks()
 
-    return NextResponse.json({ claim: updatedClaim, message: "Claim updated successfully" })
+    const { claimantEmail: _claimantEmail, ...visibleClaim } = updatedClaim
+    return NextResponse.json(
+      { claim: visibleClaim, message: "Claim updated successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     if (error instanceof ClaimUpdateError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
+    }
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+      return NextResponse.json({ error: "Release has already been recorded" }, { status: 409 })
     }
     console.error("Update claim error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

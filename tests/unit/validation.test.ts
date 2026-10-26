@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { privateBlobUrl } from "../../lib/private-blob"
 import {
   loginSchema,
   createUserSchema,
@@ -52,7 +53,7 @@ describe("auth schemas", () => {
 
 describe("item schema", () => {
   const baseItem = {
-    imageUrl: "https://example.com/photo.jpg",
+    imageUrl: privateBlobUrl("items/user/photo.jpg"),
     category: "wallet",
     location: "Sanctuary",
     dateFounded: "2026-08-01T12:00:00.000Z",
@@ -75,6 +76,12 @@ describe("item schema", () => {
 
   it("rejects a non-URL imageUrl", () => {
     expect(createItemSchema.safeParse({ ...baseItem, imageUrl: "not a url" }).success).toBe(false)
+  })
+
+  it("rejects public image URLs", () => {
+    expect(
+      createItemSchema.safeParse({ ...baseItem, imageUrl: "https://example.com/public-photo.jpg" }).success,
+    ).toBe(false)
   })
 
   it("rejects base64 data URLs for imageUrl", () => {
@@ -101,7 +108,7 @@ describe("claim schema", () => {
   it("accepts cuid and uuid item IDs", () => {
     const body = {
       itemId: "c123456789012345678901234",
-      proofImage: "https://example.com/proof.png",
+      proofImage: privateBlobUrl("claim-proofs/user/proof.png"),
       claimantId: "123e4567-e89b-12d3-a456-426614174000",
     }
     expect(createClaimSchema.safeParse(body).success).toBe(true)
@@ -110,9 +117,14 @@ describe("claim schema", () => {
   it("rejects malformed item/claimant IDs", () => {
     const body = {
       itemId: "not-an-id",
-      proofImage: "https://example.com/proof.png",
+      proofImage: privateBlobUrl("claim-proofs/user/proof.png"),
       claimantId: "c123456789012345678901234",
     }
+    expect(createClaimSchema.safeParse(body).success).toBe(false)
+  })
+
+  it("rejects public proof image URLs", () => {
+    const body = { itemId: "c123456789012345678901234", proofImage: "https://example.com/proof.png" }
     expect(createClaimSchema.safeParse(body).success).toBe(false)
   })
 

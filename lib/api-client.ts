@@ -51,12 +51,12 @@ export class ApiError extends Error {
   }
 }
 
-// Upload an image file to Vercel Blob via /api/upload. The route re-validates
-// the file server-side (MIME allowlist, 5MB cap, magic-byte verification) and
-// returns a public URL. Used for both item photos and claim proof photos.
-export async function uploadImage(file: File): Promise<string> {
+// Upload an image file to private Vercel Blob storage via /api/upload.
+// The route validates the file and returns an authenticated delivery URL.
+export async function uploadImage(file: File, purpose: "item" | "claim-proof"): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
+  formData.append("purpose", purpose)
 
   const response = await fetch(`${API_BASE}/upload`, {
     method: "POST",

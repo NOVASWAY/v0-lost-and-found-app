@@ -13,9 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
-import { itemsApi, locationsApi, ApiError, type Location, deleteUpload } from "@/lib/api-client"
+import { itemsApi, locationsApi, ApiError, type Location, deleteUpload, uploadImage } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
-import { sanitizeInput, sanitizeUrl, sanitizeTextContent } from "@/lib/client-security"
+import { sanitizeInput, sanitizeTextContent } from "@/lib/client-security"
 
 export default function UploadPage() {
   const { user, isAuthenticated } = useAuth()
@@ -119,37 +119,9 @@ const [imageFile, setImageFile] = useState<File | null>(null)
     // Tracked so a failed item creation can remove the orphaned upload.
     let uploadedImageUrl: string | null = null
     try {
-      // Upload the real photo file to Blob storage first
-      const formData = new FormData()
-      formData.append("file", imageFile)
-
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        credentials: "same-origin",
-        body: formData,
-      })
-
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json().catch(() => ({}))
-        throw new Error(err.error || "Failed to upload image")
-      }
-
-      const { url: uploadedUrl } = await uploadRes.json()
-      uploadedImageUrl = uploadedUrl
-
-      const sanitizedImageUrl = sanitizeUrl(uploadedUrl)
-      if (!sanitizedImageUrl) {
-        await deleteUpload(uploadedUrl)
-        toast({
-          title: "Invalid Image",
-          description: "Please upload a valid image.",
-          variant: "destructive",
-        })
-        setIsSaving(false)
-        return
-      }
+      uploadedImageUrl = await uploadImage(imageFile, "item")
       await itemsApi.create({
-        imageUrl: sanitizedImageUrl,
+        imageUrl: uploadedImageUrl,
         category: sanitizeInput(category.charAt(0).toUpperCase() + category.slice(1)),
         color: sanitizeInput(color || "Unknown"),
         location: sanitizeInput(location),
@@ -165,8 +137,7 @@ const [imageFile, setImageFile] = useState<File | null>(null)
 
       setIsSubmitted(true)
     } catch (err) {
-      // The upload succeeded but the item was not created — drop the orphaned
-      // blob so it does not linger publicly.
+      // The upload succeeded but the item was not created — remove the orphaned blob.
       if (uploadedImageUrl) {
         await deleteUpload(uploadedImageUrl)
       }

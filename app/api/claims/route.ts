@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
@@ -6,7 +7,8 @@ import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
 import { CLAIM_STATUSES } from "@/lib/domain"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
+import { isOwnPrivateBlobUrl } from "@/lib/private-blob"
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
     const claimantId = searchParams.get("claimantId")
     const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 })
 
-    const where: any = {}
+    const where: Prisma.ClaimWhereInput = {}
 
     // Validate status enum
     if (status && !CLAIM_STATUSES.includes(status as (typeof CLAIM_STATUSES)[number])) {
@@ -141,10 +143,8 @@ export async function POST(request: NextRequest) {
     const { itemId, proofImage, notes } = validation.data
     const claimantId = authResult.user.id
 
-    // Validate proof image URL to prevent path traversal
-    const urlValidation = validateUrl(proofImage)
-    if (!urlValidation.valid) {
-      return NextResponse.json({ error: urlValidation.error || "Invalid proof image URL" }, { status: 400 })
+    if (!isOwnPrivateBlobUrl(proofImage, claimantId, "claim-proof")) {
+      return NextResponse.json({ error: "Claim proof must be an upload owned by the current user" }, { status: 400 })
     }
 
     // Item validation, claim creation, stats, points, and the audit record commit together.

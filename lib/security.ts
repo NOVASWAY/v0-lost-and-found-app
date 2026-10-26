@@ -12,28 +12,11 @@ export function assertSameOrigin(request: NextRequest): boolean {
   const sourceHeaders = [request.headers.get("origin"), request.headers.get("referer")].filter(
     (value): value is string => Boolean(value),
   )
-
   if (sourceHeaders.length === 0) return false
 
   try {
-    const allowedOrigins = new Set<string>()
     const requestUrl = new URL(request.url)
-    if (requestUrl.protocol === "http:" || requestUrl.protocol === "https:") {
-      allowedOrigins.add(requestUrl.origin)
-    }
-
-    for (const configured of [
-      process.env.NEXT_PUBLIC_SITE_URL,
-      process.env.VERCEL_URL,
-      process.env.VERCEL_PROJECT_PRODUCTION_URL,
-    ]) {
-      if (!configured) continue
-      const value = configured.includes("://") ? configured : `https://${configured}`
-      const configuredUrl = new URL(value)
-      if (configuredUrl.protocol === "http:" || configuredUrl.protocol === "https:") {
-        allowedOrigins.add(configuredUrl.origin)
-      }
-    }
+    if (requestUrl.protocol !== "http:" && requestUrl.protocol !== "https:") return false
 
     return sourceHeaders.every((source) => {
       const sourceUrl = new URL(source)
@@ -41,7 +24,7 @@ export function assertSameOrigin(request: NextRequest): boolean {
         (sourceUrl.protocol === "http:" || sourceUrl.protocol === "https:") &&
         !sourceUrl.username &&
         !sourceUrl.password &&
-        allowedOrigins.has(sourceUrl.origin)
+        sourceUrl.origin === requestUrl.origin
       )
     })
   } catch {
@@ -49,34 +32,6 @@ export function assertSameOrigin(request: NextRequest): boolean {
   }
 }
 
-
-  try {
-    const originUrl = new URL(origin)
-    if (originUrl.protocol !== "http:" && originUrl.protocol !== "https:") {
-      return false
-    }
-
-    const configured = process.env.NEXT_PUBLIC_SITE_URL
-    let allowedHost: string | null
-    if (configured) {
-      try {
-        allowedHost = new URL(configured).host
-      } catch {
-        // Misconfigured value — fall back to the request host rather than
-        // rejecting every state-changing request.
-        allowedHost = request.headers.get("host") ?? new URL(request.url).host
-      }
-    } else {
-      // Prefer the Host header; fall back to the request URL host for
-      // manually-constructed requests (e.g. tests) where no Host is set.
-      allowedHost = request.headers.get("host") ?? new URL(request.url).host
-    }
-
-    return !!allowedHost && originUrl.host === allowedHost
-  } catch {
-    return false
-  }
-}
 
 
 /**

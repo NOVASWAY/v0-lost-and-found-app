@@ -76,10 +76,8 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
     // Tracked so a failed claim submission can remove the orphaned upload.
     let proofUrl: string | null = null
     try {
-      // Upload the proof to Blob storage first (magic-byte verified server-side),
-      // then submit the claim with the public URL — avoids large base64 payloads
-      // in the database and the previous 5000-char proof limit.
-      proofUrl = await uploadImage(proofFile)
+      // Upload the proof to private Blob storage before submitting the claim.
+      proofUrl = await uploadImage(proofFile, "claim-proof")
 
       await claimsApi.create({
         itemId,
@@ -94,8 +92,7 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
 
       setIsSubmitted(true)
     } catch (err) {
-      // The proof upload succeeded but the claim was not created — drop the
-      // orphaned blob so the photo does not linger publicly.
+      // The proof upload succeeded but the claim was not created — remove the orphaned blob.
       if (proofUrl) {
         await deleteUpload(proofUrl)
       }

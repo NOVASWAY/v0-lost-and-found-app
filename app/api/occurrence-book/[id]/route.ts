@@ -39,7 +39,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Occurrence not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ occurrence })
+    return NextResponse.json(
+      { occurrence },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get occurrence error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

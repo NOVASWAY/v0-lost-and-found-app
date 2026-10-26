@@ -87,16 +87,19 @@ async function ensureRateLimitTable() {
   if (ensurePromise) return ensurePromise
 
   ensurePromise = (async () => {
-    // Single shared table used only for rate limiting counters.
-    // Works on both Postgres and SQLite (epoch ms stored as BIGINT/INTEGER affinity).
-    await prisma.$executeRaw`
-      CREATE TABLE IF NOT EXISTS rate_limit_counters (
-        rate_key TEXT PRIMARY KEY,
-        count INTEGER NOT NULL,
-        reset_time BIGINT NOT NULL
-      );
-    `
-    ensuredTable = true
+    try {
+      await prisma.$executeRaw`
+        CREATE TABLE IF NOT EXISTS rate_limit_counters (
+          rate_key TEXT PRIMARY KEY,
+          count INTEGER NOT NULL,
+          reset_time BIGINT NOT NULL
+        );
+      `
+      ensuredTable = true
+    } catch (error) {
+      ensurePromise = null
+      throw error
+    }
   })()
 
   return ensurePromise
@@ -110,54 +113,26 @@ async function rateLimitShared(
 
   const now = Date.now()
   const resetTime = now + options.windowMs
-
-  // Read current counter
-  const row = (await prisma.$queryRaw<
-    Array<{ count: number; resetTime: number }>
-  >`
-    SELECT count, reset_time as "resetTime"
-    FROM rate_limit_counters
-    WHERE rate_key = ${identifier}
-    LIMIT 1
-  `) as Array<{ count: number; resetTime: number }>
-
-  if (!row || row.length === 0 || row[0].resetTime < now) {
-    // New window
-    const newResetTime = now + options.windowMs
-    await prisma.$executeRaw`
-      INSERT INTO rate_limit_counters (rate_key, count, reset_time)
-      VALUES (${identifier}, 1, ${newResetTime})
-      ON CONFLICT(rate_key) DO UPDATE SET
-        count = 1,
-        reset_time = ${newResetTime}
-    `
-    return { allowed: true, remaining: options.maxRequests - 1, resetTime: newResetTime }
-  }
-
-  // Existing window: increment
-  await prisma.$executeRaw`
-    UPDATE rate_limit_counters
-    SET count = count + 1
-    WHERE rate_key = ${identifier}
+  const rows = await prisma.$queryRaw<Array<{ count: number | bigint; resetTime: number | bigint }>>`
+    INSERT INTO rate_limit_counters (rate_key, count, reset_time)
+    VALUES (${identifier}, 1, ${resetTime})
+    ON CONFLICT (rate_key) DO UPDATE SET
+      count = CASE
+        WHEN rate_limit_counters.reset_time <= ${now} THEN 1
+        ELSE rate_limit_counters.count + 1
+      END,
+      reset_time = CASE
+        WHEN rate_limit_counters.reset_time <= ${now} THEN ${resetTime}
+        ELSE rate_limit_counters.reset_time
+      END
+    RETURNING count, reset_time AS "resetTime"
   `
 
-  const updated = (await prisma.$queryRaw<
-    Array<{ count: number; resetTime: number }>
-  >`
-    SELECT count, reset_time as "resetTime"
-    FROM rate_limit_counters
-    WHERE rate_key = ${identifier}
-    LIMIT 1
-  `) as Array<{ count: number; resetTime: number }>
+  const count = Number(rows[0]?.count ?? 0)
+  const sharedResetTime = Number(rows[0]?.resetTime ?? resetTime)
 
-  const count = Number(updated?.[0]?.count ?? 1)
-  // reset_time is stored as BIGINT and may come back as a BigInt value;
-  // normalize to a plain number so callers can use it in `new Date(...)`.
-  const sharedResetTime = Number(updated?.[0]?.resetTime ?? resetTime)
-
-  const allowed = count <= options.maxRequests
   return {
-    allowed,
+    allowed: count <= options.maxRequests,
     remaining: Math.max(options.maxRequests - count, 0),
     resetTime: sharedResetTime,
   }

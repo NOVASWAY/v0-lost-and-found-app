@@ -14,55 +14,54 @@ import {
 } from "../../lib/security"
 import { safeCompare } from "../../lib/secret"
 
-function makeRequest(headers: Record<string, string>): NextRequest {
-  return { headers: new Headers(headers) } as unknown as NextRequest
+function makeRequest(
+  headers: Record<string, string>,
+  url = "https://vault.example.com/api/test",
+): NextRequest {
+  return { url, nextUrl: new URL(url), headers: new Headers(headers) } as unknown as NextRequest
 }
 
 describe("assertSameOrigin (CSRF)", () => {
-  it("allows requests without an Origin header (curl/server-to-server)", () => {
-    expect(assertSameOrigin(makeRequest({ host: "vault.example.com" }))).toBe(true)
+  it("rejects headless requests without Origin or Referer", () => {
+    expect(assertSameOrigin(makeRequest({ host: "vault.example.com" }))).toBe(false)
   })
 
-  it("rejects a request with no Origin but a present Referer (privacy-mode browser)", () => {
+  it("accepts a matching Referer when Origin is absent", () => {
+    expect(
+      assertSameOrigin(makeRequest({ referer: "https://vault.example.com/login" }))
+    ).toBe(true)
+  })
+
+  it("matches the request origin and ignores the Host header", () => {
     expect(
       assertSameOrigin(
-        makeRequest({ host: "vault.example.com", referer: "https://vault.example.com/login" })
-      )
-    ).toBe(false)
+        makeRequest({ origin: "https://vault.example.com", host: "evil.example.com" }),
+      ),
+    ).toBe(true)
   })
 
-  it("honors a configured NEXT_PUBLIC_SITE_URL allowlist over the Host header", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://vault.example.com"
-    try {
-      expect(
-        assertSameOrigin(makeRequest({ origin: "https://vault.example.com", host: "evil.example.com" }))
-      ).toBe(true)
-      expect(
-        assertSameOrigin(makeRequest({ origin: "https://other.example.com", host: "vault.example.com" }))
-      ).toBe(false)
-    } finally {
-      delete process.env.NEXT_PUBLIC_SITE_URL
-    }
-  })
-
-  it("allows matching origin + host", () => {
-    expect(assertSameOrigin(makeRequest({ origin: "https://vault.example.com", host: "vault.example.com" }))).toBe(true)
+  it("allows the request's exact origin", () => {
+    expect(assertSameOrigin(makeRequest({ origin: "https://vault.example.com" }))).toBe(true)
   })
 
   it("rejects a cross-site origin", () => {
-    expect(assertSameOrigin(makeRequest({ origin: "https://evil.example.com", host: "vault.example.com" }))).toBe(false)
+    expect(assertSameOrigin(makeRequest({ origin: "https://evil.example.com" }))).toBe(false)
   })
 
-  it("rejects when host is missing", () => {
-    expect(assertSameOrigin(makeRequest({ origin: "https://vault.example.com" }))).toBe(false)
+  it("rejects an origin that does not match the request origin", () => {
+    expect(
+      assertSameOrigin(
+        makeRequest({ origin: "https://vault.example.com" }, "https://other.example.com/api/test"),
+      ),
+    ).toBe(false)
   })
 
   it("rejects non-http(s) origins", () => {
-    expect(assertSameOrigin(makeRequest({ origin: "ftp://vault.example.com", host: "vault.example.com" }))).toBe(false)
+    expect(assertSameOrigin(makeRequest({ origin: "ftp://vault.example.com" }))).toBe(false)
   })
 
   it("rejects an unparseable origin", () => {
-    expect(assertSameOrigin(makeRequest({ origin: "not a url", host: "vault.example.com" }))).toBe(false)
+    expect(assertSameOrigin(makeRequest({ origin: "not a url" }))).toBe(false)
   })
 })
 

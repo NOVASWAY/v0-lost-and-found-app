@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId, serviceDate, attended, served, notes } = validation.data
-    const recordedBy = authResult.user.username
 
     // Validate userId to prevent path traversal
     const idValidation = validateRouteId(userId)
@@ -103,14 +102,17 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      const stats: Record<string, unknown> = {}
-      if (attended) stats.attendanceCount = { increment: 1 }
-      if (served) stats.serviceCount = { increment: 1 }
-      if (Object.keys(stats).length > 0) {
-        await tx.user.update({ where: { id: userId }, data: stats })
+      if (attended || served) {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            ...(attended ? { attendanceCount: { increment: 1 } } : {}),
+            ...(served ? { serviceCount: { increment: 1 } } : {}),
+          },
+        })
       }
 
-      const awards = []
+      const awards: Array<{ awarded: boolean }> = []
       if (attended) {
         awards.push(await awardPoints({
           tx,

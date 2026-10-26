@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { del, put } from "@vercel/blob"
+import { prisma } from "@/lib/db"
+import { privateBlobPathname, privateBlobUrl, type PrivateBlobPurpose } from "@/lib/private-blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
@@ -55,37 +57,36 @@ function detectImageType(bytes: Uint8Array): string | null {
 
 // Every upload is namespaced under the uploader's id so a user can only ever
 // address — and delete — their own blobs.
-function uploadPathname(userId: string, ext: string): string {
-  return `items/${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
+function uploadPathname(userId: string, purpose: PrivateBlobPurpose, ext: string): string {
+  const prefix = purpose === "item" ? "items" : "claim-proofs"
+  return `${prefix}/${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
 }
 
 // Resolve a blob URL to its pathname, but only when it points at a blob in the
 // caller's own namespace. Anything else is rejected.
-function ownedBlobPathname(url: string, userId: string): string | null {
-  let parsed: URL
-  try {
-    parsed = new URL(url)
-  } catch {
-    return null
+function ownedBlobPathname(value: string, userId: string): string | null {
+  let pathname = privateBlobPathname(value)
+
+  if (!pathname) {
+    let parsed: URL
+    try {
+      parsed = new URL(value)
+    } catch {
+      return null
+    }
+
+    if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) return null
+    try {
+      pathname = decodeURIComponent(parsed.pathname).replace(/^\/+/, "")
+    } catch {
+      return null
+    }
   }
 
-  if (parsed.protocol !== "https:") return null
-  if (!parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) return null
-
-  let pathname: string
-  try {
-    pathname = decodeURIComponent(parsed.pathname)
-  } catch {
-    return null
-  }
-  pathname = pathname.replace(/^\/+/, "")
-
-  const prefix = `items/${userId}/`
-  if (!pathname.startsWith(prefix)) return null
-  // The remainder must be a single file name, never a nested path.
-  if (pathname.slice(prefix.length).includes("/")) return null
-  if (pathname.length <= prefix.length) return null
-
+  if (!pathname) return null
+  const ownedPrefixes = [`items/${userId}/`, `claim-proofs/${userId}/`]
+  const prefix = ownedPrefixes.find((candidate) => pathname.startsWith(candidate))
+  if (!prefix || pathname.slice(prefix.length).includes("/")) return null
   return pathname
 }
 
@@ -120,6 +121,10 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
+    const purposeValue = formData.get("purpose")
+    if (purposeValue !== "item" && purposeValue !== "claim-proof") {
+      return NextResponse.json({ error: "Invalid upload purpose" }, { status: 400 })
+    }
     const file = formData.get("file") as File | null
 
     if (!file) {
@@ -143,15 +148,18 @@ export async function POST(request: NextRequest) {
     }
 
     const ext = detectedType.split("/")[1]
-    const filename = uploadPathname(authResult.user.id, ext)
+    const pathname = uploadPathname(authResult.user.id, purposeValue, ext)
 
-    const blob = await put(filename, file, {
-      access: "public",
+    const blob = await put(pathname, file, {
+      access: "private",
       contentType: detectedType,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json(
+      { url: privateBlobUrl(blob.pathname) },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
@@ -195,6 +203,20 @@ export async function DELETE(request: NextRequest) {
     const pathname = ownedBlobPathname(url, authResult.user.id)
     if (!pathname) {
       return NextResponse.json({ error: "Invalid upload URL" }, { status: 400 })
+    }
+    if (!prisma) {
+      return NextResponse.json({ error: "Database is not configured" }, { status: 503 })
+    }
+
+    const [attachedItem, attachedClaim] = await Promise.all([
+      prisma.item.findFirst({ where: { imageUrl: url }, select: { id: true } }),
+      prisma.claim.findFirst({
+        where: { OR: [{ proofImage: url }, { itemImage: url }] },
+        select: { id: true },
+      }),
+    ])
+    if (attachedItem || attachedClaim) {
+      return NextResponse.json({ error: "Uploads attached to a record cannot be deleted here" }, { status: 409 })
     }
 
     await del(pathname, { token: process.env.BLOB_READ_WRITE_TOKEN })

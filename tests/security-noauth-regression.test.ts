@@ -22,6 +22,8 @@ import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[
 import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
 import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
 import * as uploadRoute from "../app/api/upload/route"
+import * as privateBlobsRoute from "../app/api/private-blobs/route"
+import * as authRefreshRoute from "../app/api/auth/refresh/route"
 import * as auditLogsRoute from "../app/api/audit-logs/route"
 
 function mockRequest(): NextRequest {
@@ -37,6 +39,11 @@ function mockRequest(): NextRequest {
 // route handler forgets its requireAuth/requireAdmin guard, this suite fails.
 describe("no-auth regression: protected routes require a session", () => {
   const req = mockRequest()
+
+  it("rejects GET /api/items without auth", async () => {
+    const res = (await itemsRoute.GET(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
 
   it("rejects POST /api/items without auth", async () => {
     const res = (await itemsRoute.POST(req)) as NextResponse
@@ -200,6 +207,16 @@ describe("no-auth regression: protected routes require a session", () => {
 
   it("rejects DELETE /api/upload without auth", async () => {
     const res = (await uploadRoute.DELETE(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects private blob reads without auth", async () => {
+    const res = (await privateBlobsRoute.GET(req)) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("rejects session refresh without auth", async () => {
+    const res = (await authRefreshRoute.POST(req)) as NextResponse
     expect(res.status).toBe(401)
   })
 

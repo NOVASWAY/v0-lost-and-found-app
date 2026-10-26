@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { prisma, hashPassword } from "../lib/db"
 import { signAccessToken } from "../lib/jwt"
+import { privateBlobUrl } from "../lib/private-blob"
 import * as usersRoute from "../app/api/users/route"
 import * as usersByIdRoute from "../app/api/users/[id]/route"
 import * as auditLogsRoute from "../app/api/audit-logs/route"
@@ -87,8 +88,15 @@ describe("endpoint role authorization (real DB)", () => {
     users.user = await createUser(names.user, "user")
   })
 
-  it("GET /api/items is public (no session required)", async () => {
+  it("GET /api/items requires authentication", async () => {
     const res = (await itemsRoute.GET(cookieRequest("http://localhost/api/items", {}))) as NextResponse
+    expect(res.status).toBe(401)
+  })
+
+  it("GET /api/items allows an authenticated user", async () => {
+    const res = (await itemsRoute.GET(
+      cookieRequest("http://localhost/api/items", { token: tokenFor(users.user) }),
+    )) as NextResponse
     expect(res.status).toBe(200)
   })
 
@@ -505,7 +513,8 @@ describe("endpoint role authorization (real DB)", () => {
           color: "black",
           location: "Lobby",
           dateFounded: new Date().toISOString(),
-          imageUrl: "https://blob.example.com/items/test-image.png",
+          imageUrl: privateBlobUrl(`items/${uploader.id}/test-image.png`),
+          uniqueMarkings: "secret mark",
         },
       }),
     )) as NextResponse
@@ -521,9 +530,10 @@ describe("endpoint role authorization (real DB)", () => {
     expect(detail.status).toBe(200)
     const detailItem = (await detail.json()).item
     expect(detailItem.uploadedBy).toEqual({ id: uploader.id })
+    expect(detailItem).not.toHaveProperty("uniqueMarkings")
 
-    const proofImage =
-      "https://blob.example.com/items/test-image.png"
+    const proofImage = privateBlobUrl(`claim-proofs/${claimant.id}/test-proof.png`)
+    const uploaderProof = privateBlobUrl(`claim-proofs/${uploader.id}/self-proof.png`)
 
     // The uploader cannot claim their own item.
     const selfClaim = (await claimsRoute.POST(
@@ -531,7 +541,7 @@ describe("endpoint role authorization (real DB)", () => {
         token: tokenFor(uploader),
         method: "POST",
         origin: "http://localhost",
-        body: { itemId: item.id, proofImage, claimantId: uploader.id },
+        body: { itemId: item.id, proofImage: uploaderProof, claimantId: uploader.id },
       }),
     )) as NextResponse
     expect(selfClaim.status).toBe(400)
@@ -634,9 +644,16 @@ describe("endpoint role authorization (real DB)", () => {
     await prisma.occurrenceCategory.delete({ where: { id: data.category.id } })
   })
 
-  it("GET /api/occurrence-book allows a regular user (200)", async () => {
+  it("GET /api/occurrence-book rejects a regular user (403)", async () => {
     const res = (await occurrenceBookRoute.GET(
       cookieRequest("http://localhost/api/occurrence-book", { token: tokenFor(users.user) })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("GET /api/occurrence-book allows a volunteer (200)", async () => {
+    const res = (await occurrenceBookRoute.GET(
+      cookieRequest("http://localhost/api/occurrence-book", { token: tokenFor(users.volunteer) })
     )) as NextResponse
     expect(res.status).toBe(200)
   })
@@ -684,6 +701,19 @@ describe("endpoint role authorization (real DB)", () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.occurrence.title).toContain("OB Authz Test Entry")
+
+    const userDetail = (await occurrenceBookByIdRoute.GET(
+      cookieRequest(`http://localhost/api/occurrence-book/${data.occurrence.id}`, { token: tokenFor(users.user) }),
+      { params: Promise.resolve({ id: data.occurrence.id }) },
+    )) as NextResponse
+    expect(userDetail.status).toBe(403)
+
+    const volunteerDetail = (await occurrenceBookByIdRoute.GET(
+      cookieRequest(`http://localhost/api/occurrence-book/${data.occurrence.id}`, { token: tokenFor(users.volunteer) }),
+      { params: Promise.resolve({ id: data.occurrence.id }) },
+    )) as NextResponse
+    expect(volunteerDetail.status).toBe(200)
+
     await prisma.occurrenceBook.delete({ where: { id: data.occurrence.id } })
   })
 
@@ -701,7 +731,8 @@ describe("endpoint role authorization (real DB)", () => {
           color: "black",
           location: "Lobby",
           dateFounded: new Date().toISOString(),
-          imageUrl: "https://blob.example.com/items/test-image.png",
+          imageUrl: privateBlobUrl(`items/${uploader.id}/test-image.png`),
+          uniqueMarkings: "secret mark",
         },
       }),
     )) as NextResponse
@@ -713,7 +744,7 @@ describe("endpoint role authorization (real DB)", () => {
         token: tokenFor(claimant),
         method: "POST",
         origin: "http://localhost",
-        body: { itemId: item.id, proofImage: "https://blob.example.com/items/test-image.png" },
+        body: { itemId: item.id, proofImage: privateBlobUrl(`claim-proofs/${claimant.id}/delete-test.png`) },
       }),
     )) as NextResponse
     expect(claim.status).toBe(200)
@@ -785,6 +816,11 @@ describe("endpoint role authorization (real DB)", () => {
     expect(res.status).toBe(200)
     expect((await res.json()).user.role).toBe("volunteer")
 
+    const staleSession = (await itemsRoute.GET(
+      cookieRequest("http://localhost/api/items", { token: tokenFor(target) }),
+    )) as NextResponse
+    expect(staleSession.status).toBe(401)
+
     const log = await prisma.auditLog.findFirst({
       where: { type: "user_role_changed", userId: users.admin.id },
       orderBy: { createdAt: "desc" },
@@ -796,7 +832,7 @@ describe("endpoint role authorization (real DB)", () => {
     await prisma.user.delete({ where: { id: target.id } })
   })
 
-  it("POST /api/audit-logs refuses privileged event types (no forged entries)", async () => {
+  it("POST /api/audit-logs disables client-written audit events", async () => {
     const res = (await auditLogsRoute.POST(
       cookieRequest("http://localhost/api/audit-logs", {
         token: tokenFor(users.user),
@@ -805,53 +841,64 @@ describe("endpoint role authorization (real DB)", () => {
         body: { type: "user_created", action: "forged entry", severity: "critical" },
       }),
     )) as NextResponse
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(405)
 
     const forged = await prisma.auditLog.findFirst({ where: { action: "forged entry" } })
     expect(forged).toBeNull()
   })
 
-  it("POST /api/audit-logs records client-originated types with a fixed severity", async () => {
+  it("POST /api/audit-logs rejects forged login events", async () => {
+    const action = `Audit Authz Login ${SUFFIX}`
     const res = (await auditLogsRoute.POST(
       cookieRequest("http://localhost/api/audit-logs", {
         token: tokenFor(users.user),
         method: "POST",
         origin: "http://localhost",
-        body: { type: "login", action: `Audit Authz Login ${SUFFIX}`, severity: "critical" },
+        body: { type: "login", action, severity: "critical" },
       }),
     )) as NextResponse
-    expect(res.status).toBe(201)
+    expect(res.status).toBe(405)
 
-    const data = await res.json()
-    expect(data.log.severity).toBe("info")
-    expect(data.log.userId).toBe(users.user.id)
-
-    await prisma.auditLog.delete({ where: { id: data.log.id } })
+    const log = await prisma.auditLog.findFirst({ where: { action } })
+    expect(log).toBeNull()
   })
 
-  it("POST /api/service-records attributes the audit entry to the actor", async () => {
+  it("POST /api/service-records is admin-only and records the session actor", async () => {
     const target = await createUser(`authz_service_target_${SUFFIX}`, "user")
+    const body = {
+      userId: target.id,
+      serviceDate: new Date("2026-08-01T10:00:00.000Z").toISOString(),
+      attended: true,
+    }
 
-    const res = (await serviceRecordsRoute.POST(
+    const denied = (await serviceRecordsRoute.POST(
       cookieRequest("http://localhost/api/service-records", {
         token: tokenFor(users.volunteer),
         method: "POST",
         origin: "http://localhost",
-        body: {
-          userId: target.id,
-          serviceDate: new Date("2026-08-01T10:00:00.000Z").toISOString(),
-          attended: true,
-        },
+        body,
+      }),
+    )) as NextResponse
+    expect(denied.status).toBe(403)
+
+    const res = (await serviceRecordsRoute.POST(
+      cookieRequest("http://localhost/api/service-records", {
+        token: tokenFor(users.admin),
+        method: "POST",
+        origin: "http://localhost",
+        body,
       }),
     )) as NextResponse
     expect(res.status).toBe(200)
+    const responseBody = await res.json()
+    expect(responseBody.record.recordedBy).toBe(users.admin.username)
 
     const log = await prisma.auditLog.findFirst({
-      where: { type: "attendance_marked", userId: users.volunteer.id },
+      where: { type: "attendance_marked", userId: users.admin.id },
       orderBy: { createdAt: "desc" },
     })
     expect(log).not.toBeNull()
-    expect(log!.userId).toBe(users.volunteer.id)
+    expect(log!.userId).toBe(users.admin.id)
     expect(log!.details).toContain(target.username)
 
     await prisma.serviceRecord.deleteMany({ where: { userId: target.id } })

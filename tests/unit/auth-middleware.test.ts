@@ -25,11 +25,14 @@ type UserRecord = {
   tokenVersion: number
 }
 
-function makeRequest(opts: { token?: string; origin?: string; host?: string }): NextRequest {
+function makeRequest(opts: { token?: string; origin?: string; host?: string; method?: string }): NextRequest {
   const headers = new Headers()
+  const url = "http://vault.example.com/api/test"
   if (opts.origin) headers.set("origin", opts.origin)
   if (opts.host) headers.set("host", opts.host)
   return {
+    url,
+    method: opts.method ?? "GET",
     headers,
     cookies: {
       get: (name: string) => {
@@ -100,7 +103,7 @@ describe("requireAuth", () => {
   it("returns 403 for a cross-site origin even with a valid token", async () => {
     findUnique.mockResolvedValue(normal)
     const res = (await requireAuth(
-      makeRequest({ token: tokenFor(normal), origin: "https://evil.example.com", host: "vault.example.com" })
+      makeRequest({ token: tokenFor(normal), origin: "https://evil.example.com", host: "vault.example.com", method: "POST" })
     )) as Response
     expect(res.status).toBe(403)
   })

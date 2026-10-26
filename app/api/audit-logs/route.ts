@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery } from "@/lib/security"
-import { z } from "zod"
+import { assertSameOrigin, parsePagination, sanitizeSearchQuery } from "@/lib/security"
 
 // GET all audit logs (admin only)
 export async function GET(request: NextRequest) {
@@ -66,23 +65,25 @@ export async function GET(request: NextRequest) {
       prisma.auditLog.count({ where }),
     ])
 
-    return NextResponse.json({
-      logs,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        logs,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    })
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get audit logs error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-// Every audit type the system can record. The GET filter and the POST
-// allowlist are both derived from this list so they cannot drift apart.
+// Every audit type written by the server-side workflows.
 const AUDIT_LOG_TYPES = [
   "user_created",
   "user_deleted",
@@ -122,62 +123,15 @@ const AUDIT_LOG_TYPES = [
   "occurrence_category_deleted",
 ] as const
 
-// Types a client is allowed to record. Everything else is written
-// server-side by the route handler that owns the event, so a caller can never
-// forge a privileged entry (e.g. `user_created` or a critical severity).
-const CLIENT_WRITABLE_TYPES = ["login", "logout", "user_password_changed"] as const
-
-const createAuditLogSchema = z.object({
-  type: z.enum(CLIENT_WRITABLE_TYPES),
-  action: z.string().min(1).max(200).trim(),
-  details: z.string().max(500).trim().optional(),
-})
-
-// POST record an audit log entry. The acting user is always derived from the
-// authenticated session — never trusted from the client — so the trail cannot
-// be forged by spoofing userId/userName in the request body. Only the
-// client-originated event types are accepted; the severity is fixed
-// server-side so a caller cannot escalate the severity of an entry.
 export async function POST(request: NextRequest) {
-  try {
-    const authResult = await requireAuth(request)
-    if (authResult instanceof NextResponse) {
-      return authResult
-    }
-
-    if (!assertSameOrigin(request)) {
-      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
-    }
-
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 30 })
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
-    }
-
-    const jsonBody = await readJsonBody(request)
-    if (!jsonBody.ok) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
-    }
-    const body = jsonBody.data
-    const parsed = createAuditLogSchema.safeParse(body)
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 })
-    }
-
-    const log = await prisma.auditLog.create({
-      data: {
-        type: parsed.data.type,
-        action: parsed.data.action,
-        details: parsed.data.details || null,
-        severity: "info",
-        userId: authResult.user.id,
-      },
-    })
-
-    return NextResponse.json({ log, message: "Audit log created" }, { status: 201 })
-  } catch (error) {
-    console.error("Create audit log error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  const authResult = await requireAuth(request)
+  if (authResult instanceof NextResponse) return authResult
+  if (!assertSameOrigin(request)) {
+    return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
   }
+
+  return NextResponse.json(
+    { error: "Audit events can only be written by server workflows" },
+    { status: 405, headers: { Allow: "GET", "Cache-Control": "no-store" } },
+  )
 }

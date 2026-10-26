@@ -119,7 +119,7 @@ export function AuthProvider({
 
     refreshRequestRef.current = refreshRequest
     return refreshRequest
-  }, [expireSession, resetSessionTimeout])
+  }, [expireSession, resetSessionTimeout, updateSessionUser])
 
   useEffect(() => {
     const theme = localStorage.getItem("theme") || "system"

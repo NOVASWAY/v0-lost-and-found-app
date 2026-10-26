@@ -5,6 +5,12 @@ import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
 import { updateUserSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
+class UserUpdateError extends Error {
+  constructor(message: string, public status: number) {
+    super(message)
+  }
+}
+
 // GET user by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -175,65 +181,74 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { name, role } = validation.data
 
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-      select: { id: true, name: true, username: true, role: true },
-    })
+    const user = await prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, username: true, role: true },
+      })
+      if (!existingUser) throw new UserUpdateError("User not found", 404)
 
-    if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
+      const roleChanged = isAdmin && role !== undefined && role !== existingUser.role
+      if (roleChanged && id === authResult.user.id) {
+        throw new UserUpdateError("You cannot change your own role", 400)
+      }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        // Role changes are admin-only; a non-admin self-edit ignores role.
-        ...(isAdmin && role && { role }),
-      },
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        role: true,
-        itemsUploaded: true,
-        claimsSubmitted: true,
-        joinedAt: true,
-        vaultPoints: true,
-        rank: true,
-        attendanceCount: true,
-        serviceCount: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
-
-    // Role changes are the most security-relevant state change in the app, so
-    // they must be attributable. The actor always comes from the session.
-    if (user.role !== existingUser.role) {
-      await prisma.auditLog.create({
+      const updatedUser = await tx.user.update({
+        where: { id },
         data: {
-          type: "user_role_changed",
-          action: "User role changed",
-          details: `Role changed from '${existingUser.role}' to '${user.role}' for user '${existingUser.username}'`,
-          severity: "warning",
-          userId: authResult.user.id,
+          ...(name !== undefined ? { name } : {}),
+          ...(roleChanged ? { role, tokenVersion: { increment: 1 } } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          role: true,
+          itemsUploaded: true,
+          claimsSubmitted: true,
+          joinedAt: true,
+          vaultPoints: true,
+          rank: true,
+          attendanceCount: true,
+          serviceCount: true,
+          createdAt: true,
+          updatedAt: true,
         },
       })
-    } else if (user.name !== existingUser.name) {
-      await prisma.auditLog.create({
-        data: {
-          type: "user_updated",
-          action: "User profile updated",
-          details: `Name changed from '${existingUser.name}' to '${user.name}' for user '${existingUser.username}'`,
-          severity: "info",
-          userId: authResult.user.id,
-        },
-      })
-    }
 
-    return NextResponse.json({ user, message: "User updated successfully" })
+      if (roleChanged) {
+        await tx.auditLog.create({
+          data: {
+            type: "user_role_changed",
+            action: "User role changed",
+            details: `Role changed from '${existingUser.role}' to '${updatedUser.role}' for user '${existingUser.username}'`,
+            severity: "warning",
+            userId: authResult.user.id,
+          },
+        })
+      } else if (name !== undefined && updatedUser.name !== existingUser.name) {
+        await tx.auditLog.create({
+          data: {
+            type: "user_updated",
+            action: "User profile updated",
+            details: `Name changed from '${existingUser.name}' to '${updatedUser.name}' for user '${existingUser.username}'`,
+            severity: "info",
+            userId: authResult.user.id,
+          },
+        })
+      }
+
+      return updatedUser
+    })
+
+    return NextResponse.json(
+      { user, message: "User updated successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
+    if (error instanceof UserUpdateError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
     console.error("Update user error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

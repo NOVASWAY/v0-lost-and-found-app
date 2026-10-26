@@ -40,7 +40,7 @@ const nextConfig = {
 
 const pwaConfig = withPWA({
   dest: "public",
-  cacheOnFrontEndNav: true,
+  cacheOnFrontEndNav: false,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
 });

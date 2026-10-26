@@ -70,7 +70,8 @@ export async function requireAuth(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  if (MUTATING_METHODS.has(request.method.toUpperCase()) && !assertSameOrigin(request)) {
+  const method = request.method?.toUpperCase() ?? "GET"
+  if (MUTATING_METHODS.has(method) && !assertSameOrigin(request)) {
     return NextResponse.json({ error: "Forbidden - Cross-site request rejected" }, { status: 403 })
   }
 

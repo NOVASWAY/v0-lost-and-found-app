@@ -69,7 +69,10 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
-    return NextResponse.json({ occurrences, pagination: { page, limit } })
+    return NextResponse.json(
+      { occurrences, pagination: { page, limit } },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get occurrence book error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

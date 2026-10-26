@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
 import { ITEM_STATUSES } from "@/lib/domain"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
+import { isOwnPrivateBlobUrl } from "@/lib/private-blob"
 import { requireAuth } from "@/lib/auth-middleware"
 import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
@@ -125,10 +126,8 @@ export async function POST(request: NextRequest) {
     } = validation.data
     const uploadedById = authResult.user.id
 
-    // Validate image URL to prevent path traversal
-    const urlValidation = validateUrl(imageUrl)
-    if (!urlValidation.valid) {
-      return NextResponse.json({ error: urlValidation.error || "Invalid image URL" }, { status: 400 })
+    if (!isOwnPrivateBlobUrl(imageUrl, uploadedById, "item")) {
+      return NextResponse.json({ error: "Item photo must be an upload owned by the current user" }, { status: 400 })
     }
 
     // Calculate donation deadline (30 days from found date)

@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { CLAIM_STATUSES, ITEM_STATUSES, USER_ROLES } from "@/lib/domain"
+import { isPrivateBlobUrl } from "@/lib/private-blob"
 
 // z.string().url() accepts any scheme (javascript:, data:, ftp:). Every URL
 // that reaches storage must be http(s) so a stored value cannot become a
@@ -58,22 +59,9 @@ export const changePasswordSchema = z.object({
 
 // Item validation schemas
 export const createItemSchema = z.object({
-  imageUrl: z
-    .string()
-    .max(5000)
-    .refine(
-      (url) => {
-        // Must be an http(s) URL without path traversal. Base64 data URLs are
-        // rejected: images are uploaded to Blob storage and referenced by URL.
-        return (
-          /^https?:\/\//i.test(url) &&
-          !url.includes("..") &&
-          !url.startsWith("file://") &&
-          !/^\/|^[A-Za-z]:\\/.test(url)
-        )
-      },
-      { message: "Invalid image URL format" }
-    ),
+  imageUrl: z.string().max(1000).refine(isPrivateBlobUrl, {
+    message: "Item images must be uploaded to private storage",
+  }),
   category: z.string().min(1).max(100).trim().refine((val) => !val.includes(".."), {
     message: "Category contains invalid characters",
   }),
@@ -105,22 +93,9 @@ export const createClaimSchema = z.object({
     .refine((val) => /^c[a-z0-9]{24}$/i.test(val) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val), {
       message: "Invalid item ID format",
     }),
-  proofImage: z
-    .string()
-    .max(5000)
-    .refine(
-      (url) => {
-        // Must be an http(s) URL without path traversal. Base64 data URLs are
-        // rejected: proof photos are uploaded to Blob storage and referenced by URL.
-        return (
-          /^https?:\/\//i.test(url) &&
-          !url.includes("..") &&
-          !url.startsWith("file://") &&
-          !/^\/|^[A-Za-z]:\\/.test(url)
-        )
-      },
-      { message: "Invalid proof image URL format" }
-    ),
+  proofImage: z.string().max(1000).refine(isPrivateBlobUrl, {
+    message: "Claim proof images must be uploaded to private storage",
+  }),
   notes: z.string().max(500).trim().refine((val) => !val || !val.includes(".."), {
   message: "Notes contains invalid characters",
   }).optional(),
