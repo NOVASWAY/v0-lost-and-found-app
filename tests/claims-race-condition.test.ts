@@ -1,12 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 
 import { prisma, hashPassword } from "../lib/db"
 import { signAccessToken } from "../lib/jwt"
 import * as claimsRoute from "../app/api/claims/route"
 import * as claimByIdRoute from "../app/api/claims/[id]/route"
 import * as usersByIdRoute from "../app/api/users/[id]/route"
-import * as itemsRoute from "../app/api/items/route"
+import { privateBlobUrl } from "../lib/private-blob"
 
 // Integration tests for race-condition fixes and user deletion safety.
 // Uses real DB; users/items/claims are created and cleaned up per test.
@@ -76,7 +76,7 @@ beforeAll(async () => {
       color: "brown",
       description: "A test wallet for race condition tests",
       location: "Main Sanctuary",
-      imageUrl: "https://example.com/wallet.jpg",
+      imageUrl: privateBlobUrl(`items/${users.admin.id}/wallet.jpg`),
       dateFounded: new Date(),
       status: "available",
       uploadedById: users.admin.id,
@@ -100,7 +100,7 @@ describe("claim creation race condition fixes", () => {
       token: tokenFor(users.user1),
       origin: "http://localhost",
       method: "POST",
-      body: { itemId: testItemId, proofImage: "https://example.com/proof1.jpg", claimantId: users.user1.id },
+      body: { itemId: testItemId, proofImage: privateBlobUrl(`claim-proofs/${users.user1.id}/proof1.jpg`), claimantId: users.user1.id },
     })
     const res1 = await claimsRoute.POST(req1)
     expect(res1.status).toBe(200)
@@ -110,7 +110,7 @@ describe("claim creation race condition fixes", () => {
       token: tokenFor(users.user1),
       origin: "http://localhost",
       method: "POST",
-      body: { itemId: testItemId, proofImage: "https://example.com/proof2.jpg", claimantId: users.user1.id },
+      body: { itemId: testItemId, proofImage: privateBlobUrl(`claim-proofs/${users.user1.id}/proof2.jpg`), claimantId: users.user1.id },
     })
     const res2 = await claimsRoute.POST(req2)
     expect(res2.status).toBe(409)
@@ -123,7 +123,7 @@ describe("claim creation race condition fixes", () => {
       token: tokenFor(users.user2),
       origin: "http://localhost",
       method: "POST",
-      body: { itemId: testItemId, proofImage: "https://example.com/proof3.jpg", claimantId: users.user2.id },
+      body: { itemId: testItemId, proofImage: privateBlobUrl(`claim-proofs/${users.user2.id}/proof3.jpg`), claimantId: users.user2.id },
     })
     const res = await claimsRoute.POST(req)
     expect(res.status).toBe(200)
@@ -143,7 +143,7 @@ describe("claim creation race condition fixes", () => {
         token: tokenFor(user3),
         origin: "http://localhost",
         method: "POST",
-        body: { itemId: testItemId, proofImage: "https://example.com/proof4.jpg", claimantId: user3.id },
+        body: { itemId: testItemId, proofImage: privateBlobUrl(`claim-proofs/${user3.id}/proof4.jpg`), claimantId: user3.id },
       })
       const res = await claimsRoute.POST(req)
       expect(res.status).toBe(400)
@@ -168,7 +168,7 @@ describe("claim status transition validation", () => {
       token: tokenFor(users.user1),
       origin: "http://localhost",
       method: "POST",
-      body: { itemId: testItemId, proofImage: "https://example.com/proof5.jpg", claimantId: users.user1.id },
+      body: { itemId: testItemId, proofImage: privateBlobUrl(`claim-proofs/${users.user1.id}/proof5.jpg`), claimantId: users.user1.id },
     })
     const res = await claimsRoute.POST(req)
     expect(res.status).toBe(200)
@@ -236,7 +236,7 @@ describe("user deletion with dependency check", () => {
         color: "black",
         description: "test",
         location: "Main Sanctuary",
-        imageUrl: "https://example.com/test.jpg",
+        imageUrl: privateBlobUrl(`items/${throwaway.id}/test.jpg`),
         dateFounded: new Date(),
         status: "available",
         uploadedById: throwaway.id,

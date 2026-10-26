@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAdminOrVolunteer, requireAdmin } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { updateOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { isOwnPrivateBlobUrl, safePrivateBlobAttachments } from "@/lib/private-blob"
 
 // Occurrence reports contain sensitive security details; restrict reads to staff.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     return NextResponse.json(
-      { occurrence },
+      { occurrence: { ...occurrence, attachments: safePrivateBlobAttachments(occurrence.attachments) } },
       { headers: { "Cache-Control": "private, no-store, max-age=0" } },
     )
   } catch (error) {
@@ -88,8 +89,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
+    if (validation.data.attachments?.some((attachment) => !isOwnPrivateBlobUrl(attachment.url, authResult.user.id, "occurrence"))) {
+      return NextResponse.json({ error: "Attachments must be private uploads owned by the current admin" }, { status: 400 })
+    }
 
-    const updateData: any = {}
+    const updateData: Prisma.OccurrenceBookUncheckedUpdateInput = {}
     if (validation.data.title !== undefined) updateData.title = validation.data.title
     if (validation.data.description !== undefined) updateData.description = validation.data.description
     if (validation.data.location !== undefined) updateData.location = validation.data.location || null
@@ -155,7 +159,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json({ occurrence, message: "Occurrence updated successfully" })
+    return NextResponse.json(
+      {
+        occurrence: { ...occurrence, attachments: safePrivateBlobAttachments(occurrence.attachments) },
+        message: "Occurrence updated successfully",
+      },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Update occurrence error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -177,7 +177,9 @@ export default function VolunteerDashboardPage() {
                       </td>
                       <td className="p-3 sm:p-4">
                         <p className="font-medium text-sm sm:text-base text-card-foreground">{claim.claimantName}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">{claim.claimantEmail}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                          {claim.claimant?.username ? `@${claim.claimant.username}` : "Username unavailable"}
+                        </p>
                       </td>
                       <td className="p-3 sm:p-4 hidden sm:table-cell">
                         <p className="text-xs sm:text-sm text-muted-foreground">{daysAgo} days ago</p>

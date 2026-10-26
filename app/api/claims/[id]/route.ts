@@ -7,6 +7,7 @@ import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
+import { safePrivateBlobDisplayUrl } from "@/lib/private-blob"
 import { canTransitionClaimStatus, isClaimStatus } from "@/lib/domain"
 
 class ClaimUpdateError extends Error {
@@ -54,13 +55,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
     }
 
-    const { claimantEmail: _claimantEmail, ...visibleClaim } = claim
+    const visibleClaim = { ...claim, claimantEmail: undefined }
+    const safeClaim = {
+      ...visibleClaim,
+      proofImage: safePrivateBlobDisplayUrl(claim.proofImage),
+      itemImage: safePrivateBlobDisplayUrl(claim.itemImage),
+      item: { ...claim.item, imageUrl: safePrivateBlobDisplayUrl(claim.item.imageUrl) },
+    }
     const claimForViewer = authResult.user.role === "user"
-      ? {
-          ...visibleClaim,
-          item: (({ uniqueMarkings: _uniqueMarkings, ...item }) => item)(claim.item),
-        }
-      : visibleClaim
+      ? { ...safeClaim, item: { ...safeClaim.item, uniqueMarkings: undefined } }
+      : safeClaim
 
     return NextResponse.json(
       { claim: claimForViewer },
@@ -218,7 +222,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (pointsAwarded) await refreshUserRanks()
 
-    const { claimantEmail: _claimantEmail, ...visibleClaim } = updatedClaim
+    const updatedClaimWithoutEmail = { ...updatedClaim, claimantEmail: undefined }
+    const visibleClaim = {
+      ...updatedClaimWithoutEmail,
+      proofImage: safePrivateBlobDisplayUrl(updatedClaim.proofImage),
+      itemImage: safePrivateBlobDisplayUrl(updatedClaim.itemImage),
+      item: { ...updatedClaim.item, imageUrl: safePrivateBlobDisplayUrl(updatedClaim.item.imageUrl) },
+    }
     return NextResponse.json(
       { claim: visibleClaim, message: "Claim updated successfully" },
       { headers: { "Cache-Control": "private, no-store, max-age=0" } },

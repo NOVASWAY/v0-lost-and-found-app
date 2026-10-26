@@ -2,6 +2,7 @@ import crypto from "node:crypto"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { signAccessToken, verifyAccessToken } from "../../lib/jwt"
+import { SESSION_TTL_SECONDS } from "../../lib/session"
 
 const GOOD_SECRET = "unit-test-secret-4f6a91d2c3e5b7a8d0f1e2b3c4d5e6f7"
 const ORIGINAL_SECRET = process.env.JWT_SECRET
@@ -47,10 +48,10 @@ describe("jwt", () => {
     expect(verified!.username).toBe(payload.username)
     expect(verified!.tokenVersion).toBe(3)
     expect(verified!.iat).toBeGreaterThan(0)
-    expect(verified!.exp - verified!.iat).toBe(8 * 60 * 60)
+    expect(verified!.exp - verified!.iat).toBe(SESSION_TTL_SECONDS)
   })
 
-  it("default TTL is 8 hours and matches opts when provided", () => {
+  it("honors custom TTLs", () => {
     const token = signAccessToken(payload, { ttlSeconds: 60 })
     const verified = verifyAccessToken(token)!
     expect(verified.exp - verified.iat).toBe(60)

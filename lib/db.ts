@@ -1,5 +1,3 @@
-import { prisma } from "./prisma"
-
 export { prisma, withDbRetry } from "./prisma"
 
 // Helper functions for common database operations

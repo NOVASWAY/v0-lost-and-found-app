@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { del, put } from "@vercel/blob"
 import { prisma } from "@/lib/db"
-import { privateBlobPathname, privateBlobUrl, type PrivateBlobPurpose } from "@/lib/private-blob"
+import {
+  hasPrivateBlobUrlInJson,
+  privateBlobPathname,
+  privateBlobPurposePath,
+  privateBlobUrl,
+  type PrivateBlobPurpose,
+} from "@/lib/private-blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
@@ -58,8 +64,7 @@ function detectImageType(bytes: Uint8Array): string | null {
 // Every upload is namespaced under the uploader's id so a user can only ever
 // address — and delete — their own blobs.
 function uploadPathname(userId: string, purpose: PrivateBlobPurpose, ext: string): string {
-  const prefix = purpose === "item" ? "items" : "claim-proofs"
-  return `${prefix}/${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
+  return `${privateBlobPurposePath(purpose)}/${userId}/${Date.now()}-${crypto.randomUUID()}.${ext}`
 }
 
 // Resolve a blob URL to its pathname, but only when it points at a blob in the
@@ -84,7 +89,7 @@ function ownedBlobPathname(value: string, userId: string): string | null {
   }
 
   if (!pathname) return null
-  const ownedPrefixes = [`items/${userId}/`, `claim-proofs/${userId}/`]
+  const ownedPrefixes = [`items/${userId}/`, `claim-proofs/${userId}/`, `occurrence-book/${userId}/`]
   const prefix = ownedPrefixes.find((candidate) => pathname.startsWith(candidate))
   if (!prefix || pathname.slice(prefix.length).includes("/")) return null
   return pathname
@@ -122,8 +127,11 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const purposeValue = formData.get("purpose")
-    if (purposeValue !== "item" && purposeValue !== "claim-proof") {
+    if (purposeValue !== "item" && purposeValue !== "claim-proof" && purposeValue !== "occurrence") {
       return NextResponse.json({ error: "Invalid upload purpose" }, { status: 400 })
+    }
+    if (purposeValue === "occurrence" && authResult.user.role !== "admin") {
+      return NextResponse.json({ error: "Only admins may upload occurrence attachments" }, { status: 403 })
     }
     const file = formData.get("file") as File | null
 
@@ -208,14 +216,18 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Database is not configured" }, { status: 503 })
     }
 
-    const [attachedItem, attachedClaim] = await Promise.all([
+    const [attachedItem, attachedClaim, occurrenceRecords] = await Promise.all([
       prisma.item.findFirst({ where: { imageUrl: url }, select: { id: true } }),
       prisma.claim.findFirst({
         where: { OR: [{ proofImage: url }, { itemImage: url }] },
         select: { id: true },
       }),
+      pathname.startsWith("occurrence-book/")
+        ? prisma.occurrenceBook.findMany({ select: { attachments: true } })
+        : Promise.resolve([]),
     ])
-    if (attachedItem || attachedClaim) {
+    const attachedOccurrence = occurrenceRecords.some(({ attachments }) => hasPrivateBlobUrlInJson(attachments, url))
+    if (attachedItem || attachedClaim || attachedOccurrence) {
       return NextResponse.json({ error: "Uploads attached to a record cannot be deleted here" }, { status: 409 })
     }
 

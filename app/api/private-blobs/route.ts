@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { isStaffRole } from "@/lib/domain"
-import { isAllowedPrivateBlobPathname, privateBlobUrl } from "@/lib/private-blob"
+import {
+  hasPrivateBlobUrlInJson,
+  isAllowedPrivateBlobPathname,
+  privateBlobUrl,
+} from "@/lib/private-blob"
+import { getClientIdentifier, rateLimit } from "@/lib/rate-limit"
 
 const PRIVATE_HEADERS = {
   "Cache-Control": "private, no-store, max-age=0",
@@ -15,6 +20,11 @@ export async function GET(request: NextRequest) {
   const authResult = await requireAuth(request)
   if (authResult instanceof NextResponse) return authResult
 
+  const limit = await rateLimit(getClientIdentifier(request), { windowMs: 60_000, maxRequests: 120 })
+  if (!limit.allowed) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: PRIVATE_HEADERS })
+  }
+
   const pathname = request.nextUrl.searchParams.get("pathname")
   if (!pathname || !isAllowedPrivateBlobPathname(pathname)) {
     return NextResponse.json({ error: "Invalid file path" }, { status: 400, headers: PRIVATE_HEADERS })
@@ -24,18 +34,23 @@ export async function GET(request: NextRequest) {
   }
 
   const url = privateBlobUrl(pathname)
-  const [item, claim] = await Promise.all([
+  const occurrenceQuery = pathname.startsWith("occurrence-book/") && isStaffRole(authResult.user.role)
+    ? prisma.occurrenceBook.findMany({ select: { attachments: true } })
+    : Promise.resolve([])
+  const [item, claim, occurrenceRecords] = await Promise.all([
     prisma.item.findFirst({ where: { imageUrl: url }, select: { id: true } }),
     prisma.claim.findFirst({
       where: { proofImage: url },
       select: { claimantId: true },
     }),
+    occurrenceQuery,
   ])
   const canReadItemPhoto = Boolean(item)
   const canReadProof = Boolean(
     claim && (isStaffRole(authResult.user.role) || claim.claimantId === authResult.user.id),
   )
-  if (!canReadItemPhoto && !canReadProof) {
+  const canReadOccurrence = occurrenceRecords.some(({ attachments }) => hasPrivateBlobUrlInJson(attachments, url))
+  if (!canReadItemPhoto && !canReadProof && !canReadOccurrence) {
     return NextResponse.json({ error: "File not found" }, { status: 404, headers: PRIVATE_HEADERS })
   }
 

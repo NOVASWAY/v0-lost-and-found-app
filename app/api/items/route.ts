@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
 import { ITEM_STATUSES } from "@/lib/domain"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
-import { isOwnPrivateBlobUrl } from "@/lib/private-blob"
+import { isOwnPrivateBlobUrl, safePrivateBlobDisplayUrl } from "@/lib/private-blob"
 import { requireAuth } from "@/lib/auth-middleware"
 import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     const uploadedById = searchParams.get("uploadedById")
     const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 })
     const isStaff = authResult.user.role === "admin" || authResult.user.role === "volunteer"
-    const where: any = {}
+    const where: Prisma.ItemWhereInput = {}
 
     if (status && !ITEM_STATUSES.includes(status as (typeof ITEM_STATUSES)[number])) {
       return NextResponse.json({ error: "Invalid status filter" }, { status: 400 })
@@ -68,9 +69,10 @@ export async function GET(request: NextRequest) {
       prisma.item.count({ where }),
     ])
 
-    const visibleItems = isStaff
-      ? items
-      : items.map(({ uniqueMarkings: _uniqueMarkings, ...item }) => item)
+    const visibleItems = items.map((item) => {
+      const visibleItem = isStaff ? item : { ...item, uniqueMarkings: undefined }
+      return { ...visibleItem, imageUrl: safePrivateBlobDisplayUrl(item.imageUrl) }
+    })
 
     return NextResponse.json(
       {

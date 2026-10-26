@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@prisma/client"
+import type { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
 import { requireAdminOrVolunteer, requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
 import { createOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
+import { isOwnPrivateBlobUrl, safePrivateBlobAttachments } from "@/lib/private-blob"
 
 const OCCURRENCE_SEVERITIES = ["low", "medium", "high", "critical"] as const
 const OCCURRENCE_STATUSES = ["open", "investigating", "resolved", "closed"] as const
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid status filter" }, { status: 400 })
     }
 
-    const where: any = {}
+    const where: Prisma.OccurrenceBookWhereInput = {}
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
@@ -69,8 +70,13 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
+    const visibleOccurrences = occurrences.map((occurrence) => ({
+      ...occurrence,
+      attachments: safePrivateBlobAttachments(occurrence.attachments),
+    }))
+
     return NextResponse.json(
-      { occurrences, pagination: { page, limit } },
+      { occurrences: visibleOccurrences, pagination: { page, limit } },
       { headers: { "Cache-Control": "private, no-store, max-age=0" } },
     )
   } catch (error) {
@@ -108,6 +114,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data
+    if (data.attachments?.some((attachment) => !isOwnPrivateBlobUrl(attachment.url, authResult.user.id, "occurrence"))) {
+      return NextResponse.json({ error: "Attachments must be private uploads owned by the current admin" }, { status: 400 })
+    }
 
     // Verify category exists
     const category = await prisma.occurrenceCategory.findUnique({ where: { id: data.categoryId } })

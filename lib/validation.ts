@@ -1,28 +1,11 @@
 import { z } from "zod"
 import { CLAIM_STATUSES, ITEM_STATUSES, USER_ROLES } from "@/lib/domain"
-import { isPrivateBlobUrl } from "@/lib/private-blob"
-
-// z.string().url() accepts any scheme (javascript:, data:, ftp:). Every URL
-// that reaches storage must be http(s) so a stored value cannot become a
-// script payload if it is ever rendered into an attribute or redirect.
-const httpUrlSchema = z
-  .string()
-  .max(2000)
-  .url()
-  .refine(
-    (value) => {
-      try {
-        const parsed = new URL(value)
-        return parsed.protocol === "http:" || parsed.protocol === "https:"
-      } catch {
-        return false
-      }
-    },
-    { message: "URL must use http or https" }
-  )
+import { isPrivateBlobPurposeUrl, isPrivateBlobUrl } from "@/lib/private-blob"
 
 const attachmentSchema = z.object({
-  url: httpUrlSchema,
+  url: z.string().max(1000).refine((url) => isPrivateBlobPurposeUrl(url, "occurrence"), {
+    message: "Occurrence attachments must be private uploads",
+  }),
   name: z.string().max(200).trim(),
   type: z.string().max(100).trim(),
 })

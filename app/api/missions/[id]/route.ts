@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (priority !== undefined) updateData.priority = priority
       if (dueDate !== undefined) updateData.dueDate = dueDate || null
       if (location !== undefined) updateData.location = location || null
-      if (assignedTo !== undefined) updateData.assignedTo = assignedTo || null
+      if (assignedTo !== undefined) updateData.assignedTo = assignedTo
       if (completionNotes !== undefined) updateData.completionNotes = completionNotes
 
       const completedNow = status === "completed" && currentMission.status !== "completed"

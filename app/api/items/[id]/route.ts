@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/auth-middleware"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { updateItemSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { safePrivateBlobDisplayUrl } from "@/lib/private-blob"
 
 class ItemUpdateError extends Error {
   constructor(message: string, public status: number) {
@@ -64,17 +65,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Item not found" }, { status: 404 })
     }
 
-    if (isStaff) {
-      const visibleItem = {
-        ...item,
-        claims: item.claims.map(({ claimantEmail: _claimantEmail, ...claim }) => claim),
-      }
-      return NextResponse.json({ item: visibleItem }, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
-    }
+    const visibleClaims = isStaff
+      ? item.claims.map((claim) => ({
+          ...claim,
+          claimantEmail: undefined,
+          proofImage: safePrivateBlobDisplayUrl(claim.proofImage),
+          itemImage: safePrivateBlobDisplayUrl(claim.itemImage),
+        }))
+      : item.claims
+    const visibleItem = isStaff ? item : { ...item, uniqueMarkings: undefined }
 
-    const { uniqueMarkings: _uniqueMarkings, ...visibleItem } = item
     return NextResponse.json(
-      { item: visibleItem },
+      {
+        item: {
+          ...visibleItem,
+          imageUrl: safePrivateBlobDisplayUrl(item.imageUrl),
+          claims: visibleClaims,
+        },
+      },
       { headers: { "Cache-Control": "private, no-store, max-age=0" } },
     )
   } catch (error) {
@@ -186,9 +194,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return updatedItem
     })
 
-    const visibleItem = authResult.user.role === "user"
-      ? (({ uniqueMarkings: _uniqueMarkings, ...safeItem }) => safeItem)(item)
-      : item
+    const itemWithoutMarkings = authResult.user.role === "user" ? { ...item, uniqueMarkings: undefined } : item
+    const visibleItem = {
+      ...itemWithoutMarkings,
+      imageUrl: safePrivateBlobDisplayUrl(item.imageUrl),
+    }
 
     return NextResponse.json(
       { item: visibleItem, message: "Item updated successfully" },

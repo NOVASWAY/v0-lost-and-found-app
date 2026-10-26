@@ -7,8 +7,8 @@ import { refreshUserRanks } from "@/lib/ranking"
 import { awardPoints } from "@/lib/points"
 import { CLAIM_STATUSES } from "@/lib/domain"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
-import { isOwnPrivateBlobUrl } from "@/lib/private-blob"
+import { assertSameOrigin, parsePagination, readJsonBody, validateRouteId } from "@/lib/security"
+import { isOwnPrivateBlobUrl, safePrivateBlobDisplayUrl } from "@/lib/private-blob"
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -87,7 +87,13 @@ export async function GET(request: NextRequest) {
       prisma.claim.count({ where }),
     ])
 
-    const visibleClaims = claims.map(({ claimantEmail: _claimantEmail, ...claim }) => claim)
+    const visibleClaims = claims.map((claim) => ({
+      ...claim,
+      claimantEmail: undefined,
+      proofImage: safePrivateBlobDisplayUrl(claim.proofImage),
+      itemImage: safePrivateBlobDisplayUrl(claim.itemImage),
+      item: { ...claim.item, imageUrl: safePrivateBlobDisplayUrl(claim.item.imageUrl) },
+    }))
 
     return NextResponse.json(
       {
@@ -140,7 +146,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const { itemId, proofImage, notes } = validation.data
+    const { itemId, proofImage } = validation.data
     const claimantId = authResult.user.id
 
     if (!isOwnPrivateBlobUrl(proofImage, claimantId, "claim-proof")) {
@@ -201,9 +207,16 @@ export async function POST(request: NextRequest) {
 
     if (pointsAwarded) await refreshUserRanks()
 
+    const claimWithoutSyntheticEmail = { ...claim, claimantEmail: undefined }
+    const safeClaim = {
+      ...claimWithoutSyntheticEmail,
+      proofImage: safePrivateBlobDisplayUrl(claim.proofImage),
+      itemImage: safePrivateBlobDisplayUrl(claim.itemImage),
+      item: { ...claim.item, imageUrl: safePrivateBlobDisplayUrl(claim.item.imageUrl) },
+    }
     const visibleClaim = authResult.user.role === "user"
-      ? { ...claim, item: (({ uniqueMarkings: _uniqueMarkings, ...item }) => item)(claim.item) }
-      : claim
+      ? { ...safeClaim, item: { ...safeClaim.item, uniqueMarkings: undefined } }
+      : safeClaim
 
     return NextResponse.json(
       { claim: visibleClaim, message: "Claim created successfully" },

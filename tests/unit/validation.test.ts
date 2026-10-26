@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { privateBlobUrl } from "../../lib/private-blob"
+import {
+  isOwnPrivateBlobUrl,
+  privateBlobUrl,
+  safePrivateBlobAttachments,
+  safePrivateBlobDisplayUrl,
+} from "../../lib/private-blob"
 import {
   loginSchema,
   createUserSchema,
@@ -18,6 +23,22 @@ import {
 } from "../../lib/validation"
 
 const STRONG_PASSWORD = "Str0ng!Passw0rd"
+
+describe("private blob ownership", () => {
+  it("scopes uploads to the matching user and purpose", () => {
+    const ownImage = privateBlobUrl("items/user-a/photo.jpg")
+    const proof = privateBlobUrl("claim-proofs/user-a/proof.jpg")
+    expect(isOwnPrivateBlobUrl(ownImage, "user-a", "item")).toBe(true)
+    expect(isOwnPrivateBlobUrl(ownImage, "user-b", "item")).toBe(false)
+    expect(isOwnPrivateBlobUrl(proof, "user-a", "item")).toBe(false)
+    expect(isOwnPrivateBlobUrl(proof, "user-a", "claim-proof")).toBe(true)
+    expect(safePrivateBlobDisplayUrl(ownImage)).toBe(ownImage)
+    expect(safePrivateBlobDisplayUrl("https://public.example.com/photo.jpg")).toBe("/placeholder.svg")
+    expect(safePrivateBlobAttachments([{ url: "https://public.example.com/proof.jpg", name: "proof" }])).toEqual([
+      { url: "/placeholder.svg", name: "proof" },
+    ])
+  })
+})
 
 describe("auth schemas", () => {
   it("accepts a valid login", () => {
@@ -193,16 +214,20 @@ describe("occurrence attachments", () => {
     occurrenceDate: "2026-10-01",
   }
 
-  it("accepts http(s) attachment URLs", () => {
+  it("accepts private occurrence attachment URLs", () => {
     const r = createOccurrenceBookSchema.safeParse({
       ...base,
-      attachments: [{ url: "https://example.com/photo.jpg", name: "photo.jpg", type: "image/jpeg" }],
+      attachments: [{ url: privateBlobUrl("occurrence-book/user/photo.jpg"), name: "photo.jpg", type: "image/jpeg" }],
     })
     expect(r.success).toBe(true)
   })
 
-  it("rejects javascript: and data: attachment URLs", () => {
-    for (const url of ["javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4="]) {
+  it("rejects public and unsafe attachment URLs", () => {
+    for (const url of [
+      "https://example.com/public-attachment.jpg",
+      "javascript:alert(1)",
+      "data:text/html;base64,PHNjcmlwdD4=",
+    ]) {
       const r = createOccurrenceBookSchema.safeParse({
         ...base,
         attachments: [{ url, name: "x", type: "text/html" }],
@@ -219,7 +244,7 @@ describe("validateAndSanitize deep sanitization", () => {
       categoryId: "c123456789012345678901234",
       description: "javascript:alert(1) unlocked",
       occurrenceDate: "2026-10-01",
-      attachments: [{ url: "https://example.com/a.png", name: "<b>photo</b>", type: "image/png" }],
+      attachments: [{ url: privateBlobUrl("occurrence-book/user/a.png"), name: "<b>photo</b>", type: "image/png" }],
     })
     expect(r.success).toBe(true)
     if (r.success) {

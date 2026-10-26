@@ -20,7 +20,6 @@ interface User {
   serviceCount: number
   // Optional client-side fields used by some UI components.
   orders?: Array<{ status: string }>
-  claimedItems?: Array<any>
 }
 
 interface AuthContextType {
@@ -46,7 +45,7 @@ export function AuthProvider({
   const isLoaded = true
   const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const refreshRequestRef = useRef<Promise<void> | null>(null)
-  const lastRefreshRef = useRef(initialUser ? Date.now() : 0)
+  const lastRefreshRef = useRef(0)
   const isAuthenticatedRef = useRef(Boolean(initialUser))
   const router = useRouter()
 
@@ -131,6 +130,10 @@ export function AuthProvider({
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
       document.documentElement.classList.toggle("dark", systemTheme === "dark")
     }
+  }, [])
+
+  useEffect(() => {
+    lastRefreshRef.current = isAuthenticatedRef.current ? Date.now() : 0
   }, [])
 
   useEffect(() => {

@@ -19,7 +19,6 @@ import * as missionByIdRoute from "../app/api/missions/[id]/route"
 import * as meetingMinutesRoute from "../app/api/meeting-minutes/route"
 import * as meetingMinuteByIdRoute from "../app/api/meeting-minutes/[id]/route"
 import * as occurrenceCategoriesRoute from "../app/api/occurrence-categories/route"
-import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[id]/route"
 import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
 import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
 
@@ -557,6 +556,7 @@ describe("endpoint role authorization (real DB)", () => {
     )) as NextResponse
     expect(claimRes.status).toBe(200)
     const claim = (await claimRes.json()).claim
+    expect(claim).not.toHaveProperty("claimantEmail")
     expect(claim.claimantId).toBe(claimant.id)
     expect(claim.status).toBe("pending")
 

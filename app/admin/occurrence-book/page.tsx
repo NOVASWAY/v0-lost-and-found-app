@@ -150,6 +150,7 @@ export default function AdminOccurrenceBookPage() {
     try {
       const formData = new FormData()
       formData.append("file", file)
+      formData.append("purpose", "occurrence")
 
       const response = await fetch("/api/upload", {
         method: "POST",

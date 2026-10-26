@@ -240,8 +240,8 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
                 <p className="text-card-foreground">{claim.claimantName}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Email</Label>
-                <p className="text-card-foreground">{claim.claimantEmail}</p>
+                <Label className="text-muted-foreground">Username</Label>
+                <p className="text-card-foreground">{claim.claimant?.username ?? "Unavailable"}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">Claim Date</Label>
