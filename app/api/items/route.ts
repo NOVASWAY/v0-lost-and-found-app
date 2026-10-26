@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
+import { ITEM_STATUSES } from "@/lib/domain"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 import { requireAuth } from "@/lib/auth-middleware"
 import { refreshUserRanks } from "@/lib/ranking"
+import { awardPoints } from "@/lib/points"
 
 // GET all items
 export async function GET(request: NextRequest) {
   try {
-    // Rate limiting
+    const authResult = await requireAuth(request)
+    if (authResult instanceof NextResponse) return authResult
+
     const clientId = getClientIdentifier(request)
     const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
     if (!rateLimitResult.allowed) {
@@ -23,35 +27,29 @@ export async function GET(request: NextRequest) {
     const location = sanitizeSearchQuery(searchParams.get("location") || "")
     const uploadedById = searchParams.get("uploadedById")
     const { page, limit, skip } = parsePagination(searchParams, { defaultLimit: 20, maxLimit: 100 })
-
-    // Validate status enum
-    const validStatuses = ["available", "claimed", "released", "donated", "pending", "expired"]
+    const isStaff = authResult.user.role === "admin" || authResult.user.role === "volunteer"
     const where: any = {}
 
+    if (status && !ITEM_STATUSES.includes(status as (typeof ITEM_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid status filter" }, { status: 400 })
+    }
     if (search) {
       where.OR = [
         { category: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
       ]
     }
+    if (status) where.status = status
+    if (category) where.category = { contains: category, mode: "insensitive" }
+    if (location) where.location = { contains: location, mode: "insensitive" }
 
-    if (status && validStatuses.includes(status)) {
-      where.status = status
-    }
-
-    if (category) {
-      where.category = { contains: category, mode: "insensitive" }
-    }
-
-    if (location) {
-      where.location = { contains: location, mode: "insensitive" }
-    }
-
-    // Optional uploader filter (used by the "my uploads" page).
     if (uploadedById) {
       const idValidation = validateRouteId(uploadedById)
       if (!idValidation.valid) {
         return NextResponse.json({ error: "Invalid uploader ID format" }, { status: 400 })
+      }
+      if (!isStaff && uploadedById !== authResult.user.id) {
+        return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
       }
       where.uploadedById = uploadedById
     }
@@ -60,12 +58,7 @@ export async function GET(request: NextRequest) {
       prisma.item.findMany({
         where,
         include: {
-          // Public list endpoint: do not expose uploader identity or claimant PII.
-          uploadedBy: {
-            select: {
-              id: true,
-            },
-          },
+          uploadedBy: { select: isStaff ? { id: true, name: true, username: true } : { id: true } },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -74,15 +67,17 @@ export async function GET(request: NextRequest) {
       prisma.item.count({ where }),
     ])
 
-    return NextResponse.json({
-      items,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    const visibleItems = isStaff
+      ? items
+      : items.map(({ uniqueMarkings: _uniqueMarkings, ...item }) => item)
+
+    return NextResponse.json(
+      {
+        items: visibleItems,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       },
-    })
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get items error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -141,53 +136,62 @@ export async function POST(request: NextRequest) {
     const donationDeadline = new Date(foundDate)
     donationDeadline.setDate(donationDeadline.getDate() + 30)
 
-    const item = await prisma.item.create({
-      data: {
-        imageUrl,
-        category,
-        color: color || "Unknown",
-        location,
-        dateFounded: foundDate,
-        description: description || "",
-        uniqueMarkings: uniqueMarkings || null,
-        status: "available",
-        donationDeadline,
-        uploadedById,
-      },
-      include: {
-        uploadedBy: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
+    const { item, pointsAwarded } = await prisma.$transaction(async (tx) => {
+      const item = await tx.item.create({
+        data: {
+          imageUrl,
+          category,
+          color: color || "Unknown",
+          location,
+          dateFounded: foundDate,
+          description: description || "",
+          uniqueMarkings: uniqueMarkings || null,
+          status: "available",
+          donationDeadline,
+          uploadedById,
+        },
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
           },
         },
-      },
-    })
+      })
 
-    // Update user stats
-    await prisma.user.update({
-      where: { id: uploadedById },
-      data: {
-        itemsUploaded: { increment: 1 },
-        vaultPoints: { increment: 50 },
-      },
-    })
+      await tx.user.update({
+        where: { id: uploadedById },
+        data: { itemsUploaded: { increment: 1 } },
+      })
 
-    await refreshUserRanks()
-
-    // Add audit log
-    await prisma.auditLog.create({
-      data: {
-        type: "item_uploaded",
-        action: "Item uploaded",
-        details: `${category} uploaded from ${location}`,
-        severity: "info",
+      const pointResult = await awardPoints({
+        tx,
         userId: uploadedById,
-      },
+        action: "item_uploaded",
+        referenceId: item.id,
+      })
+
+      await tx.auditLog.create({
+        data: {
+          type: "item_uploaded",
+          action: "Item uploaded",
+          details: `${category} uploaded from ${location}`,
+          severity: "info",
+          userId: uploadedById,
+        },
+      })
+
+      return { item, pointsAwarded: pointResult.awarded }
     })
 
-    return NextResponse.json({ item, message: "Item created successfully" })
+    if (pointsAwarded) await refreshUserRanks()
+
+    return NextResponse.json(
+      { item, message: "Item created successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Create item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

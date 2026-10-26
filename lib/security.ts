@@ -4,29 +4,51 @@
 import type { NextRequest } from "next/server"
 
 /**
- * CSRF protection: verifies that state-changing requests originated from the
- * same site as the app. Browsers always attach an Origin header to cross-site
- * POST/PATCH/DELETE requests, so a mismatched origin means the request was
- * forged (e.g. submitted from an attacker's page).
- *
- * Compared against a configured allowlist (NEXT_PUBLIC_SITE_URL, falling back
- * to the request Host) rather than the Host header alone, so an attacker who
- * can influence Host cannot spoof a legitimate origin.
- *
- * Requests with no Origin are rejected when a Referer is present (browsers that
- * strip Origin in privacy modes still send Referer); only truly header-less
- * requests (curl, server-to-server) are allowed through.
+ * CSRF protection for state-changing browser requests. A missing Origin and
+ * Referer is rejected; authenticated APIs must not treat headless requests as
+ * same-origin just because the browser headers are absent.
  */
 export function assertSameOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get("origin")
-  const referer = request.headers.get("referer")
+  const sourceHeaders = [request.headers.get("origin"), request.headers.get("referer")].filter(
+    (value): value is string => Boolean(value),
+  )
 
-  if (!origin) {
-    // No Origin header: if the client is a browser it will send Referer on
-    // cross-site state-changing requests. Allow only if there's no Referer
-    // (server-to-server / curl), otherwise reject.
-    return !referer
+  if (sourceHeaders.length === 0) return false
+
+  try {
+    const allowedOrigins = new Set<string>()
+    const requestUrl = new URL(request.url)
+    if (requestUrl.protocol === "http:" || requestUrl.protocol === "https:") {
+      allowedOrigins.add(requestUrl.origin)
+    }
+
+    for (const configured of [
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.VERCEL_URL,
+      process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    ]) {
+      if (!configured) continue
+      const value = configured.includes("://") ? configured : `https://${configured}`
+      const configuredUrl = new URL(value)
+      if (configuredUrl.protocol === "http:" || configuredUrl.protocol === "https:") {
+        allowedOrigins.add(configuredUrl.origin)
+      }
+    }
+
+    return sourceHeaders.every((source) => {
+      const sourceUrl = new URL(source)
+      return (
+        (sourceUrl.protocol === "http:" || sourceUrl.protocol === "https:") &&
+        !sourceUrl.username &&
+        !sourceUrl.password &&
+        allowedOrigins.has(sourceUrl.origin)
+      )
+    })
+  } catch {
+    return false
   }
+}
+
 
   try {
     const originUrl = new URL(origin)

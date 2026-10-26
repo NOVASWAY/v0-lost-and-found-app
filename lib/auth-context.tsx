@@ -3,15 +3,15 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { addAuditLog } from "./audit-logger"
-import { sanitizeSearchQuery } from "./security"
+import { isUserRole, type UserRole } from "@/lib/domain"
+import { SESSION_IDLE_TIMEOUT_MS, SESSION_REFRESH_INTERVAL_MS } from "@/lib/session"
 
 // Production user type
 interface User {
   id: string
   name: string
   username: string
-  role: "admin" | "volunteer" | "user"
+  role: UserRole
   vaultPoints: number
   rank: number
   itemsUploaded: number
@@ -26,49 +26,102 @@ interface User {
 interface AuthContextType {
   user: User | null
   login: (username: string, password: string, opts?: { redirect?: boolean }) => Promise<boolean>
-  logout: () => void
+  logout: () => Promise<void>
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>
   isAuthenticated: boolean
+  isLoaded: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Session security: clear session after 30 minutes of inactivity
-const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutes
-
-function readCachedUser(): User | null {
-  if (typeof window === "undefined") return null
-  try {
-    const raw = sessionStorage.getItem("user")
-    return raw ? (JSON.parse(raw) as User) : null
-  } catch {
-    sessionStorage.removeItem("user")
-    return null
-  }
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+export function AuthProvider({
+  children,
+  initialUser = null,
+}: {
+  children: React.ReactNode
+  initialUser?: User | null
+}) {
+  const [user, setUser] = useState<User | null>(initialUser)
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(initialUser))
+  const isLoaded = true
+  const sessionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const refreshRequestRef = useRef<Promise<void> | null>(null)
+  const lastRefreshRef = useRef(initialUser ? Date.now() : 0)
+  const isAuthenticatedRef = useRef(Boolean(initialUser))
   const router = useRouter()
 
-  // Secure session management - use useCallback with empty deps to avoid circular dependency
+  const updateSessionUser = useCallback((nextUser: User | null) => {
+    isAuthenticatedRef.current = Boolean(nextUser)
+    setUser(nextUser)
+    setIsAuthenticated(Boolean(nextUser))
+  }, [])
+
+  const clearSession = useCallback((destination: string) => {
+    if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
+    updateSessionUser(null)
+    router.replace(destination)
+  }, [router, updateSessionUser])
+
+  const expireSession = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: true,
+      })
+    } catch {
+      // The server-side session may already have expired.
+    }
+    clearSession("/login?reason=session-expired")
+  }, [clearSession])
+
   const resetSessionTimeout = useCallback(() => {
     if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
-    
-    sessionTimeoutRef.current = setTimeout(() => {
-      setUser(null)
-      setIsAuthenticated(false)
-      sessionStorage.removeItem("userId")
-      sessionStorage.removeItem("user")
-      router.push("/")
-    }, SESSION_TIMEOUT)
-  }, [router])
+    if (!isAuthenticatedRef.current) return
 
-  // Single useEffect for initialization - runs only on mount
+    sessionTimeoutRef.current = setTimeout(() => {
+      void expireSession()
+    }, SESSION_IDLE_TIMEOUT_MS)
+  }, [expireSession])
+
+  const refreshSession = useCallback(async () => {
+    if (!isAuthenticatedRef.current) return
+    if (Date.now() - lastRefreshRef.current < SESSION_REFRESH_INTERVAL_MS) return
+    if (refreshRequestRef.current) return refreshRequestRef.current
+
+    const refreshRequest = (async () => {
+      try {
+        const response = await fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+        })
+        if (response.status === 401) {
+          await expireSession()
+          return
+        }
+        if (response.ok) {
+          const data = await response.json()
+          if (!data?.user || !isUserRole(data.user.role)) {
+            await expireSession()
+            return
+          }
+          updateSessionUser(data.user as User)
+          lastRefreshRef.current = Date.now()
+          resetSessionTimeout()
+        }
+      } catch {
+        // A later user interaction retries the refresh if the network is unavailable.
+      } finally {
+        refreshRequestRef.current = null
+      }
+    })()
+
+    refreshRequestRef.current = refreshRequest
+    return refreshRequest
+  }, [expireSession, resetSessionTimeout])
+
   useEffect(() => {
-    // Apply theme preference
     const theme = localStorage.getItem("theme") || "system"
     if (theme === "dark") {
       document.documentElement.classList.add("dark")
@@ -78,105 +131,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
       document.documentElement.classList.toggle("dark", systemTheme === "dark")
     }
+  }, [])
 
-    // Optimistically restore the cached user object for instant UI, then validate
-    // the session server-side against the httpOnly cookie (no token in storage).
-    const cachedUser = sessionStorage.getItem("user")
-    if (cachedUser) {
-      try {
-        setUser(JSON.parse(cachedUser) as User)
-        setIsAuthenticated(true)
-      } catch {
-        sessionStorage.removeItem("user")
-      }
+  useEffect(() => {
+    const handleUserActivity = () => {
+      if (!isAuthenticatedRef.current) return
+      resetSessionTimeout()
+      void refreshSession()
     }
 
-    let cancelled = false
-    fetch("/api/auth/me", {
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-    })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("unauthorized"))))
-      .then((data) => {
-        if (cancelled) return
-        if (data?.user) {
-          setUser(data.user)
-          sessionStorage.setItem("user", JSON.stringify(data.user))
-          sessionStorage.setItem("userId", data.user.id)
-          setIsAuthenticated(true)
-          resetSessionTimeout()
-        } else {
-          throw new Error("no user in response")
-        }
-      })
-      .catch(() => {
-        if (cancelled) return
-        setUser(null)
-        setIsAuthenticated(false)
-        sessionStorage.removeItem("user")
-        sessionStorage.removeItem("userId")
-      })
-
-    // Activity listener for session timeout reset
-    const handleUserActivity = () => resetSessionTimeout()
-    window.addEventListener("mousedown", handleUserActivity)
+    if (isAuthenticatedRef.current) resetSessionTimeout()
+    window.addEventListener("pointerdown", handleUserActivity)
     window.addEventListener("keydown", handleUserActivity)
+    window.addEventListener("touchstart", handleUserActivity)
 
     return () => {
-      cancelled = true
-      window.removeEventListener("mousedown", handleUserActivity)
+      window.removeEventListener("pointerdown", handleUserActivity)
       window.removeEventListener("keydown", handleUserActivity)
+      window.removeEventListener("touchstart", handleUserActivity)
       if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     }
-  }, [resetSessionTimeout])
+  }, [refreshSession, resetSessionTimeout])
 
   const login = async (username: string, password: string, opts?: { redirect?: boolean }): Promise<boolean> => {
-    // Sanitize inputs
-    const sanitizedUsername = sanitizeSearchQuery(username)
-    
-    // Rate limit check (simple implementation)
-    const loginAttempts = parseInt(sessionStorage.getItem("loginAttempts") || "0")
-    if (loginAttempts > 5) {
-      return false
-    }
-
     try {
-      // Make API call to secure backend endpoint
       const response = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: sanitizedUsername, password }),
+        body: JSON.stringify({ username: username.trim(), password }),
       })
 
-      if (!response.ok) {
-        // Log failed attempt
-        sessionStorage.setItem("loginAttempts", (loginAttempts + 1).toString())
-        return false
-      }
+      if (!response.ok) return false
 
       const data = await response.json()
-      const foundUser = data.user
+      const foundUser = data.user as User | undefined
+      if (!foundUser || !isUserRole(foundUser.role)) return false
 
-      if (!foundUser) {
-        return false
-      }
-      
-      setUser(foundUser)
-      setIsAuthenticated(true)
-      
-      // Session is carried by the httpOnly `auth_token` cookie set by the server.
-      // Only the (non-secret) user profile is cached for instant UI.
-      sessionStorage.setItem("userId", foundUser.id)
-      sessionStorage.setItem("user", JSON.stringify(foundUser))
-      sessionStorage.removeItem("loginAttempts")
-      
+      updateSessionUser(foundUser)
+      lastRefreshRef.current = Date.now()
       resetSessionTimeout()
 
-      // Add audit log
-      addAuditLog("login", "User logged in", `User '${foundUser.username}' logged in`)
-
-      // Route based on role. Set `opts.redirect: false` to let the caller play
-      // its own cinematic transition before navigating (used by the login page).
       if (opts?.redirect !== false) {
         if (foundUser.role === "admin") {
           router.push("/admin")
@@ -192,51 +187,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = useCallback(() => {
-    if (user) {
-      addAuditLog("logout", "User logged out", `User '${user.username}' logged out`)
-    }
-    // Clear the httpOnly session cookie server-side.
+  const logout = useCallback(async () => {
     try {
-      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {})
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: true,
+      })
     } catch {
-      /* ignore network errors during logout */
+      // Clear the local view even if the logout request cannot reach the server.
     }
-    setUser(null)
-    setIsAuthenticated(false)
-    sessionStorage.removeItem("userId")
-    sessionStorage.removeItem("user")
-    sessionStorage.removeItem("loginAttempts")
-    if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
-    router.push("/")
-  }, [user, router])
+    clearSession("/")
+  }, [clearSession])
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
     if (!user) return false
 
     try {
-      // Auth comes from the httpOnly session cookie.
       const response = await fetch("/api/auth/change-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({
-          currentPassword,
-          newPassword,
-        }),
+        body: JSON.stringify({ currentPassword, newPassword }),
       })
 
-      if (!response.ok) {
-        return false
-      }
-
-      addAuditLog(
-        "user_password_changed",
-        "User password changed",
-        `Password changed for user '${user.username}'`,
-      )
+      if (!response.ok) return false
+      lastRefreshRef.current = Date.now()
+      resetSessionTimeout()
       return true
     } catch {
       return false
@@ -244,7 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, changePassword, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, changePassword, isAuthenticated, isLoaded }}>
       {children}
     </AuthContext.Provider>
   )

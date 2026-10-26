@@ -1,4 +1,5 @@
 import crypto from "crypto"
+import { SESSION_TTL_SECONDS } from "@/lib/session"
 
 type JwtPayload = {
   sub: string
@@ -47,9 +48,7 @@ const getJwtSecret = (): string => {
 }
 
 export function signAccessToken(payload: Omit<JwtPayload, "iat" | "exp">, opts?: { ttlSeconds?: number }): string {
-  // Default TTL (8h) matches the auth_token cookie maxAge set in the login route
-  // so sessions are not force-expired while the cookie is still valid.
-  const ttlSeconds = opts?.ttlSeconds ?? 8 * 60 * 60
+  const ttlSeconds = opts?.ttlSeconds ?? SESSION_TTL_SECONDS
   const now = Math.floor(Date.now() / 1000)
 
   const fullPayload: JwtPayload = {

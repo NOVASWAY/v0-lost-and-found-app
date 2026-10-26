@@ -3,12 +3,13 @@ import type { NextRequest } from "next/server"
 import crypto from "crypto"
 import { verifyAccessToken } from "@/lib/jwt"
 import { prisma, withDbRetry } from "@/lib/db"
+import { isStaffRole, isUserRole } from "@/lib/domain"
 
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production"
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
 
-  const cspHeader = `default-src 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
+  const cspHeader = `default-src 'self'; script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
 
   // Forward the nonce + CSP via request headers so Next.js can inject the nonce
   // into inline scripts during server rendering. Also set on the response so the
@@ -38,22 +39,32 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin")
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin")
 
-  // ---- Server-side route protection ----
-  // Enforce authentication/authorization for privileged area before the page renders,
-  // so access is not left to client-side checks alone.
+  // Enforce page access on the server before rendering; client-side redirects
+  // remain a UX fallback, not an authorization boundary.
   const { pathname } = request.nextUrl
+  const matchesPath = (path: string) => pathname === path || pathname.startsWith(`${path}/`)
+  const isAdminPath = matchesPath("/admin")
+  const isVolunteerPath = matchesPath("/volunteer")
+  const isVolunteerDashboard = pathname === "/volunteer/dashboard"
+  const requiresStaff = ["/playbooks"].some(matchesPath)
+  const requiresUser = [
+    "/dashboard",
+    "/browse",
+    "/items",
+    "/missions",
+    "/my-claims",
+    "/my-uploads",
+    "/orders",
+    "/profile",
+    "/upload",
+  ].some(matchesPath)
+  const requiresAuth = isAdminPath || isVolunteerPath || requiresStaff || requiresUser
 
-  const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/")
-  const isVolunteerPath = pathname === "/volunteer" || pathname.startsWith("/volunteer/")
-
-  if (isAdminPath || isVolunteerPath) {
+  if (requiresAuth) {
+    response.headers.set("Cache-Control", "private, no-store, max-age=0")
     const token = request.cookies.get("auth_token")?.value
     const payload = token ? verifyAccessToken(token) : null
 
-    // Re-validate against the database: reject stale/revoked sessions (tokenVersion
-    // bumped on password change) and reflect the user's CURRENT role, so a demoted
-    // or deleted account loses privileged page access immediately rather than for
-    // the remainder of the (up to 8h) token lifetime.
     let currentRole: string | null = null
     if (payload && prisma) {
       try {
@@ -61,25 +72,32 @@ export async function proxy(request: NextRequest) {
           prisma.user.findUnique({
             where: { id: payload.sub },
             select: { role: true, tokenVersion: true },
-          })
+          }),
         )
-        if (user && user.tokenVersion === payload.tokenVersion) {
+        if (user && user.tokenVersion === payload.tokenVersion && isUserRole(user.role)) {
           currentRole = user.role
         }
       } catch {
-        // DB unavailable — deny privileged access rather than granting by default.
         currentRole = null
       }
     }
 
-    const isAdmin = currentRole === "admin"
-    const isStaff = currentRole === "admin" || currentRole === "volunteer"
+    const hasSession = currentRole !== null
+    const allowed = isAdminPath
+      ? currentRole === "admin"
+      : isVolunteerDashboard
+        ? currentRole === "volunteer"
+        : isVolunteerPath || requiresStaff
+          ? isStaffRole(currentRole)
+          : hasSession
 
-    if ((isAdminPath && !isAdmin) || (isVolunteerPath && !isStaff)) {
+    if (!allowed) {
       const url = request.nextUrl.clone()
-      url.pathname = "/login"
+      url.pathname = hasSession ? (currentRole === "admin" ? "/admin" : "/dashboard") : "/login"
       url.search = ""
-      return NextResponse.redirect(url)
+      const redirect = NextResponse.redirect(url)
+      redirect.headers.set("Cache-Control", "private, no-store, max-age=0")
+      return redirect
     }
   }
 

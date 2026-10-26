@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { CLAIM_STATUSES, ITEM_STATUSES, USER_ROLES } from "@/lib/domain"
 
 // z.string().url() accepts any scheme (javascript:, data:, ftp:). Every URL
 // that reaches storage must be http(s) so a stored value cannot become a
@@ -42,12 +43,12 @@ export const createUserSchema = z.object({
   name: z.string().min(2).max(100).trim(),
   username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
   password: passwordStrengthSchema,
-  role: z.enum(["user", "volunteer", "admin"]),
+  role: z.enum(USER_ROLES),
 })
 
 export const updateUserSchema = z.object({
   name: z.string().min(2).max(100).trim().optional(),
-  role: z.enum(["user", "volunteer", "admin"]).optional(),
+  role: z.enum(USER_ROLES).optional(),
 })
 
 export const changePasswordSchema = z.object({
@@ -92,7 +93,7 @@ export const createItemSchema = z.object({
 })
 
 export const updateItemSchema = z.object({
-  status: z.enum(["available", "claimed", "released", "donated"]).optional(),
+  status: z.enum(ITEM_STATUSES).optional(),
   description: z.string().max(1000).trim().optional(),
 })
 
@@ -126,7 +127,7 @@ export const createClaimSchema = z.object({
 })
 
 export const updateClaimSchema = z.object({
-  status: z.enum(["pending", "approved", "released", "rejected"]).optional(),
+  status: z.enum(CLAIM_STATUSES).optional(),
   releaseNotes: z.string().max(500).trim().optional(),
 })
 

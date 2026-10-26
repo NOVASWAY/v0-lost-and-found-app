@@ -2,34 +2,34 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma, withDbRetry } from "./db"
 import { verifyAccessToken } from "./jwt"
 import { assertSameOrigin } from "./security"
+import { isUserRole, type UserRole } from "./domain"
 
-export interface AuthenticatedRequest extends NextRequest {
-  user?: {
-    id: string
-    username: string
-    name: string
-    role: string
-  }
-}
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
 
-// Get user from the httpOnly session cookie (auth_token).
-export async function getAuthenticatedUser(request: NextRequest): Promise<{
+export interface AuthenticatedUser {
   id: string
   username: string
   name: string
-  role: string
-} | null> {
-  try {
-    const token = request.cookies?.get("auth_token")?.value
+  role: UserRole
+  tokenVersion: number
+  vaultPoints: number
+  rank: number
+  itemsUploaded: number
+  claimsSubmitted: number
+  attendanceCount: number
+  serviceCount: number
+}
 
+export interface AuthenticatedRequest extends NextRequest {
+  user?: AuthenticatedUser
+}
+
+export async function getAuthenticatedUserFromToken(token?: string | null): Promise<AuthenticatedUser | null> {
+  try {
     if (!token) return null
 
     const payload = verifyAccessToken(token)
-    if (!payload) return null
-
-    // Verify the user still exists and return server-side role.
-    // (We could rely on token.role, but refreshing from DB prevents stale/removed accounts.)
-    if (!prisma) return null
+    if (!payload || !prisma) return null
 
     const user = await withDbRetry(() =>
       prisma.user.findUnique({
@@ -40,51 +40,49 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<{
           name: true,
           role: true,
           tokenVersion: true,
+          vaultPoints: true,
+          rank: true,
+          itemsUploaded: true,
+          claimsSubmitted: true,
+          attendanceCount: true,
+          serviceCount: true,
         },
       })
     )
 
-    if (!user) return null
-
-    // Reject tokens issued before the user's last password change (revoked sessions).
-    if (user.tokenVersion !== payload.tokenVersion) return null
-
-    return user
+    if (!user || !isUserRole(user.role) || user.tokenVersion !== payload.tokenVersion) return null
+    return { ...user, role: user.role }
   } catch {
     return null
   }
 }
 
-// Middleware to require authentication
-export async function requireAuth(
-  request: NextRequest
-): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
-  // CSRF defense-in-depth: reject cross-site requests. Browsers attach an Origin
-  // header to cross-site POST/PATCH/DELETE requests; if it doesn't match this
-  // host the request was forged. (No-Origin requests, e.g. curl, are allowed.)
-  if (!assertSameOrigin(request)) {
-    return NextResponse.json({ error: "Forbidden - Cross-site request rejected" }, { status: 403 })
-  }
+export async function getAuthenticatedUser(request: NextRequest): Promise<AuthenticatedUser | null> {
+  return getAuthenticatedUserFromToken(request.cookies?.get("auth_token")?.value)
+}
 
+export async function requireAuth(
+  request: NextRequest,
+): Promise<NextResponse | { user: AuthenticatedUser }> {
   const user = await getAuthenticatedUser(request)
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  if (MUTATING_METHODS.has(request.method.toUpperCase()) && !assertSameOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden - Cross-site request rejected" }, { status: 403 })
+  }
+
   return { user }
 }
 
-// Middleware to require specific role
 export async function requireRole(
   request: NextRequest,
-  allowedRoles: string[]
-): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
+  allowedRoles: readonly UserRole[],
+): Promise<NextResponse | { user: AuthenticatedUser }> {
   const authResult = await requireAuth(request)
-
-  if (authResult instanceof NextResponse) {
-    return authResult
-  }
+  if (authResult instanceof NextResponse) return authResult
 
   if (!allowedRoles.includes(authResult.user.role)) {
     return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
@@ -93,16 +91,12 @@ export async function requireRole(
   return authResult
 }
 
-// Middleware to require admin
-export async function requireAdmin(
-  request: NextRequest
-): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
+export async function requireAdmin(request: NextRequest): Promise<NextResponse | { user: AuthenticatedUser }> {
   return requireRole(request, ["admin"])
 }
 
-// Middleware to require admin or volunteer
 export async function requireAdminOrVolunteer(
-  request: NextRequest
-): Promise<NextResponse | { user: { id: string; username: string; name: string; role: string } }> {
+  request: NextRequest,
+): Promise<NextResponse | { user: AuthenticatedUser }> {
   return requireRole(request, ["admin", "volunteer"])
 }

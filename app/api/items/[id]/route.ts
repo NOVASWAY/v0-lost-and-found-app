@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             : { id: true },
         },
         claims: {
-          // Only staff see claimant identity; regular users see the claim exists but not who filed it.
+          where: isStaff ? undefined : { claimantId: authResult.user.id },
           include: isStaff
             ? {
                 claimant: {
@@ -57,7 +57,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Item not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ item })
+    if (isStaff) {
+      return NextResponse.json({ item }, { headers: { "Cache-Control": "private, no-store, max-age=0" } })
+    }
+
+    const { uniqueMarkings: _uniqueMarkings, ...visibleItem } = item
+    return NextResponse.json(
+      { item: visibleItem },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

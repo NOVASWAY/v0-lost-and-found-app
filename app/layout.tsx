@@ -2,11 +2,12 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { headers } from "next/headers"
+import { cookies, headers } from "next/headers"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
+import { getAuthenticatedUserFromToken } from "@/lib/auth-middleware"
 import { NavigationWrapper } from "@/components/navigation-wrapper"
 import { getSiteUrl } from "@/lib/site-url"
 
@@ -91,7 +92,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const nonce = (await headers()).get("x-nonce") ?? undefined
+  const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()])
+  const nonce = requestHeaders.get("x-nonce") ?? undefined
+  const initialUser = await getAuthenticatedUserFromToken(cookieStore.get("auth_token")?.value)
 
   return (
     <html lang="en" suppressHydrationWarning nonce={nonce}>
@@ -116,7 +119,7 @@ export default async function RootLayout({
           }}
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
+          <AuthProvider initialUser={initialUser}>
             <NavigationWrapper>
               {children}
             </NavigationWrapper>

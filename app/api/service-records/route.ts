@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { createServiceRecordSchema, validateAndSanitize } from "@/lib/validation"
-import { requireAuth } from "@/lib/auth-middleware"
+import { requireAdmin, requireAuth } from "@/lib/auth-middleware"
+import { refreshUserRanks } from "@/lib/ranking"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { awardPoints } from "@/lib/points"
 
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 // POST create service record
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireAuth(request)
+    const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) {
       return authResult
     }
@@ -74,10 +75,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    if (authResult.user.role === "user") {
-      return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
-    }
-
     const { userId, serviceDate, attended, served, notes } = validation.data
     const recordedBy = authResult.user.username
 
@@ -94,40 +91,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    const record = await prisma.serviceRecord.create({
-      data: {
-        userId,
-        serviceDate: new Date(serviceDate),
-        attended: attended || false,
-        served: served || false,
-        notes: notes || null,
-        recordedBy: recordedBy || "System",
-      },
-    })
+    const { record, pointsAwarded } = await prisma.$transaction(async (tx) => {
+      const record = await tx.serviceRecord.create({
+        data: {
+          userId,
+          serviceDate: new Date(serviceDate),
+          attended: attended || false,
+          served: served || false,
+          notes: notes || null,
+          recordedBy: authResult.user.username,
+        },
+      })
 
-    // Update user stats
-    const updateData: any = {}
-    if (attended) updateData.attendanceCount = { increment: 1 }
-    if (served) updateData.serviceCount = { increment: 1 }
+      const stats: Record<string, unknown> = {}
+      if (attended) stats.attendanceCount = { increment: 1 }
+      if (served) stats.serviceCount = { increment: 1 }
+      if (Object.keys(stats).length > 0) {
+        await tx.user.update({ where: { id: userId }, data: stats })
+      }
 
-    if (Object.keys(updateData).length > 0) {
-      await prisma.user.update({ where: { id: userId }, data: updateData })
-    }
-
-    if (attended) {
-      await awardPoints({ userId, action: "service_attended", referenceId: record.id, fallbackPoints: 10 })
-    }
-    if (served) {
-      await awardPoints({ userId, action: "service_served", referenceId: record.id, fallbackPoints: 25 })
-    }
-
-    // Add audit logs. The actor is the staff member who recorded the entry —
-    // the target member only appears in the details, so the trail answers
-    // "who marked this" rather than "who was marked".
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { username: true } })
-    if (user) {
+      const awards = []
       if (attended) {
-        await prisma.auditLog.create({
+        awards.push(await awardPoints({
+          tx,
+          userId,
+          action: "service_attended",
+          referenceId: record.id,
+        }))
+      }
+      if (served) {
+        awards.push(await awardPoints({
+          tx,
+          userId,
+          action: "service_served",
+          referenceId: record.id,
+        }))
+      }
+
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { username: true } })
+      if (user && attended) {
+        await tx.auditLog.create({
           data: {
             type: "attendance_marked",
             action: "Attendance marked",
@@ -137,8 +140,8 @@ export async function POST(request: NextRequest) {
           },
         })
       }
-      if (served) {
-        await prisma.auditLog.create({
+      if (user && served) {
+        await tx.auditLog.create({
           data: {
             type: "service_marked",
             action: "Service marked",
@@ -148,9 +151,16 @@ export async function POST(request: NextRequest) {
           },
         })
       }
-    }
 
-    return NextResponse.json({ record, message: "Service record created successfully" })
+      return { record, pointsAwarded: awards.some((award) => award.awarded) }
+    })
+
+    if (pointsAwarded) await refreshUserRanks()
+
+    return NextResponse.json(
+      { record, message: "Service record created successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Create service record error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
-import { requireAuth, requireAdmin } from "@/lib/auth-middleware"
+import { requireAdminOrVolunteer, requireAdmin } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
 import { createOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
@@ -9,10 +9,10 @@ import { createOccurrenceBookSchema, validateAndSanitize } from "@/lib/validatio
 const OCCURRENCE_SEVERITIES = ["low", "medium", "high", "critical"] as const
 const OCCURRENCE_STATUSES = ["open", "investigating", "resolved", "closed"] as const
 
-// GET all occurrences (all authenticated users)
+// Occurrence reports contain sensitive security details; restrict reads to staff.
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireAuth(request)
+    const authResult = await requireAdminOrVolunteer(request)
     if (authResult instanceof NextResponse) {
       return authResult
     }

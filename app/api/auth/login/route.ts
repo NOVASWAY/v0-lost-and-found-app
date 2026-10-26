@@ -5,6 +5,8 @@ import { loginSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, resetRateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { signAccessToken } from "@/lib/jwt"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
+import { getSessionCookieOptions } from "@/lib/session-cookie"
+import { isUserRole } from "@/lib/domain"
 
 // A valid bcrypt hash of a throwaway string. Used to equalize the bcrypt timing
 // for unknown usernames so an attacker cannot enumerate accounts via response time.
@@ -111,6 +113,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
 
+      if (!isUserRole(user.role)) {
+        await recordFailure("Invalid account role")
+        return NextResponse.json({ error: "Account is not configured for access" }, { status: 403 })
+      }
+
       // Clear the failed-attempt counter on success.
       await resetRateLimit(lockoutKey)
 
@@ -144,6 +151,7 @@ export async function POST(request: NextRequest) {
         },
         {
           headers: {
+            "Cache-Control": "private, no-store, max-age=0",
             "X-RateLimit-Limit": "5",
             "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
             "X-RateLimit-Reset": new Date(rateLimitResult.resetTime).toISOString(),
@@ -151,13 +159,7 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      response.cookies.set("auth_token", accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 8, // 8 hours
-      })
+      response.cookies.set("auth_token", accessToken, getSessionCookieOptions(request))
 
       return response
     } catch (dbError) {

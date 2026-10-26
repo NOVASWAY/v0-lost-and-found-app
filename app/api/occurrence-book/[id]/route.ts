@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
-import { requireAuth, requireAdmin } from "@/lib/auth-middleware"
+import { requireAdminOrVolunteer, requireAdmin } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { updateOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 
-// GET single occurrence (all authenticated users)
+// Occurrence reports contain sensitive security details; restrict reads to staff.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const authResult = await requireAuth(request)
+    const authResult = await requireAdminOrVolunteer(request)
     if (authResult instanceof NextResponse) {
       return authResult
     }

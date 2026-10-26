@@ -6,6 +6,7 @@ import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
 import { signAccessToken } from "@/lib/jwt"
+import { getSessionCookieOptions } from "@/lib/session-cookie"
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,14 +85,11 @@ export async function POST(request: NextRequest) {
       tokenVersion: updatedUser.tokenVersion,
     })
 
-    const response = NextResponse.json({ message: "Password changed successfully" })
-    response.cookies.set("auth_token", newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 8, // 8 hours
-    })
+    const response = NextResponse.json(
+      { message: "Password changed successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
+    response.cookies.set("auth_token", newToken, getSessionCookieOptions(request))
 
     return response
   } catch (error) {

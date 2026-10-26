@@ -4,10 +4,10 @@ import { requireAdmin } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { z } from "zod"
-import { DEFAULT_POINT_RULES } from "@/lib/points"
+import { DEFAULT_POINT_RULES, POINT_ACTIONS } from "@/lib/points"
 
 const ruleSchema = z.object({
-  action: z.string().regex(/^[a-z][a-z0-9_]*$/).max(60),
+  action: z.enum(POINT_ACTIONS),
   label: z.string().trim().min(1).max(120),
   points: z.number().int().min(0).max(10000),
   isActive: z.boolean().optional(),
@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
       }),
     ),
   )
-  const rules = await prisma.pointRule.findMany({ orderBy: { label: "asc" } })
+  const rules = await prisma.pointRule.findMany({
+    where: { action: { in: [...POINT_ACTIONS] } },
+    orderBy: { label: "asc" },
+  })
   return NextResponse.json({ rules })
 }
 

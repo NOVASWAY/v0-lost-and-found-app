@@ -5,6 +5,8 @@ import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { refreshUserRanks } from "@/lib/ranking"
+import { awardPoints } from "@/lib/points"
+import { canTransitionClaimStatus } from "@/lib/domain"
 
 class ClaimUpdateError extends Error {
   constructor(message: string, public status: number) {

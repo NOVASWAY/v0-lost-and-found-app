@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { refreshUserRanks } from "@/lib/ranking"
+import { awardPoints } from "@/lib/points"
+import { CLAIM_STATUSES } from "@/lib/domain"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
 
@@ -37,10 +39,10 @@ export async function GET(request: NextRequest) {
     const where: any = {}
 
     // Validate status enum
-    const validStatuses = ["pending", "approved", "released", "rejected"]
-    if (status && validStatuses.includes(status)) {
-      where.status = status
+    if (status && !CLAIM_STATUSES.includes(status as (typeof CLAIM_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid claim status filter" }, { status: 400 })
     }
+    if (status) where.status = status
 
     const isStaff = authResult.user.role === "admin" || authResult.user.role === "volunteer"
     // Users can only query their own claims; a supplied claimantId is ignored
@@ -83,15 +85,20 @@ export async function GET(request: NextRequest) {
       prisma.claim.count({ where }),
     ])
 
-    return NextResponse.json({
-      claims,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+    const visibleClaims = claims.map(({ claimantEmail: _claimantEmail, ...claim }) => claim)
+
+    return NextResponse.json(
+      {
+        claims: visibleClaims,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       },
-    })
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     console.error("Get claims error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -140,11 +147,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: urlValidation.error || "Invalid proof image URL" }, { status: 400 })
     }
 
-    // Atomic transaction: check item status + create claim + update stats.
-    // The Claim model has @@unique([itemId, claimantId]) so duplicate claims
-    // are rejected at the DB level even if two concurrent requests pass the
-    // status check.
-    const claim = await prisma.$transaction(async (tx) => {
+    // Item validation, claim creation, stats, points, and the audit record commit together.
+    const { claim, pointsAwarded } = await prisma.$transaction(async (tx) => {
       const item = await tx.item.findUnique({ where: { id: itemId } })
       if (!item) throw new ClaimError("Item not found", 404)
       if (item.status !== "available") throw new ClaimError("Item is not available for claiming", 400)
@@ -160,7 +164,7 @@ export async function POST(request: NextRequest) {
           itemImage: item.imageUrl,
           proofImage,
           claimantName: claimant.name,
-          claimantEmail: `${claimant.username}@vault.church`,
+          claimantEmail: "",
           claimantId,
           status: "pending",
         },
@@ -172,7 +176,14 @@ export async function POST(request: NextRequest) {
 
       await tx.user.update({
         where: { id: claimantId },
-        data: { claimsSubmitted: { increment: 1 }, vaultPoints: { increment: 25 } },
+        data: { claimsSubmitted: { increment: 1 } },
+      })
+
+      const pointResult = await awardPoints({
+        tx,
+        userId: claimantId,
+        action: "claim_submitted",
+        referenceId: created.id,
       })
 
       await tx.auditLog.create({
@@ -185,12 +196,19 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      return created
+      return { claim: created, pointsAwarded: pointResult.awarded }
     })
 
-    await refreshUserRanks()
+    if (pointsAwarded) await refreshUserRanks()
 
-    return NextResponse.json({ claim, message: "Claim created successfully" } )
+    const visibleClaim = authResult.user.role === "user"
+      ? { ...claim, item: (({ uniqueMarkings: _uniqueMarkings, ...item }) => item)(claim.item) }
+      : claim
+
+    return NextResponse.json(
+      { claim: visibleClaim, message: "Claim created successfully" },
+      { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    )
   } catch (error) {
     if (error instanceof ClaimError) {
       return NextResponse.json({ error: error.message }, { status: error.status })

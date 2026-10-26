@@ -2,57 +2,41 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin } from "@/lib/security"
-import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { getSessionCookieOptions } from "@/lib/session-cookie"
 
 export async function POST(request: NextRequest) {
+  if (!assertSameOrigin(request)) {
+    return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
+  }
+
+  let user: { id: string; username: string } | null = null
   try {
     const authResult = await requireAuth(request)
-    if (authResult instanceof NextResponse) {
-      return authResult
-    }
-
-    if (!assertSameOrigin(request)) {
-      return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
-    }
-
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 20 })
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
-    }
-
-    const userId = authResult.user.id
-    const username = authResult.user.username
-
-    if (prisma) {
-      try {
-        // Add audit log for logout
-        await prisma.auditLog.create({
-          data: {
-            type: "logout",
-            action: "User logged out",
-            details: `User '${username}' logged out`,
-            severity: "info",
-            userId: userId,
-          },
-        })
-      } catch (error) {
-        console.error("Error creating logout audit log:", error)
-        // Continue with logout even if audit log fails
-      }
-    }
-
-    const response = NextResponse.json({ message: "Logout successful" })
-    response.cookies.set("auth_token", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-    })
-    return response
-  } catch (error) {
-    console.error("Logout error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    if (!(authResult instanceof NextResponse)) user = authResult.user
+  } catch {
+    // Logout must still clear an expired or unverifiable cookie.
   }
+
+  if (user && prisma) {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          type: "logout",
+          action: "User logged out",
+          details: `User '${user.username}' logged out`,
+          severity: "info",
+          userId: user.id,
+        },
+      })
+    } catch (error) {
+      console.error("Error creating logout audit log:", error)
+    }
+  }
+
+  const response = NextResponse.json(
+    { message: "Logout successful" },
+    { headers: { "Cache-Control": "private, no-store, max-age=0" } },
+  )
+  response.cookies.set("auth_token", "", getSessionCookieOptions(request, 0))
+  return response
 }
