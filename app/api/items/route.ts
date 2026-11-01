@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { createItemSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
-import { requireAuth } from "@/lib/auth-middleware"
-import { refreshUserRanks } from "@/lib/ranking"
+import {
+  assertSameOrigin,
+  parsePagination,
+  readJsonBody,
+  redactItemSecrets,
+  sanitizeSearchQuery,
+  toPublicItem,
+  validateRouteId,
+  validateUploadUrl,
+} from "@/lib/security"
+import { getAuthenticatedUser, requireAuth } from "@/lib/auth-middleware"
+import { awardPoints } from "@/lib/points"
 
 // GET all items
 export async function GET(request: NextRequest) {
@@ -16,6 +25,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
+    const viewer = await getAuthenticatedUser(request)
+
     const searchParams = request.nextUrl.searchParams
     const search = sanitizeSearchQuery(searchParams.get("search") || "")
     const status = searchParams.get("status")
@@ -26,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     // Validate status enum
     const validStatuses = ["available", "claimed", "released", "donated", "pending", "expired"]
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (search) {
       where.OR = [
@@ -47,16 +58,24 @@ export async function GET(request: NextRequest) {
       where.location = { contains: location, mode: "insensitive" }
     }
 
-    // Optional uploader filter (used by the "my uploads" page).
+    // Uploader filter is only for the signed-in owner (my-uploads) or staff.
+    // Anonymous callers must not enumerate another member's uploads by id.
     if (uploadedById) {
       const idValidation = validateRouteId(uploadedById)
       if (!idValidation.valid) {
         return NextResponse.json({ error: "Invalid uploader ID format" }, { status: 400 })
       }
+      if (!viewer) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+      const isStaff = viewer.role === "admin" || viewer.role === "volunteer"
+      if (!isStaff && uploadedById !== viewer.id) {
+        return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
+      }
       where.uploadedById = uploadedById
     }
 
-    const [items, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.item.findMany({
         where,
         include: {
@@ -73,6 +92,12 @@ export async function GET(request: NextRequest) {
       }),
       prisma.item.count({ where }),
     ])
+
+    // Unauthenticated catalog: landing-page teaser only — no uniqueMarkings /
+    // description that would leak claim-proof details.
+    const items = viewer
+      ? rows.map((item) => redactItemSecrets(item, viewer))
+      : rows.map((item) => toPublicItem(item as unknown as Record<string, unknown>))
 
     return NextResponse.json({
       items,
@@ -130,8 +155,8 @@ export async function POST(request: NextRequest) {
     } = validation.data
     const uploadedById = authResult.user.id
 
-    // Validate image URL to prevent path traversal
-    const urlValidation = validateUrl(imageUrl)
+    // Validate image URL — production requires a Vercel Blob upload URL.
+    const urlValidation = validateUploadUrl(imageUrl)
     if (!urlValidation.valid) {
       return NextResponse.json({ error: urlValidation.error || "Invalid image URL" }, { status: 400 })
     }
@@ -165,18 +190,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Update user stats
     await prisma.user.update({
       where: { id: uploadedById },
-      data: {
-        itemsUploaded: { increment: 1 },
-        vaultPoints: { increment: 50 },
-      },
+      data: { itemsUploaded: { increment: 1 } },
     })
 
-    await refreshUserRanks()
+    await awardPoints({
+      userId: uploadedById,
+      action: "item_uploaded",
+      referenceId: item.id,
+      fallbackPoints: 15,
+    })
 
-    // Add audit log
     await prisma.auditLog.create({
       data: {
         type: "item_uploaded",

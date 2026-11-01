@@ -4,7 +4,7 @@ import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { refreshUserRanks } from "@/lib/ranking"
+import { awardPoints } from "@/lib/points"
 
 class ClaimUpdateError extends Error {
   constructor(message: string, public status: number) {
@@ -180,11 +180,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             },
           })
 
-          await tx.user.update({
-            where: { id: claim.claimantId },
-            data: { vaultPoints: { increment: 100 } },
-          })
-
           await tx.auditLog.create({
             data: {
               type: "item_released",
@@ -201,7 +196,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     })
 
     if (status === "released") {
-      await refreshUserRanks()
+      await awardPoints({
+        userId: updatedClaim.claimantId,
+        action: "item_released",
+        referenceId: updatedClaim.id,
+        fallbackPoints: 20,
+      })
     }
 
     return NextResponse.json({ claim: updatedClaim, message: "Claim updated successfully" })

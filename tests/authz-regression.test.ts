@@ -634,9 +634,16 @@ describe("endpoint role authorization (real DB)", () => {
     await prisma.occurrenceCategory.delete({ where: { id: data.category.id } })
   })
 
-  it("GET /api/occurrence-book allows a regular user (200)", async () => {
+  it("GET /api/occurrence-book rejects a regular user (403)", async () => {
     const res = (await occurrenceBookRoute.GET(
       cookieRequest("http://localhost/api/occurrence-book", { token: tokenFor(users.user) })
+    )) as NextResponse
+    expect(res.status).toBe(403)
+  })
+
+  it("GET /api/occurrence-book allows a volunteer (200)", async () => {
+    const res = (await occurrenceBookRoute.GET(
+      cookieRequest("http://localhost/api/occurrence-book", { token: tokenFor(users.volunteer) })
     )) as NextResponse
     expect(res.status).toBe(200)
   })
@@ -796,37 +803,12 @@ describe("endpoint role authorization (real DB)", () => {
     await prisma.user.delete({ where: { id: target.id } })
   })
 
-  it("POST /api/audit-logs refuses privileged event types (no forged entries)", async () => {
-    const res = (await auditLogsRoute.POST(
-      cookieRequest("http://localhost/api/audit-logs", {
-        token: tokenFor(users.user),
-        method: "POST",
-        origin: "http://localhost",
-        body: { type: "user_created", action: "forged entry", severity: "critical" },
-      }),
-    )) as NextResponse
-    expect(res.status).toBe(400)
+  it("POST /api/audit-logs is disabled (server-side writes only)", async () => {
+    const res = (await auditLogsRoute.POST()) as NextResponse
+    expect(res.status).toBe(405)
 
     const forged = await prisma.auditLog.findFirst({ where: { action: "forged entry" } })
     expect(forged).toBeNull()
-  })
-
-  it("POST /api/audit-logs records client-originated types with a fixed severity", async () => {
-    const res = (await auditLogsRoute.POST(
-      cookieRequest("http://localhost/api/audit-logs", {
-        token: tokenFor(users.user),
-        method: "POST",
-        origin: "http://localhost",
-        body: { type: "login", action: `Audit Authz Login ${SUFFIX}`, severity: "critical" },
-      }),
-    )) as NextResponse
-    expect(res.status).toBe(201)
-
-    const data = await res.json()
-    expect(data.log.severity).toBe("info")
-    expect(data.log.userId).toBe(users.user.id)
-
-    await prisma.auditLog.delete({ where: { id: data.log.id } })
   })
 
   it("POST /api/service-records attributes the audit entry to the actor", async () => {

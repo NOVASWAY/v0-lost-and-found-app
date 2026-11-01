@@ -3,7 +3,6 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { addAuditLog } from "./audit-logger"
 import { sanitizeSearchQuery } from "./security"
 
 // Production user type
@@ -58,6 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     
     sessionTimeoutRef.current = setTimeout(() => {
+      // Clear the httpOnly cookie as well as the UI cache so idle expiry
+      // matches what the user sees (cookie alone would still authenticate).
+      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {})
       setUser(null)
       setIsAuthenticated(false)
       sessionStorage.removeItem("userId")
@@ -172,9 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       resetSessionTimeout()
 
-      // Add audit log
-      addAuditLog("login", "User logged in", `User '${foundUser.username}' logged in`)
-
       // Route based on role. Set `opts.redirect: false` to let the caller play
       // its own cinematic transition before navigating (used by the login page).
       if (opts?.redirect !== false) {
@@ -193,10 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = useCallback(() => {
-    if (user) {
-      addAuditLog("logout", "User logged out", `User '${user.username}' logged out`)
-    }
-    // Clear the httpOnly session cookie server-side.
+    // Clear the httpOnly session cookie server-side (also writes the logout audit).
     try {
       fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {})
     } catch {
@@ -209,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem("loginAttempts")
     if (sessionTimeoutRef.current) clearTimeout(sessionTimeoutRef.current)
     router.push("/")
-  }, [user, router])
+  }, [router])
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
     if (!user) return false
@@ -232,11 +228,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false
       }
 
-      addAuditLog(
-        "user_password_changed",
-        "User password changed",
-        `Password changed for user '${user.username}'`,
-      )
       return true
     } catch {
       return false

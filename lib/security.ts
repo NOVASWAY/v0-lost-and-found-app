@@ -144,6 +144,8 @@ export function sanitizePath(input: string): string {
   return sanitized.trim()
 }
 
+const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com"
+
 /**
  * Validates and sanitizes a URL to prevent path traversal
  */
@@ -201,6 +203,62 @@ export function validateUrl(url: string): { valid: boolean; sanitized?: string; 
   } catch {
     return { valid: false, error: "Invalid URL format" }
   }
+}
+
+/**
+ * Item photos and claim proofs must come from our upload pipeline. In production
+ * that means a Vercel Blob HTTPS URL; locally any validateUrl-passing URL is fine
+ * so tests and offline fixtures keep working without a Blob store.
+ */
+export function validateUploadUrl(url: string): { valid: boolean; sanitized?: string; error?: string } {
+  const base = validateUrl(url)
+  if (!base.valid) return base
+
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(BLOB_HOST_SUFFIX)) {
+        return { valid: false, error: "Image URL must be a Vercel Blob upload" }
+      }
+    } catch {
+      return { valid: false, error: "Invalid URL format" }
+    }
+  }
+
+  return base
+}
+
+/** Fields safe to show on the unauthenticated landing/catalog feed. */
+export function toPublicItem(item: Record<string, unknown>) {
+  return {
+    id: item.id,
+    imageUrl: item.imageUrl,
+    category: item.category,
+    color: item.color,
+    location: item.location,
+    dateFounded: item.dateFounded,
+    status: item.status,
+    donationDeadline: item.donationDeadline,
+    createdAt: item.createdAt,
+    uploadedBy: item.uploadedBy,
+  }
+}
+
+/**
+ * Unique markings are ownership proof — never expose them to unrelated members.
+ * Staff and the uploader may see them; everyone else gets null.
+ */
+export function redactItemSecrets<T extends { uniqueMarkings?: string | null; uploadedById?: string }>(
+  item: T,
+  viewer: { id: string; role: string } | null,
+): T {
+  if (!viewer) {
+    return { ...item, uniqueMarkings: null }
+  }
+  const isStaff = viewer.role === "admin" || viewer.role === "volunteer"
+  const isOwner = item.uploadedById === viewer.id
+  if (isStaff || isOwner) return item
+  return { ...item, uniqueMarkings: null }
 }
 
 /**

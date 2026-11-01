@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return auth
   if (!assertSameOrigin(request)) return NextResponse.json({ error: "CSRF validation failed" }, { status: 403 })
+  const result = await rateLimit(getClientIdentifier(request), { windowMs: 60000, maxRequests: 30 })
+  if (!result.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 })
   const body = await readJsonBody(request)
   if (!body.ok) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   const parsed = ruleSchema.safeParse(body.data)

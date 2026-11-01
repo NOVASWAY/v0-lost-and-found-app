@@ -85,12 +85,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const recordFailure = async (reason: string) => {
+    const recordFailure = async () => {
+      // Do not record whether the username existed — that would recreate
+      // account enumeration in the audit trail even though the HTTP body is generic.
       await prisma.auditLog.create({
         data: {
           type: "login",
           action: "Login failed",
-          details: `Failed login for '${username}': ${reason}`,
+          details: `Failed login attempt for '${username}'`,
           severity: "warning",
         },
       })
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest) {
       const isValidPassword = await comparePassword(password, passwordHash)
 
       if (!user || !isValidPassword) {
-        await recordFailure(user ? "Invalid password" : "Unknown username")
+        await recordFailure()
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
 
@@ -125,8 +127,6 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Return user data (excluding password)
-      const { password: _, ...userWithoutPassword } = user
       const accessToken = signAccessToken({
         sub: user.id,
         role: user.role,
@@ -135,11 +135,28 @@ export async function POST(request: NextRequest) {
         tokenVersion: user.tokenVersion,
       })
 
+      // Profile fields only — never return password hash or tokenVersion.
+      const safeUser = {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+        itemsUploaded: user.itemsUploaded,
+        claimsSubmitted: user.claimsSubmitted,
+        joinedAt: user.joinedAt,
+        vaultPoints: user.vaultPoints,
+        rank: user.rank,
+        attendanceCount: user.attendanceCount,
+        serviceCount: user.serviceCount,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }
+
       // The access token is delivered ONLY via an httpOnly cookie so it can never be
       // read or stored by client-side JavaScript (mitigates token theft via XSS).
       const response = NextResponse.json(
         {
-          user: userWithoutPassword,
+          user: safeUser,
           message: "Login successful",
         },
         {

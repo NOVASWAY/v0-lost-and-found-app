@@ -7,6 +7,9 @@ import {
   isValidCUID,
   sanitizePath,
   validateUrl,
+  validateUploadUrl,
+  toPublicItem,
+  redactItemSecrets,
   sanitizeSearchQuery,
   validateRouteId,
   parsePagination,
@@ -136,6 +139,49 @@ describe("validateUrl", () => {
   it("rejects base64 data URLs", () => {
     expect(validateUrl("data:image/png;base64,iVBORw0KGgo=").valid).toBe(false)
     expect(validateUrl("data:text/html;base64,PHNjcmlwdD4=").valid).toBe(false)
+  })
+})
+
+describe("validateUploadUrl", () => {
+  it("in production requires a Vercel Blob host", () => {
+    vi.stubEnv("NODE_ENV", "production")
+    try {
+      expect(validateUploadUrl("https://images.example.com/photo.png").valid).toBe(false)
+      expect(validateUploadUrl("https://abc123.blob.vercel-storage.com/items/u/a.png").valid).toBe(true)
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+})
+
+describe("item projection helpers", () => {
+  const sample = {
+    id: "c0000000000000000000000001",
+    imageUrl: "https://example.com/a.png",
+    category: "Phone",
+    color: "black",
+    location: "Lobby",
+    dateFounded: new Date().toISOString(),
+    description: "secret details",
+    uniqueMarkings: "scratch on back",
+    status: "available",
+    donationDeadline: null,
+    uploadedById: "c0000000000000000000000002",
+    createdAt: new Date().toISOString(),
+    uploadedBy: { id: "c0000000000000000000000002" },
+  }
+
+  it("toPublicItem omits uniqueMarkings and description", () => {
+    const pub = toPublicItem(sample)
+    expect(pub).not.toHaveProperty("uniqueMarkings")
+    expect(pub).not.toHaveProperty("description")
+    expect(pub.category).toBe("Phone")
+  })
+
+  it("redactItemSecrets hides markings from unrelated members", () => {
+    expect(redactItemSecrets(sample, { id: "cother", role: "user" }).uniqueMarkings).toBeNull()
+    expect(redactItemSecrets(sample, { id: sample.uploadedById, role: "user" }).uniqueMarkings).toBe("scratch on back")
+    expect(redactItemSecrets(sample, { id: "cstaff", role: "volunteer" }).uniqueMarkings).toBe("scratch on back")
   })
 })
 

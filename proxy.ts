@@ -4,11 +4,32 @@ import crypto from "crypto"
 import { verifyAccessToken } from "@/lib/jwt"
 import { prisma, withDbRetry } from "@/lib/db"
 
+const MEMBER_PATHS = [
+  "/dashboard",
+  "/browse",
+  "/upload",
+  "/my-claims",
+  "/my-uploads",
+  "/profile",
+  "/orders",
+  "/missions",
+  "/items",
+] as const
+
+function matchesPrefix(pathname: string, prefixes: readonly string[]): boolean {
+  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+}
+
 export async function proxy(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production"
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
 
-  const cspHeader = `default-src 'self'; script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
+  // Use the nonce for scripts; keep unsafe-inline only in development where Next
+  // HMR still needs eval. Production relies on the nonce forwarded via x-nonce.
+  const scriptSrc = isDev
+    ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}'`
+    : `script-src 'self' 'nonce-${nonce}'`
+  const cspHeader = `default-src 'self'; ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
 
   // Forward the nonce + CSP via request headers so Next.js can inject the nonce
   // into inline scripts during server rendering. Also set on the response so the
@@ -39,14 +60,16 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin")
 
   // ---- Server-side route protection ----
-  // Enforce authentication/authorization for privileged area before the page renders,
-  // so access is not left to client-side checks alone.
+  // Enforce authentication/authorization before the page renders so access is
+  // not left to client-side useEffect redirects alone.
   const { pathname } = request.nextUrl
 
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/")
   const isVolunteerPath = pathname === "/volunteer" || pathname.startsWith("/volunteer/")
+  const isPlaybooksPath = pathname === "/playbooks" || pathname.startsWith("/playbooks/")
+  const isMemberPath = matchesPrefix(pathname, MEMBER_PATHS)
 
-  if (isAdminPath || isVolunteerPath) {
+  if (isAdminPath || isVolunteerPath || isPlaybooksPath || isMemberPath) {
     const token = request.cookies.get("auth_token")?.value
     const payload = token ? verifyAccessToken(token) : null
 
@@ -74,8 +97,14 @@ export async function proxy(request: NextRequest) {
 
     const isAdmin = currentRole === "admin"
     const isStaff = currentRole === "admin" || currentRole === "volunteer"
+    const isAuthed = currentRole !== null
 
-    if ((isAdminPath && !isAdmin) || (isVolunteerPath && !isStaff)) {
+    if (
+      (isAdminPath && !isAdmin) ||
+      (isVolunteerPath && !isStaff) ||
+      (isPlaybooksPath && !isStaff) ||
+      (isMemberPath && !isAuthed)
+    ) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       url.search = ""

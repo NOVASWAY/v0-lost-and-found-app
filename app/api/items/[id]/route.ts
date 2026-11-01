@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
+import { assertSameOrigin, readJsonBody, redactItemSecrets, validateRouteId } from "@/lib/security"
 import { requireAuth } from "@/lib/auth-middleware"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { updateItemSchema, validateAndSanitize } from "@/lib/validation"
@@ -57,7 +57,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Item not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ item })
+    // Unique markings are ownership proof — redact for non-owner non-staff.
+    return NextResponse.json({ item: redactItemSecrets(item, authResult.user) })
   } catch (error) {
     console.error("Get item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

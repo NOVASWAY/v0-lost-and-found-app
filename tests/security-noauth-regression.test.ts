@@ -203,9 +203,9 @@ describe("no-auth regression: protected routes require a session", () => {
     expect(res.status).toBe(401)
   })
 
-  it("rejects POST /api/audit-logs without auth", async () => {
-    const res = (await auditLogsRoute.POST(req)) as NextResponse
-    expect(res.status).toBe(401)
+  it("rejects POST /api/audit-logs (method disabled)", async () => {
+    const res = (await auditLogsRoute.POST()) as NextResponse
+    expect(res.status).toBe(405)
   })
 })
 

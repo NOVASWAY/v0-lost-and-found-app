@@ -20,6 +20,16 @@ export default function PlaybooksPage() {
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
+    // Staff-only: do not fetch until role is known (proxy also gates this path).
+    if (!isAuthenticated) {
+      router.push("/login")
+      return
+    }
+    if (user?.role !== "admin" && user?.role !== "volunteer") {
+      router.push("/dashboard")
+      return
+    }
+
     playbooksApi
       .getAll()
       .then((res) => setPlaybooks(res.playbooks))
@@ -28,17 +38,7 @@ export default function PlaybooksPage() {
         toast({ title: "Error", description: message, variant: "destructive" })
       })
       .finally(() => setIsLoaded(true))
-  }, [toast])
-
-  useEffect(() => {
-    if (isLoaded && !isAuthenticated) {
-      router.push("/login")
-    }
-    // Playbooks contain internal security procedures; staff only.
-    if (isLoaded && isAuthenticated && user?.role !== "admin" && user?.role !== "volunteer") {
-      router.push("/dashboard")
-    }
-  }, [isLoaded, isAuthenticated, user, router])
+  }, [isAuthenticated, user, router, toast])
 
   if (!isLoaded || !isAuthenticated) {
     return (

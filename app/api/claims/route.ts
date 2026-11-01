@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { requireAuth } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
-import { refreshUserRanks } from "@/lib/ranking"
 import { createClaimSchema, validateAndSanitize } from "@/lib/validation"
-import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUrl } from "@/lib/security"
+import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId, validateUploadUrl } from "@/lib/security"
+import { awardPoints } from "@/lib/points"
 
 class ClaimError extends Error {
   constructor(message: string, public status: number) {
@@ -134,8 +134,8 @@ export async function POST(request: NextRequest) {
     const { itemId, proofImage, notes } = validation.data
     const claimantId = authResult.user.id
 
-    // Validate proof image URL to prevent path traversal
-    const urlValidation = validateUrl(proofImage)
+    // Validate proof image URL — production requires a Vercel Blob upload URL.
+    const urlValidation = validateUploadUrl(proofImage)
     if (!urlValidation.valid) {
       return NextResponse.json({ error: urlValidation.error || "Invalid proof image URL" }, { status: 400 })
     }
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
       await tx.user.update({
         where: { id: claimantId },
-        data: { claimsSubmitted: { increment: 1 }, vaultPoints: { increment: 25 } },
+        data: { claimsSubmitted: { increment: 1 } },
       })
 
       await tx.auditLog.create({
@@ -188,9 +188,14 @@ export async function POST(request: NextRequest) {
       return created
     })
 
-    await refreshUserRanks()
+    await awardPoints({
+      userId: claimantId,
+      action: "claim_submitted",
+      referenceId: claim.id,
+      fallbackPoints: 10,
+    })
 
-    return NextResponse.json({ claim, message: "Claim created successfully" } )
+    return NextResponse.json({ claim, message: "Claim created successfully" })
   } catch (error) {
     if (error instanceof ClaimError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
