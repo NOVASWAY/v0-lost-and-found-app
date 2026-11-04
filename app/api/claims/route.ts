@@ -165,7 +165,22 @@ export async function POST(request: NextRequest) {
           status: "pending",
         },
         include: {
-          item: true,
+          // Never item:true — uniqueMarkings are ownership proof and must stay
+          // off the claimant create response.
+          item: {
+            select: {
+              id: true,
+              imageUrl: true,
+              category: true,
+              color: true,
+              location: true,
+              dateFounded: true,
+              description: true,
+              status: true,
+              donationDeadline: true,
+              uploadedById: true,
+            },
+          },
           claimant: { select: { id: true, name: true, username: true } },
         },
       })

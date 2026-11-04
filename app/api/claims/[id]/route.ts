@@ -12,6 +12,27 @@ class ClaimUpdateError extends Error {
   }
 }
 
+// Never `include: { claimant: true }` — that serializes the password hash.
+const CLAIMANT_PUBLIC_SELECT = { id: true, name: true, username: true } as const
+
+const ITEM_PUBLIC_SELECT = {
+  id: true,
+  imageUrl: true,
+  category: true,
+  color: true,
+  location: true,
+  dateFounded: true,
+  description: true,
+  status: true,
+  donationDeadline: true,
+  uploadedById: true,
+} as const
+
+const ITEM_STAFF_SELECT = {
+  ...ITEM_PUBLIC_SELECT,
+  uniqueMarkings: true,
+} as const
+
 // GET claim by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -27,17 +48,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!idValidation.valid) {
       return NextResponse.json({ error: idValidation.error || "Invalid ID format" }, { status: 400 })
     }
+
+    const isStaff = authResult.user.role === "admin" || authResult.user.role === "volunteer"
+
     const claim = await prisma.claim.findUnique({
       where: { id },
       include: {
-        item: true,
-        claimant: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          },
-        },
+        item: { select: isStaff ? ITEM_STAFF_SELECT : ITEM_PUBLIC_SELECT },
+        claimant: { select: CLAIMANT_PUBLIC_SELECT },
         releaseLog: true,
       },
     })
@@ -111,10 +129,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     const updatedClaim = await prisma.$transaction(async (tx) => {
-      // Fresh read inside transaction — concurrent modifications are serialized
+      // Fresh read inside transaction — concurrent modifications are serialized.
+      // Do not include claimant:true — that would pull the password hash into
+      // memory and into the JSON response below.
       const claim = await tx.claim.findUnique({
         where: { id },
-        include: { item: true, claimant: true },
+        select: {
+          id: true,
+          itemId: true,
+          itemName: true,
+          claimantId: true,
+          claimantName: true,
+          status: true,
+        },
       })
 
       if (!claim) throw new ClaimUpdateError("Claim not found", 404)
@@ -159,14 +186,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const updated = await tx.claim.update({
         where: { id },
         data: updateData,
-        include: { item: true, claimant: true },
+        include: {
+          item: { select: ITEM_STAFF_SELECT },
+          claimant: { select: CLAIMANT_PUBLIC_SELECT },
+        },
       })
 
       // Release: update item, create release log, award points
       if (status === "released") {
         await tx.item.update({ where: { id: claim.itemId }, data: { status: "released" } })
 
-        const volunteer = await tx.user.findUnique({ where: { id: actorId } })
+        const volunteer = await tx.user.findUnique({
+          where: { id: actorId },
+          select: { id: true, name: true },
+        })
         if (volunteer) {
           await tx.releaseLog.create({
             data: {

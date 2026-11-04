@@ -176,7 +176,7 @@ describe("claim status transition validation", () => {
     claimId = body.claim.id
   })
 
-  it("approves a pending claim", async () => {
+  it("approves a pending claim without leaking claimant password hash", async () => {
     const req = cookieRequest(`http://localhost/api/claims/${claimId}`, {
       token: tokenFor(users.admin),
       method: "PATCH",
@@ -186,6 +186,14 @@ describe("claim status transition validation", () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.claim.status).toBe("approved")
+    // Regression for cba3c14: include { claimant: true } serialized password hashes.
+    expect(body.claim.claimant).toEqual({
+      id: users.user1.id,
+      name: users.user1.name,
+      username: users.user1.username,
+    })
+    expect(body.claim.claimant).not.toHaveProperty("password")
+    expect(JSON.stringify(body)).not.toMatch(/\$2[aby]\$/)
   })
 
   it("rejects transitioning from approved to pending", async () => {
