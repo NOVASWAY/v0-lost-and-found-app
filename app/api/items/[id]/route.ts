@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth-middleware"
 import { requireAdmin } from "@/lib/auth-middleware"
 import { updateItemSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { withProxiedMedia } from "@/lib/media"
 
 // GET item by ID
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -58,7 +59,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Unique markings are ownership proof — redact for non-owner non-staff.
-    return NextResponse.json({ item: redactItemSecrets(item, authResult.user) })
+    return NextResponse.json({
+      item: withProxiedMedia(redactItemSecrets(item, authResult.user)),
+    })
   } catch (error) {
     console.error("Get item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -135,7 +138,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json({ item, message: "Item updated successfully" })
+    return NextResponse.json({ item: withProxiedMedia(item), message: "Item updated successfully" })
   } catch (error) {
     console.error("Update item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

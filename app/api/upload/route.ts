@@ -3,10 +3,10 @@ import { del, put } from "@vercel/blob"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { requireAuth } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody } from "@/lib/security"
+import { BLOB_HOST_SUFFIX, toProxiedMediaUrl } from "@/lib/media"
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
-const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com"
 
 // Verify a file's magic bytes match its declared MIME type. The multipart
 // Content-Type is client-supplied and can be forged, so we inspect the actual
@@ -146,12 +146,16 @@ export async function POST(request: NextRequest) {
     const filename = uploadPathname(authResult.user.id, ext)
 
     const blob = await put(filename, file, {
-      access: "public",
+      access: "private",
       contentType: detectedType,
       token: process.env.BLOB_READ_WRITE_TOKEN,
     })
 
-    return NextResponse.json({ url: blob.url })
+    // Persist the raw blob URL in the DB; browsers only ever see the proxy URL.
+    return NextResponse.json({
+      url: blob.url,
+      displayUrl: toProxiedMediaUrl(blob.url),
+    })
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })

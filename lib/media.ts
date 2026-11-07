@@ -52,3 +52,17 @@ export function withProxiedMedia<T extends MediaFields>(row: T): T {
 export function withProxiedMediaList<T extends MediaFields>(rows: T[]): T[] {
   return rows.map((row) => withProxiedMedia(row))
 }
+
+/** Rewrite attachment.url values stored on occurrence-book entries. */
+export function withProxiedAttachments<T extends { attachments?: unknown }>(row: T): T {
+  if (!Array.isArray(row.attachments)) return row
+  return {
+    ...row,
+    attachments: row.attachments.map((entry) => {
+      if (!entry || typeof entry !== "object") return entry
+      const att = entry as { url?: unknown }
+      if (typeof att.url !== "string") return entry
+      return { ...att, url: toProxiedMediaUrl(att.url) }
+    }),
+  }
+}

@@ -22,6 +22,7 @@ import * as occurrenceCategoryByIdRoute from "../app/api/occurrence-categories/[
 import * as occurrenceBookRoute from "../app/api/occurrence-book/route"
 import * as occurrenceBookByIdRoute from "../app/api/occurrence-book/[id]/route"
 import * as uploadRoute from "../app/api/upload/route"
+import * as mediaRoute from "../app/api/media/route"
 import * as auditLogsRoute from "../app/api/audit-logs/route"
 
 function mockRequest(): NextRequest {
@@ -201,6 +202,21 @@ describe("no-auth regression: protected routes require a session", () => {
   it("rejects DELETE /api/upload without auth", async () => {
     const res = (await uploadRoute.DELETE(req)) as NextResponse
     expect(res.status).toBe(401)
+  })
+
+  it("rejects GET /api/media for an unknown blob without auth", async () => {
+    const headers = new Headers()
+    const mediaReq = {
+      headers,
+      cookies: { get: () => undefined },
+      nextUrl: {
+        searchParams: new URLSearchParams({
+          u: "https://abc.private.blob.vercel-storage.com/items/nobody/secret.png",
+        }),
+      },
+    } as unknown as import("next/server").NextRequest
+    const res = (await mediaRoute.GET(mediaReq)) as NextResponse
+    expect([401, 503]).toContain(res.status)
   })
 
   it("rejects POST /api/audit-logs (method disabled)", async () => {

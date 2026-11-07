@@ -5,6 +5,7 @@ import { requireAdmin, requireAdminOrVolunteer } from "@/lib/auth-middleware"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { assertSameOrigin, parsePagination, readJsonBody, sanitizeSearchQuery, validateRouteId } from "@/lib/security"
 import { createOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
+import { withProxiedAttachments } from "@/lib/media"
 
 const OCCURRENCE_SEVERITIES = ["low", "medium", "high", "critical"] as const
 const OCCURRENCE_STATUSES = ["open", "investigating", "resolved", "closed"] as const
@@ -69,7 +70,10 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
-    return NextResponse.json({ occurrences, pagination: { page, limit } })
+    return NextResponse.json({
+      occurrences: occurrences.map((o) => withProxiedAttachments(o)),
+      pagination: { page, limit },
+    })
   } catch (error) {
     console.error("Get occurrence book error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -164,7 +168,10 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ occurrence, message: "Occurrence created successfully" })
+    return NextResponse.json({
+      occurrence: withProxiedAttachments(occurrence),
+      message: "Occurrence created successfully",
+    })
   } catch (error) {
     console.error("Create occurrence error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

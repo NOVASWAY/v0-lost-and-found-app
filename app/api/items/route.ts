@@ -14,6 +14,7 @@ import {
 } from "@/lib/security"
 import { getAuthenticatedUser, requireAuth } from "@/lib/auth-middleware"
 import { awardPoints } from "@/lib/points"
+import { withProxiedMedia, withProxiedMediaList } from "@/lib/media"
 
 // GET all items
 export async function GET(request: NextRequest) {
@@ -94,10 +95,12 @@ export async function GET(request: NextRequest) {
     ])
 
     // Unauthenticated catalog: landing-page teaser only — no uniqueMarkings /
-    // description that would leak claim-proof details.
-    const items = viewer
+    // description that would leak claim-proof details. Media URLs are rewritten
+    // to /api/media so browsers never hit private Blob storage directly.
+    const projected = viewer
       ? rows.map((item) => redactItemSecrets(item, viewer))
       : rows.map((item) => toPublicItem(item as unknown as Record<string, unknown>))
+    const items = withProxiedMediaList(projected as Array<{ imageUrl?: string | null }>)
 
     return NextResponse.json({
       items,
@@ -212,7 +215,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ item, message: "Item created successfully" })
+    return NextResponse.json({ item: withProxiedMedia(item), message: "Item created successfully" })
   } catch (error) {
     console.error("Create item error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

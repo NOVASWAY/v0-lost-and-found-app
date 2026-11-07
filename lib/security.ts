@@ -144,6 +144,8 @@ export function sanitizePath(input: string): string {
   return sanitized.trim()
 }
 
+// Matches both public (*.blob.vercel-storage.com) and private
+// (*.private.blob.vercel-storage.com) Vercel Blob hosts.
 const BLOB_HOST_SUFFIX = ".blob.vercel-storage.com"
 
 /**
@@ -230,6 +232,7 @@ export function validateUploadUrl(url: string): { valid: boolean; sanitized?: st
 
 /** Fields safe to show on the unauthenticated landing/catalog feed. */
 export function toPublicItem(item: Record<string, unknown>) {
+  // imageUrl is rewritten by the route via withProxiedMedia — keep raw here.
   return {
     id: item.id,
     imageUrl: item.imageUrl,

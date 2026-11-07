@@ -5,6 +5,7 @@ import { requireAdmin, requireAdminOrVolunteer } from "@/lib/auth-middleware"
 import { assertSameOrigin, readJsonBody, validateRouteId } from "@/lib/security"
 import { updateOccurrenceBookSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
+import { withProxiedAttachments } from "@/lib/media"
 
 // GET single occurrence (staff only — matches /admin/occurrence-book UI)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Occurrence not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ occurrence })
+    return NextResponse.json({ occurrence: withProxiedAttachments(occurrence) })
   } catch (error) {
     console.error("Get occurrence error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -152,7 +153,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     })
 
-    return NextResponse.json({ occurrence, message: "Occurrence updated successfully" })
+    return NextResponse.json({
+      occurrence: withProxiedAttachments(occurrence),
+      message: "Occurrence updated successfully",
+    })
   } catch (error) {
     console.error("Update occurrence error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

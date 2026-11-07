@@ -5,6 +5,7 @@ import { requireAdminOrVolunteer, requireAuth } from "@/lib/auth-middleware"
 import { updateClaimSchema, validateAndSanitize } from "@/lib/validation"
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { awardPoints } from "@/lib/points"
+import { withProxiedMedia } from "@/lib/media"
 
 class ClaimUpdateError extends Error {
   constructor(message: string, public status: number) {
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Forbidden - Insufficient permissions" }, { status: 403 })
     }
 
-    return NextResponse.json({ claim })
+    return NextResponse.json({ claim: withProxiedMedia(claim) })
   } catch (error) {
     console.error("Get claim error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -237,7 +238,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       })
     }
 
-    return NextResponse.json({ claim: updatedClaim, message: "Claim updated successfully" })
+    return NextResponse.json({
+      claim: withProxiedMedia(updatedClaim),
+      message: "Claim updated successfully",
+    })
   } catch (error) {
     if (error instanceof ClaimUpdateError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
