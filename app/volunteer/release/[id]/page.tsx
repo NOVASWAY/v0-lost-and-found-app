@@ -7,12 +7,14 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { BackButton } from "@/components/back-button"
 import { claimsApi, ApiError } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { VaultBackground } from "@/components/vault-background"
+import { cn } from "@/lib/utils"
 
 export default function ReleaseItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { user, isAuthenticated } = useAuth()
@@ -48,27 +50,27 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
-          <Card className="p-6 text-center">
+          <Card className="p-6 text-center glass-card">
             <p className="text-muted-foreground">Loading claim...</p>
             <BackButton fallbackHref="/volunteer/dashboard" />
           </Card>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 
   if (!claim) {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
-          <Card className="p-6 text-center">
+          <Card className="p-6 text-center glass-card">
             <p className="text-muted-foreground">Claim not found</p>
             <BackButton fallbackHref="/volunteer/dashboard" />
           </Card>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 
@@ -144,11 +146,13 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
   if (isReleased) {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto flex min-h-[calc(100vh-80px)] items-center justify-center px-4">
-          <Card className="max-w-md p-8 text-center">
-            <CheckCircle className="mx-auto mb-4 h-16 w-16 text-accent" />
-            <h1 className="mb-2 text-2xl font-bold text-card-foreground">Item Released!</h1>
+          <Card className="max-w-md p-8 text-center glass-card animate-scale-in">
+            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </div>
+            <h1 className="mb-2 text-2xl font-black text-card-foreground">Item Released!</h1>
             <p className="mb-6 text-muted-foreground">
               The item has been successfully released to {claim.claimantName}. The release has been logged in the
               system.
@@ -156,41 +160,40 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
             <BackButton fallbackHref="/volunteer/dashboard" className="w-full" />
           </Card>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-
+    <VaultBackground>
       <main className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
-        <div className="mb-6">
+        <div className="mb-6 animate-slide-up">
           <BackButton fallbackHref="/volunteer/dashboard" />
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 animate-slide-up delay-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-foreground">Review & Release</h1>
+            <h1 className="text-3xl font-black text-foreground">Review & Release</h1>
             <Badge variant="outline" className="font-mono">
               {claim.id}
             </Badge>
           </div>
-          <p className="text-muted-foreground">Verify the claimant&apos;s identity and proof before releasing the item</p>
+          <p className="text-muted-foreground">Verify the claimant's identity and proof before releasing the item</p>
         </div>
 
         {/* Photo Comparison */}
-        <Card className="mb-6 p-6">
+        <Card className="mb-6 p-6 glass-card animate-slide-up delay-2">
           <h2 className="mb-4 text-xl font-semibold text-card-foreground">Photo Comparison</h2>
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <Label className="mb-2 block text-sm font-medium">Found Item Photo</Label>
-              <div className="relative aspect-square overflow-hidden rounded-lg border border-border">
+              <div className="relative aspect-square overflow-hidden rounded-xl border border-border/50">
                 <Image src={item?.imageUrl || claim.itemImage || "/placeholder.svg"} alt="Found item" fill className="object-cover" />
               </div>
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium">Claimant&apos;s Proof Photo</Label>
-              <div className="relative aspect-square overflow-hidden rounded-lg border border-border">
+              <Label className="mb-2 block text-sm font-medium">Claimant's Proof Photo</Label>
+              <div className="relative aspect-square overflow-hidden rounded-xl border border-border/50">
                 <Image src={claim.proofImage || "/placeholder.svg"} alt="Proof photo" fill className="object-cover" />
               </div>
             </div>
@@ -199,7 +202,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Item Details */}
-          <Card className="p-6">
+          <Card className="p-6 glass-card animate-slide-up delay-3">
             <h2 className="mb-4 text-xl font-semibold text-card-foreground">Item Details</h2>
             <div className="space-y-3">
               {item && (
@@ -232,7 +235,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
           </Card>
 
           {/* Claimant Information */}
-          <Card className="p-6">
+          <Card className="p-6 glass-card animate-slide-up delay-3">
             <h2 className="mb-4 text-xl font-semibold text-card-foreground">Claimant Information</h2>
             <div className="space-y-3">
               <div>
@@ -258,7 +261,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Release Form */}
-        <Card className="mt-6 p-6">
+        <Card className="mt-6 p-6 glass-card animate-slide-up delay-4">
           <h2 className="mb-4 text-xl font-semibold text-card-foreground">
             {claim.status === "pending" || claim.status === "approved"
               ? "Review Claim"
@@ -278,31 +281,56 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
                   />
                 </div>
                 {claim.status === "approved" && (
-                  <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+                  <div className={cn(
+                    "rounded-xl p-3 text-sm",
+                    "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                  )}>
                     Claim approved — the item is locked. You can now release it to the claimant or reject it.
                   </div>
                 )}
                 <div className="flex flex-col gap-3 sm:flex-row">
                   {claim.status === "pending" ? (
-                    <Button onClick={handleApprove} size="lg" className="flex-1" disabled={isSubmitting}>
-                      <CheckCircle className="mr-2 h-5 w-5" />
+                    <Button
+                      onClick={handleApprove}
+                      size="lg"
+                      className="flex-1 gap-2"
+                      disabled={isSubmitting}
+                    >
+                      <CheckCircle className="h-5 w-5" />
                       Approve Claim
                     </Button>
                   ) : (
-                    <Button onClick={handleRelease} size="lg" className="flex-1" disabled={isSubmitting}>
-                      <CheckCircle className="mr-2 h-5 w-5" />
+                    <Button
+                      onClick={handleRelease}
+                      size="lg"
+                      className="flex-1 gap-2"
+                      disabled={isSubmitting}
+                    >
+                      <CheckCircle className="h-5 w-5" />
                       Release Item
                     </Button>
                   )}
-                  <Button onClick={handleReject} size="lg" variant="destructive" className="flex-1" disabled={isSubmitting}>
+                  <Button
+                    onClick={handleReject}
+                    size="lg"
+                    variant="destructive"
+                    className="flex-1 gap-2"
+                    disabled={isSubmitting}
+                  >
+                    <XCircle className="h-5 w-5" />
                     Reject Claim
                   </Button>
                 </div>
               </>
             )}
             {(claim.status === "rejected" || claim.status === "released") && (
-              <div className="rounded-lg bg-muted p-4">
-                <p className="text-sm text-muted-foreground">
+              <div className={cn(
+                "rounded-xl p-4",
+                claim.status === "rejected"
+                  ? "bg-destructive/10 text-destructive border border-destructive/20"
+                  : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+              )}>
+                <p className="text-sm">
                   {claim.status === "rejected" ? "This claim has been rejected." : "This item has been released."}
                 </p>
                 <div className="mt-4">
@@ -313,6 +341,6 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
           </div>
         </Card>
       </main>
-    </div>
+    </VaultBackground>
   )
 }

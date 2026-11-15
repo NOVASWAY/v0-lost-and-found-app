@@ -26,6 +26,7 @@ import { useAuth } from "@/lib/auth-context"
 import { usersApi, auditLogsApi, ApiError, type UserListItem } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { VaultBackground } from "@/components/vault-background"
+import { cn } from "@/lib/utils"
 
 export default function AdminDashboardPage() {
   const { user, isAuthenticated } = useAuth()
@@ -67,15 +68,15 @@ export default function AdminDashboardPage() {
   // Show loading while checking auth or fetching data
   if (!isLoaded || !isAuthenticated || user?.role !== "admin") {
     return (
-      <VaultBackground>
+      <VaultBackground intensity="cinematic">
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <div className="mb-6 sm:mb-8 space-y-2">
-            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-64 bg-muted animate-pulse rounded-xl" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 w-full bg-muted animate-pulse rounded-lg" />
+              <div key={i} className="h-24 w-full bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         </main>
@@ -86,11 +87,11 @@ export default function AdminDashboardPage() {
   return (
     <VaultBackground intensity="cinematic" className="text-foreground font-sans selection:bg-primary/30">
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-7xl animate-in fade-in duration-700 pb-24 sm:pb-10">
-        <div className="mb-8 sm:mb-12 border-b border-border/50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
+        <div className="mb-8 sm:mb-12 border-b border-border/50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 animate-slide-up">
           <div>
             <div className="flex items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
-              <div className="bg-primary/10 p-1.5 sm:p-2 rounded-lg border border-primary/20 shadow-[0_0_15px_rgba(var(--primary),0.1)]">
-                <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              <div className="bg-primary/10 p-2 sm:p-3 rounded-xl border border-primary/20 shadow-[0_0_20px_rgba(var(--primary),0.15)]">
+                <ShieldCheck className="w-7 h-7 sm:w-10 sm:h-10 text-primary" />
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tighter uppercase italic">Security Command Center</h1>
             </div>
@@ -99,18 +100,18 @@ export default function AdminDashboardPage() {
               <span className="text-primary font-bold">SUPERUSER</span>
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 animate-slide-up delay-1">
             <Link href="/admin/audit-logs">
               <Button
                 variant="outline"
-                className="border-border hover:bg-muted font-bold tracking-tight bg-transparent"
+                className="border-border hover:bg-muted font-bold tracking-tight bg-transparent glass"
               >
                 <Eye className="mr-2 w-4 h-4" />
                 Audit Logs
               </Button>
             </Link>
             <Link href="/admin/users">
-              <Button className="bg-primary text-primary-foreground font-black tracking-tight hover:scale-105 transition-transform">
+              <Button className="font-black tracking-tight hover:scale-105 transition-transform gradient">
                 <Users className="mr-2 w-4 h-4" />
                 Manage Users
               </Button>
@@ -128,19 +129,21 @@ export default function AdminDashboardPage() {
           ].map((stat, i) => (
             <Card
               key={i}
-              className="bg-card border-border hover:border-primary/50 transition-all p-4 sm:p-6 relative overflow-hidden group"
+              className={cn(
+                "bg-card border-border hover:border-primary/50 transition-all p-4 sm:p-6 relative overflow-hidden group glass-card",
+              )}
             >
-              <div 
+              <div
                 className="absolute top-0 right-0 p-2 sm:p-4 opacity-10 group-hover:opacity-20 transition-opacity animate-float-gentle"
                 style={{
                   animationDelay: `${i * 200}ms`,
-                  animationDuration: '4s',
+                  animationDuration: "4s",
                 }}
               >
                 <stat.icon className={`w-8 h-8 sm:w-12 sm:h-12 ${stat.color}`} />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1 uppercase tracking-wider">{stat.label}</p>
-              <h3 className="text-2xl sm:text-3xl font-bold">{stat.value}</h3>
+              <h3 className="text-2xl sm:text-3xl font-black">{stat.value}</h3>
             </Card>
           ))}
         </div>
@@ -148,9 +151,9 @@ export default function AdminDashboardPage() {
         {/* Quick Navigation */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link href="/admin/users">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -162,9 +165,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/items">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 transition-colors group-hover:bg-blue-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 transition-all duration-300 group-hover:bg-blue-500/20 group-hover:scale-110">
                   <Package className="h-6 w-6 text-blue-500" />
                 </div>
                 <div>
@@ -176,10 +179,10 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/claims">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10 transition-colors group-hover:bg-green-500/20">
-                  <FileText className="h-6 w-6 text-green-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 transition-all duration-300 group-hover:bg-emerald-500/20 group-hover:scale-110">
+                  <FileText className="h-6 w-6 text-emerald-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">Claims</h3>
@@ -190,9 +193,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/locations">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10 transition-colors group-hover:bg-purple-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 transition-all duration-300 group-hover:bg-purple-500/20 group-hover:scale-110">
                   <MapPin className="h-6 w-6 text-purple-500" />
                 </div>
                 <div>
@@ -204,9 +207,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/releases">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10 transition-colors group-hover:bg-amber-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 transition-all duration-300 group-hover:bg-amber-500/20 group-hover:scale-110">
                   <ShieldCheck className="h-6 w-6 text-amber-500" />
                 </div>
                 <div>
@@ -218,9 +221,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/donations">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10 transition-colors group-hover:bg-red-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 transition-all duration-300 group-hover:bg-red-500/20 group-hover:scale-110">
                   <Gift className="h-6 w-6 text-red-500" />
                 </div>
                 <div>
@@ -232,9 +235,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/audit-logs">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-500/10 transition-colors group-hover:bg-indigo-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 transition-all duration-300 group-hover:bg-indigo-500/20 group-hover:scale-110">
                   <Eye className="h-6 w-6 text-indigo-500" />
                 </div>
                 <div>
@@ -246,9 +249,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/playbooks">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-500/10 transition-colors group-hover:bg-orange-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 transition-all duration-300 group-hover:bg-orange-500/20 group-hover:scale-110">
                   <BookOpen className="h-6 w-6 text-orange-500" />
                 </div>
                 <div>
@@ -260,9 +263,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/missions">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-cyan-500/10 transition-colors group-hover:bg-cyan-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 transition-all duration-300 group-hover:bg-cyan-500/20 group-hover:scale-110">
                   <Activity className="h-6 w-6 text-cyan-500" />
                 </div>
                 <div>
@@ -274,9 +277,9 @@ export default function AdminDashboardPage() {
           </Link>
 
           <Link href="/admin/meeting-minutes">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-500/10 transition-colors group-hover:bg-teal-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/10 transition-all duration-300 group-hover:bg-teal-500/20 group-hover:scale-110">
                   <Calendar className="h-6 w-6 text-teal-500" />
                 </div>
                 <div>
@@ -287,10 +290,24 @@ export default function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/settings">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+          <Link href="/admin/occurrence-book">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-500/10 transition-colors group-hover:bg-slate-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-500/10 transition-all duration-300 group-hover:bg-pink-500/20 group-hover:scale-110">
+                  <FileText className="h-6 w-6 text-pink-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-card-foreground">Occurrence Book</h3>
+                  <p className="text-sm text-muted-foreground">Security occurrence log</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/admin/settings">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-500/10 transition-all duration-300 group-hover:bg-slate-500/20 group-hover:scale-110">
                   <Settings className="h-6 w-6 text-slate-500" />
                 </div>
                 <div>

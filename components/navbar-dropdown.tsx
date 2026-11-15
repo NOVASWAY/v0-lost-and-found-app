@@ -34,27 +34,39 @@ export function NavbarDropdown({ label, items }: NavbarDropdownProps) {
       <button
         onClick={() => setOpen(!open)}
         onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setTimeout(() => setOpen(false), 100)}
         className={cn(
-          "flex items-center gap-1 text-sm font-semibold transition-all duration-300 relative group",
-          open ? "text-primary" : "text-muted-foreground hover:text-primary"
+          "flex items-center gap-1 px-3 py-2 text-sm font-semibold transition-all duration-200 rounded-lg relative group",
+          open ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary hover:bg-muted/50"
         )}
+        aria-expanded={open}
+        aria-haspopup="true"
       >
         {label}
         <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", open && "rotate-180")} />
-        <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent group-hover:w-full transition-all duration-300 rounded-full" />
+        <span className={cn(
+          "absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-accent transition-all duration-300 rounded-full -translate-x-1/2",
+          open && "w-[calc(100%-0.75rem)]"
+        )} />
       </button>
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-2 w-48 py-1 bg-card border border-border rounded-lg shadow-xl z-50"
+          className="absolute top-full left-0 mt-2 w-52 py-2 bg-background/95 backdrop-blur-xl glass-strong border border-border/50 rounded-xl shadow-2xl z-50 animate-scale-in"
           onMouseLeave={() => setOpen(false)}
+          onMouseEnter={() => setOpen(true)}
+          role="menu"
         >
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+              className={cn(
+                "block px-4 py-2.5 text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors duration-200 rounded-lg mx-2",
+                "first:rounded-t-xl last:rounded-b-xl"
+              )}
+              role="menuitem"
             >
               {item.label}
             </Link>

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, CheckCircle } from "lucide-react"
+import { Upload, CheckCircle, ImageIcon, XIcon } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/lib/auth-context"
 import { claimsApi, uploadImage, deleteUpload, ApiError } from "@/lib/api-client"
@@ -25,7 +25,7 @@ interface ClaimModalProps {
   itemName: string
 }
 
-const MAX_PROOF_SIZE = 5 * 1024 * 1024 // 5MB (matches server-side limit)
+const MAX_PROOF_SIZE = 5 * 1024 * 1024
 
 export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
   const { user } = useAuth()
@@ -58,9 +58,16 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
       return
     }
 
-    // Keep the real file for upload, and a local preview URL for display only.
     setProofFile(file)
     setProofImage(URL.createObjectURL(file))
+  }
+
+  const removeProof = () => {
+    if (proofImage) {
+      URL.revokeObjectURL(proofImage)
+    }
+    setProofImage(null)
+    setProofFile(null)
   }
 
   const handleSubmit = async () => {
@@ -73,12 +80,8 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
       return
     }
     setIsSubmitting(true)
-    // Tracked so a failed claim submission can remove the orphaned upload.
     let proofUrl: string | null = null
     try {
-      // Upload the proof to Blob storage first (magic-byte verified server-side),
-      // then submit the claim with the public URL — avoids large base64 payloads
-      // in the database and the previous 5000-char proof limit.
       proofUrl = await uploadImage(proofFile)
 
       await claimsApi.create({
@@ -94,13 +97,10 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
 
       setIsSubmitted(true)
     } catch (err) {
-      // The proof upload succeeded but the claim was not created — drop the
-      // orphaned blob so the photo does not linger publicly.
       if (proofUrl) {
         await deleteUpload(proofUrl)
       }
-      const message =
-        err instanceof ApiError ? err.message : "Failed to submit claim"
+      const message = err instanceof ApiError ? err.message : "Failed to submit claim"
       toast({
         title: "Claim Failed",
         description: message,
@@ -114,29 +114,32 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="lg" className="w-full">
+        <Button size="lg" className="w-full gradient">
           Claim This Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl" size="lg">
         {!isSubmitted ? (
           <>
             <DialogHeader>
-              <DialogTitle>Claim Item: {itemName}</DialogTitle>
+              <DialogTitle className="flex items-center justify-between gap-4">
+                Claim Item
+                <span className="text-sm font-normal text-muted-foreground">{itemName}</span>
+              </DialogTitle>
               <DialogDescription>
                 Upload a photo proving ownership to submit your claim. This will be reviewed by our release volunteers.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-2">
               {/* Proof Photo Upload */}
-              <div className="space-y-2">
-                <Label htmlFor="proof-photo">Upload Proof Photo *</Label>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-4">
+              <div className="space-y-3">
+                <Label htmlFor="proof-photo">Proof Photo <span className="text-destructive">*</span></Label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
                     <Button
                       type="button"
                       variant="outline"
-                      className="gap-2 bg-transparent"
+                      className="gap-2"
                       onClick={() => document.getElementById("proof-upload")?.click()}
                     >
                       <Upload className="h-4 w-4" />
@@ -149,11 +152,24 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
                       className="hidden"
                       onChange={handleFileChange}
                     />
-                    {proofImage && <span className="text-sm text-muted-foreground">Photo uploaded</span>}
+                    {proofImage && (
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <ImageIcon className="h-3 w-3" />
+                        Photo uploaded
+                      </span>
+                    )}
                   </div>
                   {proofImage && (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
-                      <Image src={proofImage || "/placeholder.svg"} alt="Proof" fill className="object-cover" />
+                    <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border/50 glass-card">
+                      <Image src={proofImage} alt="Proof" fill className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={removeProof}
+                        className="absolute top-2 right-2 glass rounded-full p-1 opacity-0 hover:opacity-100 transition-opacity"
+                        aria-label="Remove proof photo"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -175,20 +191,29 @@ export function ClaimModal({ itemId, itemName }: ClaimModalProps) {
                 />
               </div>
 
-              <Button onClick={handleSubmit} disabled={!proofImage || isSubmitting} className="w-full">
+              <Button
+                onClick={handleSubmit}
+                disabled={!proofImage || isSubmitting}
+                className="w-full"
+                size="lg"
+              >
                 {isSubmitting ? "Submitting..." : "Submit Claim"}
               </Button>
             </div>
           </>
         ) : (
-          <div className="py-8 text-center">
-            <CheckCircle className="mx-auto mb-4 h-16 w-16 text-accent" />
+          <div className="py-8 text-center animate-scale-in">
+            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center animate-scale-in">
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </div>
             <DialogTitle className="mb-2 text-2xl">Claim Submitted!</DialogTitle>
-            <DialogDescription className="mb-6">
+            <DialogDescription className="mb-6 max-w-sm mx-auto">
               Your claim has been submitted successfully. A release volunteer will review your proof photo and contact
               you for pickup.
             </DialogDescription>
-            <Button onClick={() => setIsSubmitted(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setIsSubmitted(false)} className="w-full">
+              Close
+            </Button>
           </div>
         )}
       </DialogContent>

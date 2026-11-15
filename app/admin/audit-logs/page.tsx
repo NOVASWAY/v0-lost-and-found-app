@@ -22,6 +22,7 @@ export default function AuditLogsPage() {
   const [severityFilter, setSeverityFilter] = useState("all")
   const [auditLogs, setAuditLogs] = useState<any[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const now = Date.now()
 
   useEffect(() => {
     auditLogsApi

@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation"
 import { ItemCard } from "@/components/item-card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search } from "lucide-react"
+import { Search, Filter, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { itemsApi, locationsApi, ApiError, type Item, type Location } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
+import { VaultBackground } from "@/components/vault-background"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export default function BrowsePage() {
   const { isAuthenticated } = useAuth()
@@ -43,23 +46,23 @@ export default function BrowsePage() {
 
   if (!isLoaded || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background">
+      <VaultBackground>
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <div className="mb-6 sm:mb-8 space-y-2">
-            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-64 bg-muted animate-pulse rounded-xl" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded-xl" />
           </div>
           <div className="mb-6 space-y-4">
-            <div className="h-10 w-full bg-muted animate-pulse rounded" />
+            <div className="h-10 w-full bg-muted animate-pulse rounded-xl" />
             <div className="flex gap-4">
-              <div className="h-10 w-[180px] bg-muted animate-pulse rounded" />
-              <div className="h-10 w-[180px] bg-muted animate-pulse rounded" />
-              <div className="h-10 w-[180px] bg-muted animate-pulse rounded" />
+              <div className="h-10 w-[180px] bg-muted animate-pulse rounded-xl" />
+              <div className="h-10 w-[180px] bg-muted animate-pulse rounded-xl" />
+              <div className="h-10 w-[180px] bg-muted animate-pulse rounded-xl" />
             </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+              <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden glass-card">
                 <div className="aspect-square bg-muted animate-pulse" />
                 <div className="p-4 space-y-3">
                   <div className="h-4 w-24 bg-muted animate-pulse rounded" />
@@ -69,7 +72,7 @@ export default function BrowsePage() {
             ))}
           </div>
         </main>
-      </div>
+      </VaultBackground>
     )
   }
 
@@ -85,16 +88,18 @@ export default function BrowsePage() {
     return matchesSearch && matchesCategory && matchesColor && matchesLocation
   })
 
+  const hasActiveFilters = categoryFilter !== "all" || colorFilter !== "all" || locationFilter !== "all" || searchQuery !== ""
+
   return (
-    <div className="min-h-screen bg-background">
+    <VaultBackground>
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Browse Lost Items</h1>
+        <div className="mb-6 sm:mb-8 animate-slide-up">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-black tracking-tight text-foreground">Browse Lost Items</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Search through found items to locate your belongings</p>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-6 sm:mb-8 space-y-4">
+        <div className="mb-6 sm:mb-8 space-y-4 animate-slide-up delay-1">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -105,6 +110,22 @@ export default function BrowsePage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("")
+                  setCategoryFilter("all")
+                  setColorFilter("all")
+                  setLocationFilter("all")
+                }}
+                className="gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3 sm:gap-4">
@@ -161,8 +182,15 @@ export default function BrowsePage() {
         </div>
 
         {/* Items Grid */}
-        <div className="mb-4">
-          <p className="text-sm text-muted-foreground">{filteredItems.length} items found</p>
+        <div className="mb-4 animate-slide-up delay-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{filteredItems.length} items found</p>
+            {hasActiveFilters && (
+              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                {categoryFilter !== "all" ? 1 : 0 + (colorFilter !== "all" ? 1 : 0) + (locationFilter !== "all" ? 1 : 0)} filter(s) active
+              </span>
+            )}
+          </div>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredItems.map((item) => (
@@ -181,11 +209,13 @@ export default function BrowsePage() {
         </div>
 
         {filteredItems.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">No items found matching your search criteria</p>
+          <div className="py-16 text-center animate-fade-in">
+            <Filter className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+            <p className="text-muted-foreground mb-2">No items found</p>
+            <p className="text-sm text-muted-foreground/70">Try adjusting your search or filters</p>
           </div>
         )}
       </main>
-    </div>
+    </VaultBackground>
   )
 }

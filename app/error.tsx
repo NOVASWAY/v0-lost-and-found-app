@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 
 export default function Error({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string }

@@ -91,14 +91,14 @@ export default function DashboardPage() {
       <VaultBackground>
         <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
           <div className="mb-6 sm:mb-8 space-y-2">
-            <div className="h-8 w-64 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-80 bg-muted animate-pulse rounded" />
+            <div className="h-8 w-64 bg-muted animate-pulse rounded-xl" />
+            <div className="h-4 w-80 bg-muted animate-pulse rounded-xl" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="p-6">
+              <Card key={i} className="p-6 glass-card">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-muted animate-pulse rounded-lg" />
+                  <div className="h-12 w-12 bg-muted animate-pulse rounded-xl" />
                   <div className="space-y-2 flex-1">
                     <div className="h-4 w-32 bg-muted animate-pulse rounded" />
                     <div className="h-3 w-48 bg-muted animate-pulse rounded" />
@@ -118,19 +118,19 @@ export default function DashboardPage() {
   const unreadOrders = user?.orders?.filter((o) => o.status === "unread") || []
 
   return (
-    <div className="min-h-screen bg-background">
+    <VaultBackground>
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-foreground">Welcome Back, {user?.name || "User"}!</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Here&apos;s your Lost & Found activity summary</p>
+        <div className="mb-6 sm:mb-8 animate-slide-up">
+          <h1 className="mb-2 text-2xl sm:text-3xl font-black tracking-tight text-foreground">Welcome Back, {user?.name || "User"}!</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Here's your Lost & Found activity summary</p>
         </div>
 
         {/* Quick Actions */}
         <div className="mb-6 sm:mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Link href="/upload">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-110">
                   <Upload className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -142,9 +142,9 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/browse">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 transition-colors group-hover:bg-accent/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 transition-all duration-300 group-hover:bg-accent/20 group-hover:scale-110">
                   <Search className="h-6 w-6 text-accent" />
                 </div>
                 <div>
@@ -156,24 +156,24 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/my-uploads">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 transition-colors group-hover:bg-blue-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 transition-all duration-300 group-hover:bg-blue-500/20 group-hover:scale-110">
                   <Package className="h-6 w-6 text-blue-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">My Uploads</h3>
-                  <p className="text-sm text-muted-foreground">View items you&apos;ve uploaded</p>
+                  <p className="text-sm text-muted-foreground">View items you've uploaded</p>
                 </div>
               </div>
             </Card>
           </Link>
 
           <Link href="/my-claims">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500/10 transition-colors group-hover:bg-green-500/20">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 transition-all duration-300 group-hover:bg-emerald-500/20 group-hover:scale-110">
+                  <CheckCircle className="h-6 w-6 text-emerald-500" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">My Claims</h3>
@@ -184,9 +184,9 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/missions">
-            <Card className="group cursor-pointer p-6 transition-shadow hover:shadow-md">
+            <Card className="group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-500/10 transition-colors group-hover:bg-purple-500/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 transition-all duration-300 group-hover:bg-purple-500/20 group-hover:scale-110">
                   <Activity className="h-6 w-6 text-purple-500" />
                 </div>
                 <div>
@@ -198,16 +198,18 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/orders">
-            <Card className={`group cursor-pointer p-6 transition-shadow hover:shadow-md ${unreadOrders.length > 0 ? "border-primary/50 bg-primary/5" : ""}`}>
+            <Card className={`group cursor-pointer p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 glass-card ${unreadOrders.length > 0 ? "border-primary/30 bg-primary/5" : ""}`}>
               <div className="flex items-center gap-4">
-                <div className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${unreadOrders.length > 0 ? "bg-primary/20 group-hover:bg-primary/30" : "bg-slate-500/10 group-hover:bg-slate-500/20"}`}>
+                <div className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-300 ${unreadOrders.length > 0 ? "bg-primary/10 group-hover:bg-primary/20" : "bg-slate-500/10 group-hover:bg-slate-500/20"}`}>
                   <MessageSquare className={`h-6 w-6 ${unreadOrders.length > 0 ? "text-primary" : "text-slate-500"}`} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-card-foreground">Security Orders</h3>
                     {unreadOrders.length > 0 && (
-                      <Badge className="bg-primary text-primary-foreground">{unreadOrders.length} New</Badge>
+                      <Badge variant="default" className="animate-bounce-subtle">
+                        {unreadOrders.length} New
+                      </Badge>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">View important directives</p>
@@ -218,45 +220,53 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Widgets */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card className="p-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8 animate-slide-up delay-1">
+          <Card className="p-6 glass-card">
             <div className="mb-2 flex items-center justify-between">
-              <Package className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                <Package className="h-5 w-5 text-primary" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-card-foreground">{userUploads.length}</p>
+            <p className="text-3xl font-black text-card-foreground">{userUploads.length}</p>
             <p className="text-sm text-muted-foreground">Items Uploaded</p>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 glass-card">
             <div className="mb-2 flex items-center justify-between">
-              <Search className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+                <Search className="h-5 w-5 text-accent" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-card-foreground">{userClaims.length}</p>
+            <p className="text-3xl font-black text-card-foreground">{userClaims.length}</p>
             <p className="text-sm text-muted-foreground">Total Claims</p>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 glass-card">
             <div className="mb-2 flex items-center justify-between">
-              <Clock className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-chart-4/10">
+                <Clock className="h-5 w-5 text-chart-4" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-card-foreground">{pendingClaims.length}</p>
+            <p className="text-3xl font-black text-card-foreground">{pendingClaims.length}</p>
             <p className="text-sm text-muted-foreground">Pending Release</p>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 glass-card">
             <div className="mb-2 flex items-center justify-between">
-              <CheckCircle className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                <CheckCircle className="h-5 w-5 text-emerald-500" />
+              </div>
             </div>
-            <p className="text-3xl font-bold text-card-foreground">{releasedItems.length}</p>
+            <p className="text-3xl font-black text-card-foreground">{releasedItems.length}</p>
             <p className="text-sm text-muted-foreground">Items Received</p>
           </Card>
         </div>
 
         {/* Recent finds — the congregation's newest uploads, visible to everyone */}
-        <div className="mb-8">
+        <div className="mb-8 animate-slide-up delay-2">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-foreground">Recent finds</h2>
+              <h2 className="text-lg sm:text-xl font-black text-foreground">Recent finds</h2>
               <p className="text-sm text-muted-foreground">Newest items from the congregation</p>
             </div>
             <div className="flex items-center gap-2">
@@ -266,6 +276,7 @@ export default function DashboardPage() {
                 onClick={handleRefreshFinds}
                 disabled={isRefreshing}
                 aria-label="Refresh recent finds"
+                className="gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh
@@ -294,7 +305,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <Card className="p-8 text-center">
+            <Card className="p-8 text-center glass-card">
               <p className="text-muted-foreground">
                 {feedError
                   ? "Couldn't load recent finds — press Refresh to retry."
@@ -305,10 +316,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Progress Widgets */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background border-primary/20">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-slide-up delay-3">
+          <Card className="p-6 bg-gradient-to-br from-primary/10 via-background to-background border-primary/20 glass-card">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 rounded bg-primary/20">
+              <div className="p-2 rounded-lg bg-primary/20">
                 <Trophy className="w-5 h-5 text-primary" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-primary/70 italic">
@@ -325,9 +336,9 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="p-6 bg-card border-border">
+          <Card className="p-6 glass-card border-border">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 rounded bg-accent/10">
+              <div className="p-2 rounded-lg bg-accent/10">
                 <Star className="w-5 h-5 text-accent" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">
@@ -345,17 +356,17 @@ export default function DashboardPage() {
               </div>
               <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-accent transition-all duration-1000"
+                  className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-1000"
                   style={{ width: `${Math.min(100, ((user?.vaultPoints || 0) / 1000) * 100)}%` }}
                 />
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-primary/20 bg-primary/5">
+          <Card className="p-6 border-primary/20 bg-primary/5 glass-card">
             <h3 className="text-sm font-black uppercase tracking-widest mb-4 italic">Security Identity</h3>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded bg-primary flex items-center justify-center text-primary-foreground font-black text-xl italic">
+              <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl italic">
                 {user?.name?.[0].toUpperCase()}
               </div>
               <div>
@@ -369,12 +380,12 @@ export default function DashboardPage() {
                 <span className="text-primary">Verified</span>
               </div>
               <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                <div className="h-full w-full bg-primary" />
+                <div className="h-full w-full bg-gradient-to-r from-primary to-accent" />
               </div>
             </div>
           </Card>
         </div>
       </main>
-    </div>
+    </VaultBackground>
   )
 }

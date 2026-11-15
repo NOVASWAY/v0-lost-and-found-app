@@ -66,7 +66,7 @@ export function MobileBottomNav() {
 
   if (!user) return null
 
-  // Don't show on login/signup/home pages
+  // Don't show on landing/login/signup pages
   if (pathname === "/" || pathname === "/login" || pathname === "/signup") {
     return null
   }
@@ -91,14 +91,14 @@ export function MobileBottomNav() {
     <>
       {moreOpen && overflowItems.length > 0 && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden animate-fade-in"
           onClick={() => setMoreOpen(false)}
           aria-hidden="true"
         />
       )}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden animate-slide-up">
         {moreOpen && overflowItems.length > 0 && (
-          <div className="border-t border-border bg-background shadow-lg">
+          <div className="border-t border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl animate-slide-down">
             <div className="mx-auto max-w-md px-4 py-2">
               {overflowItems.map((item) => {
                 const Icon = item.icon
@@ -109,8 +109,8 @@ export function MobileBottomNav() {
                     href={item.href}
                     onClick={() => setMoreOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors",
-                      isActive ? "text-primary bg-muted" : "text-foreground hover:bg-muted"
+                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                      isActive ? "text-primary bg-primary/5" : "text-foreground hover:bg-muted/50"
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
@@ -121,11 +121,10 @@ export function MobileBottomNav() {
             </div>
           </div>
         )}
-        <nav className="border-t border-border bg-background/95 backdrop-blur-xl">
+        <nav className="border-t border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl glass-strong">
           <div className="flex h-16 items-center justify-around px-2">
             {displayItems.map((item) => {
               const Icon = item.icon
-              // Handle active state: exact match or starts with (but not for root paths like /admin matching /admin/items)
               const isActive = pathname === item.href || 
                 (pathname.startsWith(item.href + "/") && item.href !== "/")
               
@@ -134,15 +133,18 @@ export function MobileBottomNav() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 flex-1 h-full min-w-0 px-2 transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                    "flex flex-col items-center justify-center gap-1 flex-1 h-full min-w-0 px-2 transition-all duration-200",
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                  <div className={cn(
+                    "flex items-center justify-center rounded-lg p-1.5 transition-all duration-200",
+                    isActive ? "bg-primary/10" : "hover:bg-accent/10"
+                  )}>
+                    <Icon className={cn("h-5 w-5 shrink-0 transition-colors duration-200", isActive && "text-primary")} />
+                  </div>
                   <span className={cn(
-                    "text-[10px] font-medium truncate w-full text-center",
+                    "text-[10px] font-semibold truncate w-full text-center transition-colors duration-200",
                     isActive && "text-primary"
                   )}>
                     {item.label}
@@ -156,14 +158,16 @@ export function MobileBottomNav() {
                 onClick={() => setMoreOpen((open) => !open)}
                 aria-label="Toggle more navigation items"
                 aria-expanded={moreOpen}
-                className="flex flex-col items-center justify-center gap-1 flex-1 h-full min-w-0 px-2 transition-colors text-muted-foreground hover:text-foreground"
+                className="flex flex-col items-center justify-center gap-1 flex-1 h-full min-w-0 px-2 transition-all duration-200 text-muted-foreground hover:text-foreground"
               >
-                {moreOpen ? (
-                  <X className="h-5 w-5 shrink-0" />
-                ) : (
-                  <MoreHorizontal className="h-5 w-5 shrink-0" />
-                )}
-                <span className="text-[10px] font-medium truncate w-full text-center">
+                <div className="flex items-center justify-center rounded-lg p-1.5 hover:bg-accent/10 transition-all duration-200">
+                  {moreOpen ? (
+                    <X className="h-5 w-5 shrink-0" />
+                  ) : (
+                    <MoreHorizontal className="h-5 w-5 shrink-0" />
+                  )}
+                </div>
+                <span className="text-[10px] font-semibold truncate w-full text-center">
                   {moreOpen ? "Close" : "More"}
                 </span>
               </button>

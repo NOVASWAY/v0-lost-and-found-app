@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import Image from "next/image"
 import { NavbarDropdown } from "@/components/navbar-dropdown"
+import { cn } from "@/lib/utils"
 
 interface NavbarProps {
   role?: "user" | "volunteer" | "admin"
@@ -75,10 +76,10 @@ export function Navbar({ role = "user" }: NavbarProps) {
   const links = isAdmin ? adminTopLinks : isVolunteer ? volunteerLinks : userLinks
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/30 glass-effect hidden md:block animate-slide-in-down">
+    <header className="sticky top-0 z-50 border-b border-border/30 bg-background/90 backdrop-blur-xl glass hidden md:block animate-slide-in-down">
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
         <Link href="/" className="flex items-center gap-4 group">
-          <div className="relative h-10 w-7 sm:h-12 sm:w-8 transition-all duration-500 border border-primary/30 group-hover:border-primary/60 rounded-lg p-1 bg-gradient-to-br from-primary/10 to-accent/10 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/20">
+          <div className="relative h-10 w-7 sm:h-12 sm:w-8 transition-all duration-500 border border-primary/30 group-hover:border-primary/60 rounded-xl p-1 bg-gradient-to-br from-primary/10 to-accent/10 shadow-lg group-hover:shadow-xl group-hover:shadow-primary/20">
             <Image src="/vault-church-logo.jpeg" alt="Vault Church" fill sizes="(max-width: 640px) 28px, 32px" className="object-contain object-top group-hover:drop-shadow-lg transition-all duration-300" priority />
           </div>
           <div className="flex flex-col">
@@ -88,15 +89,17 @@ export function Navbar({ role = "user" }: NavbarProps) {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-5 md:flex">
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-semibold text-muted-foreground hover:text-primary transition-all duration-300 relative group"
+              className={cn(
+                "relative px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-all duration-300 rounded-lg",
+                "before:absolute before:bottom-0 before:left-1/2 before:w-0 before:h-0.5 before:bg-gradient-to-r before:from-primary before:to-accent before:transition-all before:duration-300 before:-translate-x-1/2 hover:before:w-[calc(100%-0.75rem)]"
+              )}
             >
               {link.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-accent group-hover:w-full transition-all duration-300 rounded-full" />
             </Link>
           ))}
           {isAdmin && adminDropdowns.map((dropdown) => (
@@ -112,7 +115,7 @@ export function Navbar({ role = "user" }: NavbarProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="font-semibold hover:text-primary transition-all duration-300 hover:bg-primary/10"
+                  className="rounded-xl font-semibold hover:text-primary transition-all duration-300 hover:bg-primary/5"
                 >
                   {user.name}
                 </Button>
@@ -121,7 +124,7 @@ export function Navbar({ role = "user" }: NavbarProps) {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="font-semibold transition-all duration-300 hover:border-primary hover:text-primary hover:bg-primary/10"
+                className="rounded-xl font-semibold transition-all duration-300 hover:border-primary hover:text-primary hover:bg-primary/5"
               >
                 Logout
               </Button>
