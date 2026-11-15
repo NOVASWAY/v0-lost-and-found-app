@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <main className="container mx-auto px-4 py-6 sm:py-8 pb-24 sm:pb-8">
         <div className="mb-6 sm:mb-8 animate-slide-up">
           <h1 className="mb-2 text-2xl sm:text-3xl font-black tracking-tight text-foreground">Welcome Back, {user?.name || "User"}!</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Here's your Lost & Found activity summary</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Here&#39;s your Lost &amp; Found activity summary</p>
         </div>
 
         {/* Quick Actions */}
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">My Uploads</h3>
-                  <p className="text-sm text-muted-foreground">View items you've uploaded</p>
+                  <p className="text-sm text-muted-foreground">View items you&#39;ve uploaded</p>
                 </div>
               </div>
             </Card>

@@ -178,7 +178,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
               {claim.id}
             </Badge>
           </div>
-          <p className="text-muted-foreground">Verify the claimant's identity and proof before releasing the item</p>
+          <p className="text-muted-foreground">Verify the claimant&#39;s identity and proof before releasing the item</p>
         </div>
 
         {/* Photo Comparison */}
@@ -192,7 +192,7 @@ export default function ReleaseItemPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <div>
-              <Label className="mb-2 block text-sm font-medium">Claimant's Proof Photo</Label>
+              <Label className="mb-2 block text-sm font-medium">Claimant&#39;s Proof Photo</Label>
               <div className="relative aspect-square overflow-hidden rounded-xl border border-border/50">
                 <Image src={claim.proofImage || "/placeholder.svg"} alt="Proof photo" fill className="object-cover" />
               </div>
