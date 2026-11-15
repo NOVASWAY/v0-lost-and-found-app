@@ -307,3 +307,13 @@ model OccurrenceBook {
   @@index([linkedItemId])
   @@index([linkedClaimId])
 }
+
+// Shared fixed-window counters used by lib/rate-limit.ts. Declared here so the
+// table is created by migrations (no runtime DDL) and stays in schema parity.
+model RateLimitCounter {
+  rateKey   String @id @map("rate_key")
+  count     Int
+  resetTime BigInt @map("reset_time")
+
+  @@map("rate_limit_counters")
+}

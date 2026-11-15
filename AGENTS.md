@@ -98,12 +98,37 @@ The **DB-backed API under `app/api/*` is authoritative, secure, and the source o
 - The `postgres-smoke` CI job runs the migrations, seed, and full test suite
   against a real `postgres:16` container — treat it as the gate for any schema
   or adapter change.
-- Schema changes: update `prisma/schema.prisma`, run `pnpm db:migrate` (dev). If the migration
-  history drifts from the DB (e.g. a runtime table like `rate_limit_counters`), `start.sh` resets
-  the dev DB — that is expected.
+- Schema changes: update `prisma/schema.prisma`, run `pnpm db:migrate` (dev). `rate_limit_counters`
+  (`RateLimitCounter`) is a normal migrated table — do not recreate it at runtime, and do not let
+  the app role need DDL privileges. If the dev migration history drifts, `start.sh` resets the dev
+  DB — that is expected.
 - `User.tokenVersion` is bumped on password change to revoke all existing sessions. Keep it in the
   JWT payload and verify it in `getAuthenticatedUser` (see `lib/auth-middleware.ts`).
 - JWT default TTL is 8h and must match the cookie `maxAge` in the login route.
+
+### Neon (production Postgres)
+
+Production runs on Neon Postgres (Lakebase Postgres) in `aws-us-east-1`. The Neon CLI
+(`npm i -g neon`) stores org/project/branch pointers in a **git-ignored** `.neon` file;
+link a fresh checkout once with `neon link --no-env-pull`.
+
+- **Local dev stays SQLite.** Never run a bare `neon env pull`, `neon link`, or
+  `neon checkout` — they write a Postgres `DATABASE_URL` into `.env` and silently switch
+  the dev stack to the production database. Always pass `--no-env-pull`, or inject env at
+  runtime with `neon-env run -- <command>`.
+- Check the linked branch's schema against the generated Prisma schema:
+  ```bash
+  DATABASE_URL="$(neon connection-string main --prisma)" DATABASE_PROVIDER=postgresql \
+    pnpm exec prisma migrate diff --from-config-datasource \
+    --to-schema prisma/schema.postgresql.prisma --script
+  ```
+  Expect an empty diff; `rate_limit_counters` is modeled (`RateLimitCounter`) and migrated.
+- Apply Postgres migrations with `pnpm exec prisma migrate deploy` and a Postgres
+  `DATABASE_URL` (CI does this in `deploy.yml` against `PROD_DATABASE_URL`).
+- **Builds are read-only.** `scripts/vercel-build.sh` must never run `prisma db push`
+  (especially not `--accept-data-loss`): it bypasses migration history and can drop
+  production data. `prisma migrate deploy` in `deploy.yml` is the only schema path;
+  reference data is seeded there too, not at build time.
 
 ## Testing
 
@@ -125,14 +150,17 @@ The **DB-backed API under `app/api/*` is authoritative, secure, and the source o
 
 ## CI/CD
 
-- CI (`.github/workflows/ci.yml`): lint, typecheck, prepare the ephemeral `ci.db` via
-  `prisma migrate deploy`, a schema-drift check on `schema.postgresql.prisma`,
-  `pnpm test:coverage` (full suite + coverage gate), a `postgres-smoke` job that
+- CI (`.github/workflows/ci.yml`): lint, typecheck, production-dependency audit (`high`),
+  prepare the ephemeral `ci.db` via `prisma migrate deploy`, a schema-drift check on
+  `schema.postgresql.prisma`, `pnpm test:coverage` (full suite + coverage gate), a `postgres-smoke` job that
   migrates/seeds/tests against a real `postgres:16` container, dependency review on
   PRs (`fail-on-severity: high`), production build.
 - CodeQL (`.github/workflows/codeql.yml`): semantic JS/TS scanning on PRs, `main`, and weekly.
-- Known baseline: `pnpm audit` reports a few `lodash` advisories (dev-tooling transitive dep, no
-  patched release). Do not add new high/critical vulnerabilities via PRs (dependency review blocks).
+- Known baseline: `pnpm audit --prod` leaves two build-tooling advisories — `minimatch` (moderate;
+  the fix is a major bump inside the Workbox chain) and `deepmerge` (low; no patched release
+  exists). The high-severity Zod advisory is resolved by `zod` 4.6.7 plus the pinned
+  `@vercel/cli-config>zod` override, and `readJsonBody` caps JSON bodies at 256 KiB.
+  CI fails on new high/critical advisories (`pnpm audit --prod --audit-level high`).
 - CD (`.github/workflows/deploy.yml`): Vercel preview on PRs, production on `main`; applies
   `prisma migrate deploy` + seed against `PROD_DATABASE_URL` before each deploy. Requires the
   `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `PROD_DATABASE_URL`, and

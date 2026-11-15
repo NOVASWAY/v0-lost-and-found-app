@@ -62,3 +62,6 @@ public/workbox-*.js
 # IDE / tooling
 .opencode/
 .playwright-mcp/
+
+# Neon CLI project/branch pointer (written by `neon link` / `neon checkout`)
+.neon

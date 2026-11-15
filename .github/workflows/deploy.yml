@@ -12,11 +12,37 @@ permissions:
   pull-requests: write
 
 jobs:
+  # GitHub does not expose the `secrets` context to job/step `if` expressions.
+  # Resolve the optional deploy secrets once here, as env vars, and publish the
+  # result as a job output so the deploy job can gate on it safely.
+  gate:
+    name: Check deploy secrets
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.check.outputs.deploy }}
+    steps:
+      - id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy skipped: VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID must be set."
+          fi
+
   deploy:
     name: Deploy to Vercel
+    needs: gate
+    if: needs.gate.outputs.deploy == 'true'
     runs-on: ubuntu-latest
-    # Skip until the Vercel secrets are configured (see steps below).
-    if: ${{ secrets.VERCEL_TOKEN && secrets.VERCEL_ORG_ID && secrets.VERCEL_PROJECT_ID }}
+    # Job-level env so the optional-secret checks below can use the `env`
+    # context (available in step `if`, unlike `secrets`).
+    env:
+      PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,17 +60,18 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Database sync runs before the new code goes live so the schema is always
-      # compatible. Both steps are skipped until the required secrets exist.
+      # compatible. `prisma migrate deploy` is the ONLY schema path: the Vercel
+      # build is read-only (see scripts/vercel-build.sh).
       # PROD_DATABASE_URL is a Postgres URL; prisma.config.ts infers the provider
       # and postgres migration history from its scheme.
       - name: Run production migrations
-        if: ${{ secrets.PROD_DATABASE_URL }}
+        if: env.PROD_DATABASE_URL != ''
         env:
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
         run: pnpm exec prisma migrate deploy
 
       - name: Check bootstrap secrets
-        if: ${{ secrets.PROD_DATABASE_URL }}
+        if: env.PROD_DATABASE_URL != ''
         id: check-secrets
         env:
           HAS_ADMIN: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD && 'true' || 'false' }}
@@ -69,7 +96,7 @@ jobs:
       # idempotent (upserts) and HARD-FAILS in production if any BOOTSTRAP_*_PASSWORD
       # is missing, so insecure default passwords can never be written to prod.
       - name: Seed production bootstrap users
-        if: ${{ secrets.PROD_DATABASE_URL && steps.check-secrets.outputs.missing == '' }}
+        if: env.PROD_DATABASE_URL != '' && steps.check-secrets.outputs.missing == ''
         env:
           NODE_ENV: production
           DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
@@ -77,6 +104,18 @@ jobs:
           BOOTSTRAP_VOLUNTEER_PASSWORD: ${{ secrets.BOOTSTRAP_VOLUNTEER_PASSWORD }}
           BOOTSTRAP_USER_PASSWORD: ${{ secrets.BOOTSTRAP_USER_PASSWORD }}
         run: pnpm db:seed
+
+      # Idempotent reference data (occurrence categories, locations). Moved out of
+      # the Vercel build so builds no longer write to the production database.
+      - name: Seed reference data
+        if: env.PROD_DATABASE_URL != ''
+        env:
+          NODE_ENV: production
+          DATABASE_PROVIDER: postgresql
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          pnpm exec tsx scripts/seed-categories.ts
+          pnpm exec tsx scripts/seed-locations.ts
 
       - name: Deploy to Vercel
         uses: vercel/actions/deploy@v1

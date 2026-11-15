@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest) {
   const scriptSrc = isDev
     ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-${nonce}'`
     : `script-src 'self' 'nonce-${nonce}'`
-  const cspHeader = `default-src 'self'; ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'`
+  const upgradeInsecure = isDev ? "" : "upgrade-insecure-requests;"
+  const cspHeader = `default-src 'self'; ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; ${upgradeInsecure}`
 
   // Forward the nonce + CSP via request headers so Next.js can inject the nonce
   // into inline scripts during server rendering. Also set on the response so the

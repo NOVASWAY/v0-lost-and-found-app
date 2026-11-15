@@ -14,6 +14,8 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
+  // Do not advertise the framework in responses.
+  poweredByHeader: false,
   typescript: {
     // Production should fail fast on type errors.
     ignoreBuildErrors: false,

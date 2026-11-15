@@ -13,8 +13,6 @@ interface RateLimitStore {
 }
 
 const store: RateLimitStore = {}
-let ensuredTable = false
-let ensurePromise: Promise<void> | null = null
 
 // Clean up old entries periodically
 setInterval(() => {
@@ -41,7 +39,9 @@ export function rateLimit(
     return Promise.resolve(rateLimitInMemory(identifier, options))
   }
 
-  return rateLimitShared(identifier, options)
+  // A DB hiccup must not turn every request into a 500. Fall back to the
+  // per-instance limiter, which is weaker but still throttles the caller.
+  return rateLimitShared(identifier, options).catch(() => rateLimitInMemory(identifier, options))
 }
 
 function rateLimitInMemory(
@@ -82,32 +82,12 @@ function rateLimitInMemory(
   }
 }
 
-async function ensureRateLimitTable() {
-  if (ensuredTable) return
-  if (ensurePromise) return ensurePromise
-
-  ensurePromise = (async () => {
-    // Single shared table used only for rate limiting counters.
-    // Works on both Postgres and SQLite (epoch ms stored as BIGINT/INTEGER affinity).
-    await prisma.$executeRaw`
-      CREATE TABLE IF NOT EXISTS rate_limit_counters (
-        rate_key TEXT PRIMARY KEY,
-        count INTEGER NOT NULL,
-        reset_time BIGINT NOT NULL
-      );
-    `
-    ensuredTable = true
-  })()
-
-  return ensurePromise
-}
-
 async function rateLimitShared(
   identifier: string,
   options: RateLimitOptions,
 ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
-  await ensureRateLimitTable()
-
+  // The table is created by migrations (see the RateLimitCounter model), so no
+  // runtime DDL is needed and the app role can stay DML-only.
   const now = Date.now()
   const resetTime = now + options.windowMs
 
@@ -172,7 +152,6 @@ export async function resetRateLimit(identifier: string): Promise<void> {
     return
   }
   try {
-    await ensureRateLimitTable()
     await prisma.$executeRaw`
       DELETE FROM rate_limit_counters
       WHERE rate_key = ${identifier}

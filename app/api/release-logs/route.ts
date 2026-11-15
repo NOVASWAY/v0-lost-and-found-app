@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { sanitizeSearchQuery } from "@/lib/security"
 import { requireAdminOrVolunteer } from "@/lib/auth-middleware"
+import { rateLimit, getClientIdentifier } from "@/lib/rate-limit"
 import { toProxiedMediaUrl } from "@/lib/media"
 
 // GET all release logs
@@ -10,6 +11,12 @@ export async function GET(request: NextRequest) {
     const authResult = await requireAdminOrVolunteer(request)
     if (authResult instanceof NextResponse) {
       return authResult
+    }
+
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await rateLimit(clientId, { windowMs: 60000, maxRequests: 100 })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
     const searchParams = request.nextUrl.searchParams

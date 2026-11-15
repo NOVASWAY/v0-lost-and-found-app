@@ -41,6 +41,22 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      # Fail on new high/critical advisories in production dependencies. The
+      # remaining build-tooling advisories (minimatch, deepmerge) are below this
+      # gate; see AGENTS.md.
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high --ignore-registry-errors
+
+      # Deploys must never mutate the schema from a build: `db push
+      # --accept-data-loss` bypasses migration history and can drop data.
+      - name: Ensure builds never push the schema
+        run: |
+          if grep -RIn --exclude-dir=node_modules "prisma db push" \
+            scripts/vercel-build.sh vercel.json package.json; then
+            echo "::error::Build must not run 'prisma db push'. Use 'prisma migrate deploy' in deploy.yml."
+            exit 1
+          fi
+
       # Create the schema for the ephemeral SQLite DB the integration tests use.
       - name: Prepare test database
         run: pnpm exec prisma migrate deploy

@@ -3,17 +3,13 @@ set -e
 
 export DATABASE_PROVIDER=postgresql
 
-# Push schema changes to production DB (creates new tables if missing)
-npx prisma db push --schema=prisma/schema.postgresql.prisma --accept-data-loss
+# Builds must be read-only with respect to the database. Schema changes are
+# applied by `prisma migrate deploy` in the deploy workflow; a schema push
+# bypasses migration history and `--accept-data-loss` can drop production data.
+pnpm exec prisma generate
 
-# Seed default categories (idempotent upserts)
-DATABASE_PROVIDER=postgresql npx tsx scripts/seed-categories.ts
-
-# Seed locations with categories (idempotent upserts)
-DATABASE_PROVIDER=postgresql npx tsx scripts/seed-locations.ts
-
-# Generate Prisma client for PostgreSQL
-npx prisma generate --schema=prisma/schema.postgresql.prisma
+# Reference data (occurrence categories, locations) is seeded by the deploy
+# workflow after migrations, not during the build.
 
 # Build Next.js
 next build --webpack

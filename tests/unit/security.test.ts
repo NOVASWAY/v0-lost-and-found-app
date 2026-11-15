@@ -14,6 +14,7 @@ import {
   validateRouteId,
   parsePagination,
   readJsonBody,
+  MAX_JSON_BODY_BYTES,
 } from "../../lib/security"
 import { safeCompare } from "../../lib/secret"
 
@@ -291,5 +292,36 @@ describe("readJsonBody", () => {
   it("returns ok:false for an empty body", async () => {
     const request = new Request("http://localhost/api/test", { method: "POST" })
     await expect(readJsonBody(request)).resolves.toEqual({ ok: false })
+  })
+
+  it("rejects a streamed body larger than the ceiling", async () => {
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pad: "x".repeat(2048) }),
+    })
+    await expect(readJsonBody(request, { maxBytes: 512 })).resolves.toEqual({ ok: false })
+  })
+
+  it("rejects from the declared Content-Length without reading the body", async () => {
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(MAX_JSON_BODY_BYTES + 1) },
+      body: "{}",
+    })
+    await expect(readJsonBody(request)).resolves.toEqual({ ok: false })
+  })
+
+  it("accepts a body at the configured ceiling", async () => {
+    const body = JSON.stringify({ ok: true })
+    const request = new Request("http://localhost/api/test", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    })
+    await expect(readJsonBody(request, { maxBytes: Buffer.byteLength(body) })).resolves.toEqual({
+      ok: true,
+      data: { ok: true },
+    })
   })
 })

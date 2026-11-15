@@ -315,15 +315,57 @@ export function parsePagination(
   return { page, limit, skip: (page - 1) * limit }
 }
 
+// Default ceiling for JSON request bodies. Bodies carry URLs and text fields,
+// never file bytes, so 256 KiB is generous while keeping an attacker from
+// forcing unbounded buffering before Zod validates anything.
+export const MAX_JSON_BODY_BYTES = 256 * 1024
+
 /**
  * Reads a JSON request body without throwing, so malformed JSON is answered
- * with 400 instead of bubbling up as an unhandled 500.
+ * with 400 instead of bubbling up as an unhandled 500. The body is read as a
+ * stream and aborted once it exceeds the byte ceiling, so an oversized payload
+ * is rejected before it is fully buffered or parsed.
  */
 export async function readJsonBody(
-  request: Request
+  request: Request,
+  options: { maxBytes?: number } = {}
 ): Promise<{ ok: true; data: unknown } | { ok: false }> {
+  const maxBytes = options.maxBytes ?? MAX_JSON_BODY_BYTES
+
+  const declaredLength = Number(request.headers.get("content-length") ?? "")
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    return { ok: false }
+  }
+
+  if (!request.body) return { ok: false }
+
+  const reader = request.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+
   try {
-    return { ok: true, data: await request.json() }
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.byteLength
+      if (total > maxBytes) {
+        await reader.cancel()
+        return { ok: false }
+      }
+      chunks.push(value)
+    }
+  } catch {
+    return { ok: false }
+  }
+
+  try {
+    const bytes = new Uint8Array(total)
+    let offset = 0
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset)
+      offset += chunk.byteLength
+    }
+    return { ok: true, data: JSON.parse(new TextDecoder().decode(bytes)) }
   } catch {
     return { ok: false }
   }
